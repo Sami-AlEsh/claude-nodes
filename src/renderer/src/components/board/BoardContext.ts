@@ -12,6 +12,8 @@ export interface BoardActions {
   expand(sessionIds: string[], expanded: boolean): void
   /** Moves active sessions to the archive, asking first when one is still running. */
   archive(sessionIds: string[]): void
+  /** Stops sessions' Claude processes and keeps their cards, asking first when one is mid-turn. */
+  stop(sessionIds: string[]): void
   /** Saves what's written on a sticky note. */
   editNote(note: BoardNote, text: string): void
   /** Starts a Claude session on a note's text; the note then sticks to the session's card. */

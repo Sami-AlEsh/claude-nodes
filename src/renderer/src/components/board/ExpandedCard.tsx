@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
-import { AppWindowMac, Archive, LoaderCircle, Minimize2, Play, RotateCcw, SquareTerminal } from 'lucide-react'
+import { AppWindowMac, Archive, LoaderCircle, Minimize2, Play, RotateCcw, Square, SquareTerminal } from 'lucide-react'
 import type { SessionCard } from '@shared/types'
 import { useApp } from '@renderer/store'
 import { UsageStats } from '@renderer/components/UsageStats'
@@ -40,7 +40,7 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
   const openTerminal = useApp((s) => s.openTerminal)
   // A terminal shows in one place at a time; the modal has it while it's open.
   const inModal = useApp((s) => s.terminalSessionId === id)
-  const { expand, archive } = useBoardActions()
+  const { expand, archive, stop: stopSession } = useBoardActions()
 
   // A card that comes back expanded (after a restart, say) waits to be asked
   // before it starts Claude or a shell; one expanded just now starts right away.
@@ -123,6 +123,16 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
             >
               {shell ? <RotateCcw size={12} strokeWidth={2.2} /> : <Play size={12} strokeWidth={2.2} />}
               {shell ? 'Restart' : 'Resume'}
+            </button>
+          )}
+          {!shell && card.live && (
+            <button
+              className="card-tool is-labelled"
+              onClick={() => stopSession([id])}
+              title="Stop the session. The card stays, and Resume picks it up."
+            >
+              <Square size={11} strokeWidth={2.4} />
+              Stop
             </button>
           )}
           {!shell && (

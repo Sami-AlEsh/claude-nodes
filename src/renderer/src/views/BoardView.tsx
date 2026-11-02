@@ -42,6 +42,7 @@ import {
   Plus,
   RefreshCw,
   Sparkles,
+  Square,
   SquareDashed,
   SquareTerminal,
   StickyNote,
@@ -126,6 +127,7 @@ import {
 import { SelectionBar } from '@renderer/components/board/SelectionBar'
 import { BoardControls } from '@renderer/components/board/BoardControls'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
+import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
 import {
   MergeDialog,
   type MergeSource,
@@ -947,6 +949,17 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     [confirmStopRunning, patchCards]
   )
 
+  const stopCards = useCallback(
+    async (ids: string[]) => {
+      const targets = stoppable(cardsRef.current.filter((c) => ids.includes(c.sessionId)))
+      if (targets.length === 0) return
+      const ask = stopConfirmation(targets, cardTitle)
+      if (ask && !(await confirm(ask))) return
+      await stopSessions(targets)
+    },
+    [confirm]
+  )
+
   const restoreCard = useCallback(
     (sessionId: string) => {
       const spot = spotRightOfArchive(dockRef.current, cardsRef.current, new Set([sessionId]), CARD_SIZE, notesInTheWay())
@@ -1608,6 +1621,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       rename: (sessionId, title) => patchCards([{ sessionId, title }]),
       expand: expandCards,
       archive: (ids) => void archiveCards(ids),
+      stop: (ids) => void stopCards(ids),
       setRenaming,
       renameSection: (sectionId, name) => {
         const section = groupsRef.current.find((g) => g.section.id === sectionId)?.section
@@ -1633,6 +1647,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       saveSection,
       expandCards,
       archiveCards,
+      stopCards,
       saveNote,
       projectId,
       startNote,
@@ -2235,6 +2250,17 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
         sel.includes(card.sessionId) && sel.length > 1
           ? sel.filter((id) => !isTerminal(byId.get(id)))
           : [card.sessionId]
+      // Stopping keeps the cards; opening one resumes its session.
+      const running = stoppable(group.flatMap((id) => byId.get(id) ?? []))
+      const stopItems: MenuItem[] = running.length
+        ? [
+            {
+              label: running.length > 1 ? `Stop ${running.length} sessions` : 'Stop session',
+              icon: <Square />,
+              onSelect: () => void stopCards(running.map((c) => c.sessionId))
+            }
+          ]
+        : []
       const items: MenuItem[] = [
         ...(card.archived
           ? [{ label: 'Preview', icon: <Eye />, hint: '↩', onSelect: () => openPreview(card.sessionId) }]
@@ -2251,6 +2277,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
               hint: '⌫',
               onSelect: () => archiveCards(group)
             },
+        ...stopItems,
         {
           label: group.length > 1 ? `New session from ${group.length} contexts…` : 'New session from context…',
           icon: <Sparkles />,
@@ -2291,6 +2318,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       cardOpenItems,
       restoreCard,
       archiveCards,
+      stopCards,
       startMerge,
       confirm,
       removeCard,
