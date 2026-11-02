@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '@renderer/store'
 import { FolderIcon } from './FolderIcon'
 import { GitControls } from './git/GitControls'
-import { ThemeToggle } from './ThemeToggle'
 import { TITLEBAR_ACTIONS_ID } from './TitleBarActions'
 import { UpdateButton } from './UpdateButton'
 import { RunningCount } from './RunningCount'
@@ -67,7 +66,6 @@ export function TitleBar() {
       <div className="titlebar-actions no-drag">
         <RunningCount />
         <UpdateButton />
-        <ThemeToggle />
         {/* Each view's own buttons. */}
         <div id={TITLEBAR_ACTIONS_ID} className="titlebar-actions" />
       </div>
