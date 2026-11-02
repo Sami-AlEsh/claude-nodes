@@ -164,6 +164,12 @@ textarea {
   background: var(--status-waiting);
   animation: status-pulse 1.1s ease-out infinite;
 }
+/* A card's session with no process running: a grey ring, as only a live process has a status colour. */
+.status-dot[data-stopped='true'] {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--text-tertiary);
+  animation: none;
+}
 
 /* For lists of agents, where the dot sits beside a single line of small text. */
 .status-dot.is-small {
