@@ -5,6 +5,7 @@ import { FolderIcon } from './FolderIcon'
 import { GitControls } from './git/GitControls'
 import { TITLEBAR_ACTIONS_ID } from './TitleBarActions'
 import { UpdateButton } from './UpdateButton'
+import { RunningCount } from './RunningCount'
 import { addProject } from './projects/projectsUi'
 import './TitleBar.css'
 
@@ -63,6 +64,7 @@ export function TitleBar() {
       </nav>
 
       <div className="titlebar-actions no-drag">
+        <RunningCount />
         <UpdateButton />
         {/* Each view's own buttons. */}
         <div id={TITLEBAR_ACTIONS_ID} className="titlebar-actions" />
