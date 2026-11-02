@@ -50,8 +50,8 @@ function SessionCardNodeComponent({ data, selected, dragging }: NodeProps<Sessio
   const title = cardTitle(card)
   const updated = meta?.updatedAt ?? card.createdAt
   const shell = isTerminal(card)
-  // A session on the board with no process behind it: its dot is a grey ring.
-  const stopped = !shell && !card.live && !card.archived
+  // A session with no process behind it, archived ones included: its dot is a grey ring.
+  const stopped = !shell && !card.live
   const statusLabel = shell ? (card.live ? 'Running' : 'Exited') : stopped ? 'Not running' : STATUS_LABEL[card.status]
 
   // The current run's agents make a deck behind the card.
