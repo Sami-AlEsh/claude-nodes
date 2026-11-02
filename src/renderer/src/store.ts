@@ -3,6 +3,7 @@ import { isEmptySession } from '@shared/sessions'
 import type {
   ActionLists,
   AgentInfo,
+  AppSettings,
   BoardNote,
   BoardSection,
   BoardSnapshot,
@@ -59,6 +60,8 @@ interface AppState {
   selection: string[]
   /** The Settings dialog is open. It survives navigation. */
   settingsOpen: boolean
+  /** App-wide preferences; null until loaded. */
+  settings: AppSettings | null
   /** A card a notification asked to open, until its board has it on screen. */
   openRequest: OpenCardRequest | null
 
@@ -105,6 +108,9 @@ interface AppState {
   setSelection(ids: string[]): void
   openSettings(): void
   closeSettings(): void
+  loadSettings(): Promise<void>
+  /** Applies the changed settings at once and saves them. */
+  updateSettings(patch: Partial<AppSettings>): void
   /** Goes to a card's board and opens the card there, for a notification the user clicked. */
   showCard(request: OpenCardRequest): void
   clearOpenRequest(): void
@@ -131,6 +137,7 @@ export const useApp = create<AppState>((set, get) => ({
   agentView: null,
   selection: [],
   settingsOpen: false,
+  settings: null,
   openRequest: null,
 
   navigate(route) {
@@ -416,6 +423,15 @@ export const useApp = create<AppState>((set, get) => ({
   setSelection: (ids) => set({ selection: ids }),
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+
+  async loadSettings() {
+    set({ settings: await window.api.settings.get() })
+  },
+
+  updateSettings(patch) {
+    set((s) => ({ settings: s.settings && { ...s.settings, ...patch } }))
+    window.api.settings.update(patch).then((settings) => set({ settings }))
+  },
 
   showCard(request) {
     const { route, navigate } = get()

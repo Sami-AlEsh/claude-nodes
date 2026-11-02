@@ -483,6 +483,8 @@ export interface AppSettings {
   notify: boolean
   /** Count the sessions waiting on the user on the Dock icon. */
   dockBadge: boolean
+  /** Keep the project rail out beside the board, instead of sliding it in from the window's left edge. */
+  pinProjectRail: boolean
 }
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */

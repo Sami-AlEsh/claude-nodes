@@ -45,6 +45,21 @@
   display: none;
 }
 
+/* Pinned: a sidebar flush with the window's left edge, in a column the board leaves free. */
+.rail.is-pinned {
+  left: 0;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  padding: 8px 0;
+  border-right: 0.5px solid var(--separator);
+  border-radius: 0;
+  background: var(--bg-window);
+  backdrop-filter: none;
+  box-shadow: none;
+  transition: none;
+}
+
 .rail-item {
   position: relative;
   display: grid;
@@ -120,6 +135,10 @@
   transform: translateY(-50%);
   pointer-events: none;
   animation: rail-hint-in var(--dur-fast) var(--ease-out);
+}
+
+.rail-hint.is-pinned {
+  left: calc(var(--rail-w) + 6px);
 }
 
 .rail-hint-name {

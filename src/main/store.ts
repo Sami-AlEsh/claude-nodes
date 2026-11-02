@@ -27,7 +27,8 @@ export function normalizeSettings(raw: unknown): AppSettings {
     theme: s.theme && THEMES.includes(s.theme) ? s.theme : 'system',
     autoUpdate: s.autoUpdate !== false,
     notify: s.notify !== false,
-    dockBadge: s.dockBadge !== false
+    dockBadge: s.dockBadge !== false,
+    pinProjectRail: s.pinProjectRail === true
   }
 }
 

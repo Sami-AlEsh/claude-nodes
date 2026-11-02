@@ -29,14 +29,16 @@ function activity(stats?: ProjectStats): string | undefined {
 /**
  * Project folders in a floating rail that auto-hides like the Dock: pointing at the
  * window's left edge slides it in over the board, to jump straight to another project.
+ * Pinned (in Settings), it stays out in a column of its own beside the board.
  */
-export function ProjectRail({ activeId }: { activeId: string }) {
+export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: boolean }) {
   const projects = useApp((s) => s.projects)
   const groups = useApp((s) => s.groups)
   const stats = useApp((s) => s.stats)
   const [open, setOpen] = useState(false)
   const [hint, setHint] = useState<Hint | null>(null)
   const timer = useRef<number | undefined>(undefined)
+  const shown = pinned || open
   const hinted = hint?.projectId ? projects.find((p) => p.id === hint.projectId) : undefined
   const hintName = hint && (hint.projectId ? hinted?.name : 'New Project')
   const hintGroup = hinted?.groupId ? groups.find((g) => g.id === hinted.groupId)?.name : undefined
@@ -88,20 +90,22 @@ export function ProjectRail({ activeId }: { activeId: string }) {
 
   return (
     <>
-      <div
-        className="rail-edge"
-        aria-hidden="true"
-        onPointerEnter={reveal}
-        onPointerMove={reveal}
-        onPointerLeave={hide}
-      />
+      {!pinned && (
+        <div
+          className="rail-edge"
+          aria-hidden="true"
+          onPointerEnter={reveal}
+          onPointerMove={reveal}
+          onPointerLeave={hide}
+        />
+      )}
 
       <nav
-        className={clsx('rail', open && 'is-open')}
+        className={clsx('rail', shown && 'is-open', pinned && 'is-pinned')}
         aria-label="Projects"
-        inert={!open}
-        onPointerEnter={keepOpen}
-        onPointerLeave={hide}
+        inert={!shown}
+        onPointerEnter={pinned ? undefined : keepOpen}
+        onPointerLeave={pinned ? undefined : hide}
         onScroll={() => setHint(null)}
       >
         {blocks.map((block) => (
@@ -144,8 +148,8 @@ export function ProjectRail({ activeId }: { activeId: string }) {
       </nav>
 
       {/* Outside the rail: its transform and backdrop blur would trap a fixed tooltip. */}
-      {open && hint && hintName && (
-        <div className="rail-hint" style={{ top: hint.top }} role="tooltip">
+      {shown && hint && hintName && (
+        <div className={clsx('rail-hint', pinned && 'is-pinned')} style={{ top: hint.top }} role="tooltip">
           <span className="rail-hint-name">{hintName}</span>
           {hintDetail && <span className="rail-hint-detail">{hintDetail}</span>}
         </div>

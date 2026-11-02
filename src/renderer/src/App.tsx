@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import clsx from 'clsx'
 import { useApp } from './store'
 import { TitleBar } from './components/TitleBar'
 import { ProjectsView } from './views/ProjectsView'
@@ -12,9 +13,11 @@ import { ProjectRail } from './components/projects/ProjectRail'
 
 export function App() {
   const route = useApp((s) => s.route)
+  const pinRail = useApp((s) => s.settings?.pinProjectRail ?? false)
 
   useEffect(() => {
     useApp.getState().refreshProjects()
+    useApp.getState().loadSettings()
 
     const offStatus = window.api.on.status((sessionId, status, live) => {
       useApp.getState().setStatus(sessionId, status, live)
@@ -82,8 +85,11 @@ export function App() {
           <ProjectsView />
         ) : (
           <>
-            <BoardView key={route.projectId} projectId={route.projectId} />
-            <ProjectRail activeId={route.projectId} />
+            {/* A pinned rail takes a column of its own, so it never covers the board. */}
+            <div className={clsx('board-area', pinRail && 'beside-rail')}>
+              <BoardView key={route.projectId} projectId={route.projectId} />
+            </div>
+            <ProjectRail activeId={route.projectId} pinned={pinRail} />
           </>
         )}
       </main>

@@ -27,15 +27,12 @@ export function SettingsDialog() {
 }
 
 function SettingsPanel({ onClose }: { onClose: () => void }) {
-  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const settings = useApp((s) => s.settings)
+  const update = useApp((s) => s.updateSettings)
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    let cancelled = false
-    window.api.settings.get().then((s) => !cancelled && setSettings(s))
-    return () => {
-      cancelled = true
-    }
+    useApp.getState().loadSettings()
   }, [])
 
   // Take focus from whatever had it (often a terminal) and hand it back on close.
@@ -44,11 +41,6 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
     panelRef.current?.focus()
     return () => previous?.focus()
   }, [])
-
-  const update = (patch: Partial<AppSettings>) => {
-    setSettings((s) => s && { ...s, ...patch })
-    window.api.settings.update(patch).then(setSettings)
-  }
 
   return (
     <div
@@ -92,6 +84,20 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
             ))}
           </div>
           <p className="settings-hint">System follows the appearance set in macOS.</p>
+          <label className="settings-row">
+            <span className="settings-row-text">
+              <span className="settings-row-title">Always show the project sidebar</span>
+              <span className="settings-row-hint">When off, point at the window’s left edge to slide it in.</span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              checked={settings?.pinProjectRail ?? false}
+              disabled={!settings}
+              onChange={(e) => update({ pinProjectRail: e.target.checked })}
+            />
+          </label>
         </fieldset>
 
         <fieldset className="settings-group">
