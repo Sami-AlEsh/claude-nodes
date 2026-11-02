@@ -155,7 +155,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | Where | Action | Shortcut |
 | --- | --- | --- |
 | Anywhere | Add a project | ⌘⇧N |
-| | Settings (theme: System, Light or Dark) | ⌘, |
+| | Settings (theme: System, Light or Dark, Light to start with) | ⌘, |
 | | Switch between light and dark | The ☾/☀ button in the title bar |
 | | Quit and stop every session | ⌥⌘Q |
 | | Close the modal, or go back to projects | ⌘W |
