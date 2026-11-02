@@ -29,12 +29,16 @@ export function App() {
       useApp.getState().setUsage(sessionId, usage)
     })
 
-    // Folder badges (in the grid and the project rail) show live counts, so refresh stats when statuses change.
+    // Folder badges (in the grid and the project rail) and the title bar's running count show live
+    // counts, so refresh stats when statuses change. And when a process exits: SessionEnd reports a
+    // session as stopped while its process is still exiting, so the exit itself changes no status.
     let statsTimer: number | undefined
-    const offStatsRefresh = window.api.on.status(() => {
+    const refreshStats = () => {
       window.clearTimeout(statsTimer)
       statsTimer = window.setTimeout(() => useApp.getState().refreshProjects(), 250)
-    })
+    }
+    const offStatsRefresh = window.api.on.status(refreshStats)
+    const offExitRefresh = window.api.on.ptyExit(refreshStats)
 
     const offBoard = window.api.on.boardChanged((projectId) => {
       const { route, loadBoard } = useApp.getState()
@@ -70,6 +74,7 @@ export function App() {
       offAgentStatus()
       offUsage()
       offStatsRefresh()
+      offExitRefresh()
       offBoard()
       offMenu()
       offOpenCard()
