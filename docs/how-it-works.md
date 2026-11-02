@@ -31,6 +31,8 @@ Sessions are ordinary Claude Code sessions. New cards run `claude --session-id <
 
 The app doesn't run sessions itself. A background process, the session host, owns their terminals, so quitting Nodus (or a crash) leaves them running. Open the app again and the cards are still live, with their recent output and an up-to-date status.
 
+The title bar says how many Claude sessions Nodus is running, in every project. The count includes the ones not drawn on the board, views' brains and action runs, since each holds its own `claude` process and MCP servers. Point at it for how many run in each project. Terminal shells aren't counted. Sessions started in other terminals aren't the app's, so they never count.
+
 The host starts with the first session you open, and runs Nodus's own binary as plain Node, so it has no Dock icon. It also receives the sessions' hooks, and keeps them along with the keypresses that move status (Esc, Ctrl+C, Enter and number keys), so a relaunched app can work out each session's status. The host exits by itself once no sessions are left and the app isn't open. **Quit and Stop Sessions** (⌥⌘Q) stops every session along with the app.
 
 ## Terminal cards
