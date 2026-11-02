@@ -214,21 +214,8 @@ function ViewNodeComponent({ id, data, selected, dragging }: NodeProps<ViewFlowN
 
         <div className="view-body">
           {view.version > 0 && projectId ? (
-            <>
-              <ViewFrame projectId={projectId} view={view} />
-              {/* Until it's selected, the page is a picture: clicks select it and scrolling pans the board. */}
-              {!selected && (
-                <div
-                  className="view-shield"
-                  onDoubleClick={(e) => {
-                    e.stopPropagation()
-                    setLarge(true)
-                  }}
-                >
-                  <span className="view-shield-hint">Click to use</span>
-                </div>
-              )}
-            </>
+            // Clicks go straight to the page. Scrolls it has no use for come back to pan the board (viewRelay.ts).
+            <ViewFrame projectId={projectId} view={view} />
           ) : (
             <div className="view-empty">
               {working ? (

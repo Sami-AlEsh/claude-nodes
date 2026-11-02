@@ -48,6 +48,19 @@ export function broadcast(event: string, payload?: unknown, except?: string) {
   }
 }
 
+interface PageWheel {
+  dx: number
+  dy: number
+  mode: number
+  /** Where in the page, which is the frame's size before the board's zoom. */
+  x: number
+  y: number
+  ctrl?: boolean
+  shift?: boolean
+  alt?: boolean
+  meta?: boolean
+}
+
 interface PageMessage {
   nodus: 1
   id?: number
@@ -55,6 +68,37 @@ interface PageMessage {
   args?: unknown
   error?: string
   loaded?: boolean
+  wheel?: PageWheel
+}
+
+const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : 0)
+
+/**
+ * A scroll the page had no use for, played on its frame as if the frame
+ * weren't there: it pans the board, and a pinch zooms it. The board can't
+ * tell whether the pointer is really over a frame of another origin, so a
+ * page could move the board on its own; that's all it could do with this.
+ */
+function replayWheel(win: Window, w: PageWheel) {
+  const el = Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === win)
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  const scale = el.offsetWidth ? r.width / el.offsetWidth : 1
+  el.dispatchEvent(
+    new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      deltaX: num(w.dx),
+      deltaY: num(w.dy),
+      deltaMode: num(w.mode),
+      clientX: r.left + num(w.x) * scale,
+      clientY: r.top + num(w.y) * scale,
+      ctrlKey: w.ctrl === true,
+      shiftKey: w.shift === true,
+      altKey: w.alt === true,
+      metaKey: w.meta === true
+    })
+  )
 }
 
 /**
@@ -106,6 +150,10 @@ window.addEventListener('message', (e: MessageEvent) => {
   }
   if (msg.loaded) {
     window.api.views.report(frame.projectId, frame.viewId, { loaded: frame.version })
+    return
+  }
+  if (msg.wheel && typeof msg.wheel === 'object') {
+    replayWheel(win, msg.wheel)
     return
   }
   if (typeof msg.id !== 'number' || typeof msg.method !== 'string') return
