@@ -10,10 +10,6 @@ Every Claude Code session in a repo, as a live card. See which ones need you, an
 
 **[Download for Mac](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-arm64.dmg)** · [Intel](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-x64.dmg) · [Website](https://saleem-hadad.github.io/nodus/) · Free and open source
 
-<a href="https://www.youtube.com/watch?v=c33K4QcVxFQ"><img src="https://img.youtube.com/vi/c33K4QcVxFQ/maxresdefault.jpg" width="640" alt="Watch the video: I Was Drowning in Claude Code Sessions, So I Built This"></a>
-
-<sub>▶ <a href="https://www.youtube.com/watch?v=c33K4QcVxFQ">Watch the 2-minute video</a> · If it saves you time, a star helps other people find it.</sub>
-
 </div>
 
 ## What you get
