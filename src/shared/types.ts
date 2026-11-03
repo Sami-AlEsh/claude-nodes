@@ -496,7 +496,13 @@ export interface AppSettings {
   dockBadge: boolean
   /** Keep the project rail out beside the board, instead of sliding it in from the window's left edge. */
   pinProjectRail: boolean
+  /** Minutes a session can sit idle before its process is stopped, while the app is open. Null keeps it running. */
+  stopIdleAfter: IdleStopMinutes | null
 }
+
+/** How long a session can sit idle before it's stopped, in minutes. */
+export const IDLE_STOP_CHOICES = [15, 30, 60, 120] as const
+export type IdleStopMinutes = (typeof IDLE_STOP_CHOICES)[number]
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */
 export interface OpenCardRequest {

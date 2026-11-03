@@ -14,6 +14,7 @@ import type {
   Rect,
   Viewport
 } from '@shared/types'
+import { IDLE_STOP_CHOICES } from '@shared/types'
 
 /** Six 288px card columns with 24px gaps and 40px side padding. */
 const DEFAULT_ARCHIVE_W = 2 * 40 + 6 * 288 + 5 * 24
@@ -28,7 +29,8 @@ export function normalizeSettings(raw: unknown): AppSettings {
     autoUpdate: s.autoUpdate !== false,
     notify: s.notify !== false,
     dockBadge: s.dockBadge !== false,
-    pinProjectRail: s.pinProjectRail === true
+    pinProjectRail: s.pinProjectRail === true,
+    stopIdleAfter: IDLE_STOP_CHOICES.find((m) => m === s.stopIdleAfter) ?? null
   }
 }
 
