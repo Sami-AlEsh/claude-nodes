@@ -106,6 +106,20 @@ describe('stopping idle sessions', () => {
     expect(world.kill).toHaveBeenCalledWith(id)
   })
 
+  it('waits the full time again once a stopped session is resumed', () => {
+    const id = session({}, 40 * MIN)
+    vi.advanceTimersByTime(0)
+    expect(world.kill).toHaveBeenCalledTimes(1)
+    // Stopped, then resumed: a new process, which has had no hook yet.
+    idleStatus(id, 'done', false)
+    world.hookAt.delete(id)
+    idleStatus(id, 'done', true)
+    vi.advanceTimersByTime(15 * MIN - 1)
+    expect(world.kill).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(1)
+    expect(world.kill).toHaveBeenCalledTimes(2)
+  })
+
   it('applies a new setting to sessions already running, from when they were last used', () => {
     setIdleLimit(null)
     const id = session()
