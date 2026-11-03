@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
-import type { AppSettings, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
+import { IDLE_STOP_CHOICES } from '@shared/types'
+import type { AppSettings, IdleStopMinutes, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
 import { useUpdateStatus } from './UpdateButton'
 import './SettingsDialog.css'
+
+/** Off, then how long a session can sit idle before it's stopped. */
+const IDLE_STOPS: { value: IdleStopMinutes | null; label: string }[] = [
+  { value: null, label: 'Off' },
+  ...IDLE_STOP_CHOICES.map((m) => ({ value: m, label: m < 60 ? `${m} min` : m === 60 ? '1 hour' : `${m / 60} hours` }))
+]
 
 const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
@@ -129,6 +136,34 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
               onChange={(e) => update({ dockBadge: e.target.checked })}
             />
           </label>
+        </fieldset>
+
+        <fieldset className="settings-group">
+          <legend className="settings-label">Sessions</legend>
+          <div className="settings-row-text">
+            <span className="settings-row-title" id="idle-stop-title">
+              Stop idle sessions
+            </span>
+            <span className="settings-row-hint">
+              Frees the memory a session and its MCP servers hold. Opening its card resumes it. Only while Nodus is
+              open.
+            </span>
+          </div>
+          <div className="settings-choices" role="radiogroup" aria-labelledby="idle-stop-title">
+            {IDLE_STOPS.map((c) => (
+              <label key={c.label} className="settings-choice">
+                <input
+                  type="radio"
+                  name="stopIdleAfter"
+                  className="settings-choice-input"
+                  checked={(settings?.stopIdleAfter ?? null) === c.value}
+                  disabled={!settings}
+                  onChange={() => update({ stopIdleAfter: c.value })}
+                />
+                <span className="settings-choice-name">{c.label}</span>
+              </label>
+            ))}
+          </div>
         </fieldset>
 
         <VoiceSettings />

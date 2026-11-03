@@ -96,6 +96,11 @@ export function getStatus(sessionId: string): SessionStatus {
   return isLive(sessionId) ? combined(sessionId) : 'done'
 }
 
+/** When the session's last hook fired, replayed ones included, if one has since its process started. */
+export function lastHookTime(sessionId: string): number | undefined {
+  return lastHookAt.get(sessionId)
+}
+
 function emit(sessionId: string, liveOverride?: boolean) {
   const live = liveOverride ?? isLive(sessionId)
   const status: SessionStatus = live ? combined(sessionId) : 'done'
