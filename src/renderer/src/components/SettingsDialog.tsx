@@ -101,6 +101,27 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
         </fieldset>
 
         <fieldset className="settings-group">
+          <legend className="settings-label">Focus</legend>
+          <label className="settings-row">
+            <span className="settings-row-text">
+              <span className="settings-row-title">Focus mode</span>
+              <span className="settings-row-hint">
+                Adds a Focus switch to the title bar that shows only the projects in focus. Right-click a project
+                and choose Add to Focus.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              checked={settings?.focusFeature ?? false}
+              disabled={!settings}
+              onChange={(e) => update({ focusFeature: e.target.checked })}
+            />
+          </label>
+        </fieldset>
+
+        <fieldset className="settings-group">
           <legend className="settings-label">Notifications</legend>
           <label className="settings-row">
             <span className="settings-row-text">

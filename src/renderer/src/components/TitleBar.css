@@ -78,3 +78,14 @@
   gap: 8px;
   flex: none;
 }
+
+/* Focus mode's switch, there while focus is turned on in Settings. */
+.titlebar-focus {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px;
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+  font-weight: 500;
+}

@@ -137,6 +137,14 @@ Pressing a button starts a session on the action's prompt. It isn't drawn on the
 
 When the run's turn ends, the session goes, its transcript is hidden like a removed card's, and the summary shows as a notice. If you type into a run, or interrupt it with Esc or Ctrl+C, it becomes yours: it joins the board as an ordinary session, and loses its session tools. Answering a question it asked doesn't count. While a run is going, pressing its button opens it rather than starting another.
 
+## Focus
+
+Focus is off until you turn on **Focus mode** in Settings, and until then nothing of it shows. Turned on, it adds a **Focus** switch to the title bar and **Add to Focus** to a project's right-click menu, in the grid and on the rail.
+
+When only a few projects matter this week, put them in focus with **Add to Focus**. A small target marks each one in the grid. Then flip the title bar's **Focus** switch (or press ⌘⇧F, **View › Focus Mode**), and the grid and the board's rail show only the projects in focus. Nothing is archived or regrouped, and flipping it back shows everything again.
+
+While focusing, a project out of focus still shows, faded, while one of its sessions needs you, so nothing waiting on you goes out of sight. The rail also keeps the project whose board is open, for when a notification or a search takes you there. The grid says how many projects it's hiding. With focus mode on but nothing in focus yet, every project shows. Archiving a project takes it out of focus, and a project added while focusing joins the focus.
+
 ## Updates
 
 Nodus updates itself from GitHub releases. A little after launch, and every few hours after that, it asks GitHub for the latest release. If that release is newer, Nodus downloads the DMG for your Mac in the background and checks it against the SHA-256 digest GitHub keeps for the file. It then copies the app out of the DMG and checks that the copy's signature is intact, that it's Nodus and that it's the expected version. The new version goes in when you quit, so the next launch opens it. **Restart to Update** in the title bar does that now.
@@ -155,12 +163,13 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | Where | Action | Shortcut |
 | --- | --- | --- |
 | Anywhere | Add a project | ⌘⇧N |
+| | Show only the projects in focus, or all (once focus is on in Settings) | ⌘⇧F · the title bar's Focus switch |
 | | Settings (theme: System, Light or Dark) | ⌘, |
 | | Quit and stop every session | ⌥⌘Q |
 | | Close the modal, or go back to projects | ⌘W |
 | Projects | Open the selected project | Double-click · ⌘O · ⌘↓ |
 | | Rename · remove | Enter · ⌘⌫ |
-| | Color, Reveal in Finder | Right-click |
+| | Color, Reveal in Finder, Add to Focus (once focus is on in Settings) | Right-click |
 | Board | New session | N · ⌘N · double-click empty canvas |
 | | New terminal in the project folder | T · ⌘T |
 | | Open a card | Click · Enter |

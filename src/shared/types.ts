@@ -24,6 +24,8 @@ export interface Project {
   archived?: boolean
   /** The group the project is filed under; ungrouped when unset. */
   groupId?: string
+  /** One of the projects in focus: with focus mode on, the grid and the rail show only these. */
+  focused?: boolean
   /** The project's action buttons, in the order the dock lists them. */
   actions?: ProjectAction[]
 }
@@ -485,6 +487,10 @@ export interface AppSettings {
   dockBadge: boolean
   /** Keep the project rail out beside the board, instead of sliding it in from the window's left edge. */
   pinProjectRail: boolean
+  /** Offers focus mode: the title bar's Focus switch, and Add to Focus on projects. Off, none of it shows. */
+  focusFeature: boolean
+  /** The title bar's Focus switch: show only the projects in focus, in the grid and the rail. */
+  focusMode: boolean
 }
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */

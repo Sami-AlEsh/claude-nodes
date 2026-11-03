@@ -97,6 +97,12 @@
   transform: translateY(-50%);
 }
 
+/* Out of focus: on the rail only while a session in it waits on you, or while it's open. */
+.rail-item.is-unfocused > svg {
+  opacity: 0.45;
+  filter: saturate(0.4);
+}
+
 .rail-sep {
   flex: none;
   width: 24px;

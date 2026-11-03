@@ -135,8 +135,16 @@ export const IPC = {
  * - new-terminal: Cmd+T — new shell in the project folder on the open board
  * - new-project:  Cmd+Shift+N — add a project folder
  * - settings:     Cmd+, — open the Settings window
+ * - toggle-focus: Cmd+Shift+F — flip the title bar's Focus switch (only while focus is offered in Settings)
  */
-export type MenuCommand = 'close' | 'new-session' | 'new-terminal' | 'new-project' | 'settings' | 'search'
+export type MenuCommand =
+  | 'close'
+  | 'new-session'
+  | 'new-terminal'
+  | 'new-project'
+  | 'settings'
+  | 'search'
+  | 'toggle-focus'
 
 export type Unsubscribe = () => void
 
@@ -164,7 +172,13 @@ export interface Api {
     /** `groupId: null` takes the project out of its group. */
     update(
       id: string,
-      patch: { name?: string; color?: FolderColor; archived?: boolean; groupId?: string | null }
+      patch: {
+        name?: string
+        color?: FolderColor
+        archived?: boolean
+        groupId?: string | null
+        focused?: boolean
+      }
     ): Promise<Project>
     remove(id: string): Promise<void>
     revealInFinder(id: string): Promise<void>

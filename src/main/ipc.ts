@@ -59,7 +59,7 @@ import {
 import { getClaudePath, getClaudeVersion, initEnv } from './env'
 import { gitDiff, gitStatus } from './git'
 import { configureStatus, forgetStatus, getStatus } from './hooks'
-import { installMenu } from './menu'
+import { installMenu, syncFocusMenu } from './menu'
 import { nameSection, type NamingSource } from './naming'
 import * as notes from './notes'
 import * as notify from './notify'
@@ -121,6 +121,7 @@ const clampSize = (n: number) => Math.round(Math.min(4000, Math.max(200, n)))
 function applySettings(settings: AppSettings) {
   nativeTheme.themeSource = settings.theme
   notify.updateBadge()
+  syncFocusMenu(settings)
 }
 
 /**
@@ -311,7 +312,13 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     (
       _e,
       id: string,
-      patch: { name?: string; color?: FolderColor; archived?: boolean; groupId?: string | null }
+      patch: {
+        name?: string
+        color?: FolderColor
+        archived?: boolean
+        groupId?: string | null
+        focused?: boolean
+      }
     ): Project => {
       const project = getProject(id)
       const name = patch.name?.trim()
@@ -319,6 +326,8 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
       if (patch.color && FOLDER_COLORS.includes(patch.color)) project.color = patch.color
       if (patch.archived === true) project.archived = true
       else if (patch.archived === false) delete project.archived
+      if (patch.focused === true) project.focused = true
+      else if (patch.focused === false) delete project.focused
       if (patch.groupId === null) delete project.groupId
       else if (patch.groupId) project.groupId = getGroup(patch.groupId).id
       save()

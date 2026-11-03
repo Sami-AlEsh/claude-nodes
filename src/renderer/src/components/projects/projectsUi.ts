@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Project, ProjectGroup } from '@shared/types'
 import { useApp } from '@renderer/store'
+import { focusModeOn, isFocusing } from './focus'
 
 interface ProjectsUiState {
   /** Selected folder in the projects grid. */
@@ -47,6 +48,12 @@ export async function addProject(
     return null
   }
   if (!project) return null
+
+  // A project added while focusing joins the focus, or it would vanish as it arrives.
+  const { projects, settings } = useApp.getState()
+  if (isFocusing(projects, focusModeOn(settings)) && !project.focused) {
+    await window.api.projects.update(project.id, { focused: true })
+  }
 
   if (open) {
     await useApp.getState().refreshProjects()
@@ -98,6 +105,18 @@ export async function moveToGroup(projectId: string, groupId: string | null) {
 export async function updateGroup(id: string, patch: { name?: string; collapsed?: boolean }) {
   useApp.setState((s) => ({ groups: s.groups.map((g) => (g.id === id ? { ...g, ...patch } : g)) }))
   await window.api.groups.update(id, patch)
+}
+
+/** Brings a project into focus, or takes it out. */
+export async function setFocused(projectId: string, focused: boolean) {
+  await window.api.projects.update(projectId, { focused })
+  await useApp.getState().refreshProjects()
+}
+
+/** Flips the title bar's Focus switch; nothing while focus is turned off in Settings. */
+export function toggleFocusMode() {
+  const { settings, updateSettings } = useApp.getState()
+  if (settings?.focusFeature) updateSettings({ focusMode: !settings.focusMode })
 }
 
 /** The letter embossed on a project's folder. */
