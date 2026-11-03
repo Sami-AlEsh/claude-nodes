@@ -600,6 +600,76 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
   .agent-text { display: none; }
 }
 
+/* Focus: the projects page with the title bar's Focus switch on. The switch flips it. */
+.focus-visual { container-type: inline-size; }
+.fv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  cursor: pointer;
+}
+.fv-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: inset 0 0 0 0.5px var(--border);
+  transition: background 160ms ease;
+}
+.fv-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 160ms ease;
+}
+.fv-toggle[aria-checked='true'] .fv-switch { background: var(--accent); box-shadow: none; }
+.fv-toggle[aria-checked='true'] .fv-switch::after { transform: translateX(14px); }
+
+/* Tall enough for every project's two rows, so flipping the switch doesn't move the page. */
+.fv-body { display: flex; flex-direction: column; min-height: 70cqw; padding: 5.5cqw 5cqw 4cqw; background: var(--bg); }
+.fv-head { display: flex; align-items: baseline; gap: 1.6cqw; margin: 0 0 3.4cqw 1cqw; font-family: var(--font-display); font-size: max(17px, 4.2cqw); font-weight: 700; letter-spacing: -0.02em; }
+.fv-head small { color: var(--text-3); font-size: 0.62em; font-weight: 500; letter-spacing: 0; }
+.fv-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3.4cqw 2cqw; }
+.fv-item { display: flex; flex-direction: column; align-items: center; min-width: 0; text-align: center; }
+.fv-icon { position: relative; width: 72%; }
+.fv-icon svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.2)); transition: opacity 200ms ease, filter 200ms ease; }
+.fv-icon b { position: absolute; top: 58.6%; left: 0; right: 0; color: var(--glyph); font-size: max(13px, 4.4cqw); font-weight: 600; line-height: 1; opacity: 0.8; transform: translateY(-50%); }
+/* The target that marks a project in focus, and a session waiting on you. */
+.fv-mark, .fv-badge { position: absolute; top: 12%; display: grid; place-items: center; height: max(16px, 3.6cqw); border-radius: 99px; background: var(--elevated); box-shadow: var(--shadow-md); }
+.fv-mark { left: -6%; width: max(16px, 3.6cqw); color: var(--accent); }
+.fv-mark svg { width: 62%; height: auto; filter: none; }
+.fv-badge { right: -8%; display: flex; gap: 4px; padding: 0 max(6px, 1.2cqw); font-size: max(10px, 1.9cqw); font-weight: 600; }
+.fv-badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--waiting); }
+.fv-name { max-width: 100%; margin-top: 0.8cqw; overflow: hidden; color: var(--text); font-size: max(11px, 2.3cqw); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; }
+.fv-sub { max-width: 100%; overflow: hidden; color: var(--text-3); font-size: max(10px, 1.8cqw); white-space: nowrap; text-overflow: ellipsis; }
+.fv-note { margin: auto 0 0 1cqw; padding-top: 2.6cqw; border-top: 0.5px solid var(--separator); color: var(--text-3); font-size: max(11px, 2.1cqw); }
+
+/* On: only the projects in focus, and a faded one while a session in it waits on you. */
+.fv-item.is-hidden { display: none; }
+.fv-item.is-dimmed .fv-icon > svg { opacity: 0.42; filter: saturate(0.4); }
+.fv-item.is-dimmed .fv-name { color: var(--text-2); }
+.fv-off { display: none; }
+/* Off: every project again. */
+.focus-visual.is-off .fv-item.is-hidden { display: flex; animation: fv-in 320ms var(--ease-out); }
+.focus-visual.is-off .fv-item.is-dimmed .fv-icon > svg { opacity: 1; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.2)); }
+.focus-visual.is-off .fv-item.is-dimmed .fv-name { color: var(--text); }
+.focus-visual.is-off .fv-on { display: none; }
+.focus-visual.is-off .fv-off { display: inline; }
+.focus-visual.is-off .fv-note { display: none; }
+@keyframes fv-in { from { opacity: 0; transform: scale(0.92); } }
+
 /* The smaller things, one line each. */
 .extras { max-width: 1200px; margin: 0 auto; padding: 0 24px clamp(112px, 13vw, 168px); }
 .extras h2 { margin: 0 0 44px; font-size: clamp(28px, 2.8vw, 36px); font-weight: 700; letter-spacing: -0.03em; }
@@ -1061,6 +1131,82 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
           <img class="shot" src="screenshots/views.png" width="1620" height="1058" loading="lazy" alt="Views on the storefront board: a failing test with a Fix button, the session it started working beside it, stock per product and recent merges">
         </picture>
       </section>
+
+      <section class="feature-row is-flipped">
+        <div class="feature-copy">
+          <p class="feature-label"><i style="background: #5856d6" aria-hidden="true"></i>Focus</p>
+          <h2 class="display">See only this week's projects.</h2>
+          <p class="body">Put the projects you're on this week in focus and flip the Focus switch. The projects page and the sidebar show only those, and the rest are one flip away. Nothing gets archived or moved, and a hidden project still shows while a session in it needs you.</p>
+          <ul class="feature-keys">
+            <li><kbd class="kbd">Settings</kbd>turn on Focus mode</li>
+            <li><kbd class="kbd">Right-click</kbd>Add to Focus</li>
+            <li><kbd class="kbd">⇧⌘F</kbd>flip the switch</li>
+          </ul>
+        </div>
+        <div class="focus-visual" aria-hidden="true">
+          <svg width="0" height="0" style="position: absolute">
+            <defs>
+              <linearGradient id="fv-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="0.06" stop-color="#fff" stop-opacity="0.14"/><stop offset="0.5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+              <symbol id="fv-folder" viewBox="0 0 128 128">
+                <path d="M10 30C10 23.4 15.4 18 22 18H46C49.5 18 52.6 19.6 54.8 22.3L58 26.2C59.8 28.3 62.4 29.5 65.2 29.5H108C114.6 29.5 118 33 118 39.5V100C118 106.6 114.6 110 108 110H20C13.4 110 10 106.6 10 100Z" style="fill: var(--back)"/>
+                <rect x="10" y="39" width="108" height="71" rx="9" style="fill: var(--front)"/>
+                <rect x="10" y="39" width="108" height="71" rx="9" fill="url(#fv-sheen)"/>
+                <path d="M19 39.8H109" stroke="#fff" stroke-opacity="0.6" stroke-width="1.2" stroke-linecap="round"/>
+              </symbol>
+            </defs>
+          </svg>
+          <div class="window">
+            <div class="window-bar">
+              <div>
+                <span class="lights"><i></i><i></i><i></i></span>
+                <span class="name">Projects</span>
+              </div>
+              <div>
+                <button class="fv-toggle" type="button" role="switch" aria-checked="true" tabindex="-1" data-focus-toggle>Focus<i class="fv-switch"></i></button>
+                <span class="tool is-outlined hide-sm"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>New Project</span>
+              </div>
+            </div>
+            <div class="fv-body">
+              <p class="fv-head"><span class="fv-on">In Focus</span><span class="fv-off">Projects</span><small><span class="fv-on">4</span><span class="fv-off">8</span></small></p>
+              <div class="fv-grid">
+                <div class="fv-item" style="--back: #1d8be0; --front: #2da4f3; --glyph: #1478c8">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>S</b><span class="fv-mark"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span></div>
+                  <span class="fv-name">storefront</span><span class="fv-sub">12 sessions · 2 active</span>
+                </div>
+                <div class="fv-item is-hidden" style="--back: #76767b; --front: #9a9aa0; --glyph: #636368">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>D</b></div>
+                  <span class="fv-name">docs-site</span><span class="fv-sub">4 sessions</span>
+                </div>
+                <div class="fv-item" style="--back: #8b5bd9; --front: #a77beb; --glyph: #7447c4">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>C</b><span class="fv-mark"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span></div>
+                  <span class="fv-name">checkout-api</span><span class="fv-sub">7 sessions · 1 active</span>
+                </div>
+                <div class="fv-item is-hidden" style="--back: #e0508f; --front: #f074aa; --glyph: #c83a78">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>M</b></div>
+                  <span class="fv-name">marketing-site</span><span class="fv-sub">9 sessions</span>
+                </div>
+                <div class="fv-item" style="--back: #3db352; --front: #5dcd6b; --glyph: #2a9340">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>M</b><span class="fv-mark"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span></div>
+                  <span class="fv-name">mobile-app</span><span class="fv-sub">5 sessions</span>
+                </div>
+                <div class="fv-item is-hidden" style="--back: #e0443e; --front: #f76760; --glyph: #c4302b">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>I</b></div>
+                  <span class="fv-name">infra</span><span class="fv-sub">6 sessions</span>
+                </div>
+                <div class="fv-item is-dimmed" style="--back: #ee8420; --front: #fba343; --glyph: #d06d10">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>A</b><span class="fv-badge"><i></i>1</span></div>
+                  <span class="fv-name">admin-dashboard</span><span class="fv-sub">3 sessions · 1 active</span>
+                </div>
+                <div class="fv-item is-hidden" style="--back: #e6b020; --front: #f9cb45; --glyph: #be8e0c">
+                  <div class="fv-icon"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>D</b></div>
+                  <span class="fv-name">design-system</span><span class="fv-sub">2 sessions</span>
+                </div>
+              </div>
+              <p class="fv-note">4 other projects are hidden by focus mode.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <section class="extras">
@@ -1484,6 +1630,19 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
   board.addEventListener('pointercancel', drop)
 
   drawEdges()
+})()
+</script>
+
+<script>
+// The focus visual's switch flips it like the title bar's Focus switch: off shows every project again.
+(() => {
+  const toggle = document.querySelector('[data-focus-toggle]')
+  if (!toggle) return
+  toggle.addEventListener('click', () => {
+    const on = toggle.getAttribute('aria-checked') !== 'true'
+    toggle.setAttribute('aria-checked', String(on))
+    toggle.closest('.focus-visual').classList.toggle('is-off', !on)
+  })
 })()
 </script>
 </body>
