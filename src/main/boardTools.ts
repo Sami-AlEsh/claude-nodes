@@ -2,6 +2,8 @@
 // they run on. Every Claude session can write sticky notes on it, so what it
 // found can go up beside its card, and put up views, small live pages, and
 // change them; action runs can also list and archive the board's sessions.
+// Notes can go on another project's board too, and a session can add a
+// project when the user asks for one.
 //
 // Claude Code reaches the server over the MCP streamable HTTP transport, at
 // the session host (host.ts), which passes each request on to the app. The
@@ -29,6 +31,12 @@ export interface NotePatch {
 export interface BoardToolHandlers {
   /** Whether the session is an action run, which gets the session tools too. */
   isRun(sessionId: string): boolean
+  /** Every project, saying which one `own` is. */
+  listProjects(own: string): unknown
+  /** Adds a folder as a project, making the folder if it isn't there. */
+  createProject(folder: unknown, name: unknown): unknown
+  /** The id of the project `ref` names, by its id or its name. */
+  findProject(ref: unknown): string
   /** The project's sessions, leaving out the calling run. */
   listSessions(projectId: string, self: string, includeArchived: boolean): unknown
   archiveSessions(projectId: string, self: string, sessionIds: string[], force: boolean): unknown
@@ -44,9 +52,17 @@ export interface BoardToolHandlers {
 }
 
 const INSTRUCTIONS =
-  'Nodus is the board of Claude Code sessions the user runs this session from. Besides the session cards, it holds sticky notes and views. When the user asks you to put something on the board, or to make notes of it, write it with create_note. Read the notes they have put up with list_notes. Only write notes when the user asks for them. When the user asks for a view, a dashboard, a table, a chart or other custom UI on the board, build it with create_view; list_views, get_view and update_view find and change the views there. When the user asks you to archive yourself, use archive_self.'
+  'Nodus is the board of Claude Code sessions the user runs this session from. Besides the session cards, it holds sticky notes and views. When the user asks you to put something on the board, or to make notes of it, write it with create_note. Read the notes they have put up with list_notes. Only write notes when the user asks for them. When the user asks for a view, a dashboard, a table, a chart or other custom UI on the board, build it with create_view; list_views, get_view and update_view find and change the views there. To put a note on another project’s board, or read the notes there, pass that project to the note tools; list_projects lists the projects. When the user asks for a new project, add it with create_project. When the user asks you to archive yourself, use archive_self.'
 
 const colorProperty = (description: string) => ({ type: 'string', enum: FOLDER_COLORS, description })
+
+/** Points a note tool at another project's board. */
+const PROJECT_PROPERTY = {
+  project: {
+    type: 'string',
+    description: 'Another project’s board to use, by its id or name from list_projects. Leave out for this session’s own board.'
+  }
+}
 
 /** Every session's tools. */
 const COMMON_TOOLS = [
@@ -58,7 +74,8 @@ const COMMON_TOOLS = [
       type: 'object',
       properties: {
         text: { type: 'string', description: 'What the note says.' },
-        color: colorProperty('The note’s colour. Defaults to yellow. Colours can tell kinds of notes apart.')
+        color: colorProperty('The note’s colour. Defaults to yellow. Colours can tell kinds of notes apart.'),
+        ...PROJECT_PROPERTY
       },
       required: ['text']
     }
@@ -72,7 +89,8 @@ const COMMON_TOOLS = [
       properties: {
         note_id: { type: 'string', description: 'An id from create_note or list_notes.' },
         text: { type: 'string', description: 'The note’s new text, in full.' },
-        color: colorProperty('The note’s new colour.')
+        color: colorProperty('The note’s new colour.'),
+        ...PROJECT_PROPERTY
       },
       required: ['note_id']
     }
@@ -81,7 +99,26 @@ const COMMON_TOOLS = [
     name: 'list_notes',
     description:
       'Lists the sticky notes on the board, the user’s and any Claude wrote: each one’s id, text and colour, and whether this session wrote it.',
+    inputSchema: { type: 'object', properties: PROJECT_PROPERTY }
+  },
+  {
+    name: 'list_projects',
+    description:
+      'Lists the user’s Nodus projects, each with a board of its own: its id, name and folder, whether it is archived, and which one this session is on. Use it to find the project for a note on another board.',
     inputSchema: { type: 'object', properties: {} }
+  },
+  {
+    name: 'create_project',
+    description:
+      'Adds a project to Nodus: a folder on this machine, which gets a board of its own. Use it only when the user asks for a new project. The folder is made if it isn’t there yet, and a folder that is already a project gives back that project. Returns the project’s id and name.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'The project’s folder, as an absolute path. A leading ~ is the home folder.' },
+        name: { type: 'string', description: 'What to call the project. Defaults to the folder’s name.' }
+      },
+      required: ['path']
+    }
   },
   {
     name: 'archive_self',
@@ -297,14 +334,20 @@ async function callTool(params: Record<string, unknown>, sessionId: string) {
     if (SESSION_TOOL_NAMES.has(String(params.name)) && !handlers.isRun(sessionId)) {
       throw new Error(`${String(params.name)} is only for action runs`)
     }
+    // The note tools work on this session's board, or another project's.
+    const notesOn = () => (args.project === undefined ? projectId : handlers!.findProject(args.project))
     switch (params.name) {
       case 'create_note':
-        return text(handlers.createNote(projectId, sessionId, patch()))
+        return text(handlers.createNote(notesOn(), sessionId, patch()))
       case 'update_note':
         if (typeof args.note_id !== 'string') throw new Error('note_id is required')
-        return text(handlers.updateNote(projectId, args.note_id, patch()))
+        return text(handlers.updateNote(notesOn(), args.note_id, patch()))
       case 'list_notes':
-        return text(handlers.listNotes(projectId, sessionId))
+        return text(handlers.listNotes(notesOn(), sessionId))
+      case 'list_projects':
+        return text(handlers.listProjects(projectId))
+      case 'create_project':
+        return text(handlers.createProject(args.path, args.name))
       case 'list_sessions':
         return text(handlers.listSessions(projectId, sessionId, args.include_archived === true))
       case 'archive_sessions': {

@@ -120,6 +120,7 @@ const api: Api = {
     agentStatus: (cb) => subscribe(IPC.evAgentStatus, cb),
     usage: (cb) => subscribe(IPC.evUsage, cb),
     boardChanged: (cb) => subscribe(IPC.evBoardChanged, cb),
+    projectsChanged: (cb) => subscribe(IPC.evProjectsChanged, cb),
     summarizeProgress: (cb) => subscribe(IPC.evSummarizeProgress, cb),
     runFinished: (cb) => subscribe(IPC.evRunFinished, cb),
     menu: (cb) => subscribe(IPC.evMenu, cb),

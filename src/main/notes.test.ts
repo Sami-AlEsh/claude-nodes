@@ -52,6 +52,29 @@ describe('createNote', () => {
   })
 })
 
+describe('a note from another project’s board', () => {
+  it('goes beside the rightmost card, under the last one that session wrote here, and says where it came from', () => {
+    getBoard(project).nodes.s2 = { sessionId: 's2', x: 0, y: 0, archived: false, createdAt: 0 }
+    const away = { project: 'elsewhere', title: 'Release checklist' }
+    const first = createNote(project, 'visitor', { text: 'From afar' }, away)
+    expect(first).toMatchObject({
+      from: 'visitor',
+      fromProject: 'elsewhere',
+      fromTitle: 'Release checklist',
+      x: 2000 + CARD_W + GAP,
+      y: 0
+    })
+    const second = createNote(project, 'visitor', { text: 'And again' }, away)
+    expect(second).toMatchObject({ x: first.x, y: first.y + NOTE_H + GAP })
+  })
+
+  it('leaves the fields out for a note from this board', () => {
+    const note = createNote(project, 's1', { text: 'Home' })
+    expect(note.fromProject).toBeUndefined()
+    expect(note.fromTitle).toBeUndefined()
+  })
+})
+
 describe('updateNote', () => {
   it('changes the text and colour, and keeps the size', () => {
     const note = createNote(project, 's1', { text: 'Before' })
