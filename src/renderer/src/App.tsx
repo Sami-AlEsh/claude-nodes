@@ -44,6 +44,8 @@ export function App() {
       const { route, loadBoard } = useApp.getState()
       if (route.view === 'board' && route.projectId === projectId) loadBoard(projectId)
     })
+    // A session added a project with its board tools.
+    const offProjects = window.api.on.projectsChanged(() => useApp.getState().refreshProjects())
 
     // Cmd+W closes the top-most layer and never the window itself.
     const offMenu = window.api.on.menu((command) => {
@@ -76,6 +78,7 @@ export function App() {
       offStatsRefresh()
       offExitRefresh()
       offBoard()
+      offProjects()
       offMenu()
       offOpenCard()
       window.clearTimeout(statsTimer)

@@ -298,6 +298,10 @@ export interface BoardNote {
   sessionId?: string
   /** The session that wrote the note with its board tools, when Claude wrote it. */
   from?: string
+  /** That session's project, when it wrote from another project's board. */
+  fromProject?: string
+  /** That session's title as it wrote, since its card isn't on this board. */
+  fromTitle?: string
   createdAt: number
 }
 

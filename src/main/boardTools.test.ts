@@ -12,6 +12,12 @@ let handlers: { [K in keyof BoardToolHandlers]: ReturnType<typeof vi.fn> }
 beforeEach(() => {
   handlers = {
     isRun: vi.fn((id: string) => id === RUN),
+    listProjects: vi.fn(() => [{ id: 'p1' }, { id: 'p2' }]),
+    createProject: vi.fn(() => ({ projectId: 'p3' })),
+    findProject: vi.fn((ref: unknown) => {
+      if (ref === 'p2' || ref === 'Docs') return 'p2'
+      throw new Error(`There’s no project called “${String(ref)}”; list_projects lists them`)
+    }),
     listSessions: vi.fn(() => [{ id: 's2' }]),
     archiveSessions: vi.fn(() => ({ archived: [] })),
     archiveSelf: vi.fn(() => ({ archiving: 'later' })),
@@ -66,6 +72,8 @@ describe('protocol', () => {
       'create_note',
       'update_note',
       'list_notes',
+      'list_projects',
+      'create_project',
       'archive_self',
       'create_view',
       'update_view',
@@ -81,6 +89,8 @@ describe('protocol', () => {
       'mcp__nodus__create_note',
       'mcp__nodus__update_note',
       'mcp__nodus__list_notes',
+      'mcp__nodus__list_projects',
+      'mcp__nodus__create_project',
       'mcp__nodus__archive_self',
       'mcp__nodus__create_view',
       'mcp__nodus__update_view',
@@ -117,6 +127,31 @@ describe('tools', () => {
     expect(handlers.listNotes).toHaveBeenCalledWith('p1', 's1')
     await call('s1', 'archive_self')
     expect(handlers.archiveSelf).toHaveBeenCalledWith('p1', 's1')
+  })
+
+  it('writes, changes and reads notes on another project’s board, by its id or name', async () => {
+    await call('s1', 'create_note', { text: 'For the docs', project: 'Docs' })
+    expect(handlers.createNote).toHaveBeenCalledWith('p2', 's1', { text: 'For the docs', color: undefined })
+    await call('s1', 'update_note', { note_id: 'n1', text: 'Revised', project: 'p2' })
+    expect(handlers.updateNote).toHaveBeenCalledWith('p2', 'n1', { text: 'Revised', color: undefined })
+    await call('s1', 'list_notes', { project: 'p2' })
+    expect(handlers.listNotes).toHaveBeenCalledWith('p2', 's1')
+  })
+
+  it('says so when the project isn’t one, and writes nothing', async () => {
+    expect((await call('s1', 'create_note', { text: 'Lost', project: 'Nowhere' })).result).toEqual({
+      content: [{ type: 'text', text: 'There’s no project called “Nowhere”; list_projects lists them' }],
+      isError: true
+    })
+    expect(handlers.createNote).not.toHaveBeenCalled()
+  })
+
+  it('lists projects and adds one', async () => {
+    await call('s1', 'list_projects')
+    expect(handlers.listProjects).toHaveBeenCalledWith('p1')
+    const reply = await call('s1', 'create_project', { path: '~/Code/new-app', name: 'New app' })
+    expect(handlers.createProject).toHaveBeenCalledWith('~/Code/new-app', 'New app')
+    expect(JSON.parse(reply.result.content[0].text)).toEqual({ projectId: 'p3' })
   })
 
   it('keeps the session tools to action runs', async () => {

@@ -1,5 +1,7 @@
 // Sticky notes that sessions write on the board with their board tools
 // (boardTools.ts). A session's notes go up beside its card, one under another.
+// On another project's board, where its card isn't, they go beside the
+// rightmost card, and say where they came from.
 import crypto from 'crypto'
 import {
   GAP,
@@ -50,8 +52,8 @@ function fitNote(text: string): Size {
 /**
  * Where a session's next note goes: under the last one it wrote, or beside
  * its card, in the nearest free spot. A view's brain writes beside its view.
- * A run isn't on the board, nor is an archived card, so their notes go
- * beside the rightmost card instead.
+ * A run isn't on the board, nor is an archived card or a session from
+ * another project, so their notes go beside the rightmost card instead.
  */
 function placeNote(board: BoardState, from: string, size: Size): Point {
   const cards = Object.values(board.nodes).filter((n) => !n.archived && !n.runOf && !n.viewOf)
@@ -80,7 +82,13 @@ function placeNote(board: BoardState, from: string, size: Size): Point {
 
 const noteText = (text: string | undefined) => text?.trim().slice(0, NOTE_MAX_CHARS) ?? ''
 
-export function createNote(projectId: string, from: string, { text, color }: NotePatch): BoardNote {
+/** Who wrote a note on another project's board: their project, and their title then. */
+export interface AwayAuthor {
+  project: string
+  title: string
+}
+
+export function createNote(projectId: string, from: string, { text, color }: NotePatch, away?: AwayAuthor): BoardNote {
   const body = noteText(text)
   if (!body) throw new Error('A note needs some text')
   const board = getBoard(projectId)
@@ -93,6 +101,8 @@ export function createNote(projectId: string, from: string, { text, color }: Not
     w: size.w !== NOTE_W ? size.w : undefined,
     h: size.h !== NOTE_H ? size.h : undefined,
     from,
+    fromProject: away?.project,
+    fromTitle: away?.title,
     createdAt: Date.now()
   }
   board.notes![note.id] = note

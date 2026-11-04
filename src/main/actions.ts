@@ -22,7 +22,7 @@ const DRAFT_SYSTEM_PROMPT = `You design action buttons for Nodus, a board of Cla
 Besides the usual tools (reading and editing files, running commands), a run has these board tools:
 - list_sessions: the board's sessions, with their status (working, waiting for the user, or done), whether they are archived, their section, Claude's last reply and when they were last active.
 - archive_sessions: archives sessions by id. It skips ones that are working or waiting unless forced.
-- create_note, update_note and list_notes: write sticky notes on the board, change them, and read the notes there. A note is short plain text, which suits a report the user should find on the board.
+- create_note, update_note and list_notes: write sticky notes on the board, change them, and read the notes there. A note is short plain text, which suits a report the user should find on the board. They take an optional project, from list_projects, to use another project's board.
 
 From the user's description, write:
 - name: 1 to 3 words in Title Case, for the button.
