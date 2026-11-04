@@ -71,7 +71,7 @@ More in [Development](docs/how-it-works.md#development).
 
 ## 📄 License
 
-MIT. Made by [Saleem Hadad](https://github.com/saleem-hadad), with contributions from [Sami AlEsh](https://github.com/Sami-AlEsh).
+MIT. Made by [Saleem Hadad](https://github.com/saleem-hadad) and [Sami AlEsh](https://github.com/Sami-AlEsh).
 
 ⭐ If Nodus saves you time, star the repo. It helps other people find it.
 
