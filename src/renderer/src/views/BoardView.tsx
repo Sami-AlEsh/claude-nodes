@@ -126,6 +126,14 @@ import {
 } from '@renderer/components/board/notes'
 import { SelectionBar } from '@renderer/components/board/SelectionBar'
 import { BoardControls } from '@renderer/components/board/BoardControls'
+import {
+  MAX_ZOOM,
+  MIN_ZOOM,
+  boardControls,
+  wheelReader,
+  wheelZoomFactor,
+  zoomAround
+} from '@renderer/components/board/navigation'
 import { INK_SHORTCUTS, InkLayer, type InkHandle } from '@renderer/components/board/InkLayer'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
 import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
@@ -467,6 +475,38 @@ interface MenuState {
   items: MenuItem[]
 }
 
+/**
+ * Whether ⇧ is held, tracked only while `enabled` (One hand mode, where ⇧-drag
+ * on the canvas draws a selection box). The pointer says so too, which covers
+ * a ⇧ pressed while a view's frame had the keyboard.
+ */
+function useShiftHeld(enabled: boolean): boolean {
+  const [held, setHeld] = useState(false)
+  useEffect(() => {
+    if (!enabled) return
+    let current = false
+    const set = (shift: boolean) => {
+      if (shift === current) return
+      current = shift
+      setHeld(shift)
+    }
+    const onInput = (e: KeyboardEvent | PointerEvent) => set(e.shiftKey)
+    const onBlur = () => set(false)
+    window.addEventListener('keydown', onInput, true)
+    window.addEventListener('keyup', onInput, true)
+    window.addEventListener('pointermove', onInput, true)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.removeEventListener('keydown', onInput, true)
+      window.removeEventListener('keyup', onInput, true)
+      window.removeEventListener('pointermove', onInput, true)
+      window.removeEventListener('blur', onBlur)
+      setHeld(false)
+    }
+  }, [enabled])
+  return enabled && held
+}
+
 function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnapshot }) {
   const rf = useReactFlow<FlowNode, Edge>()
   const patchCards = useApp((s) => s.patchCards)
@@ -517,6 +557,11 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   const sectionDrag = useRef<{ id: string; last: Point; members: Set<string> } | null>(null)
   const titleClickTimer = useRef<number | undefined>(undefined)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  /** Settings › Board › Controls: how the mouse pans, zooms and selects. */
+  const controlsMode = useApp((s) => s.settings?.boardControls ?? 'twoHands')
+  const oneHand = controlsMode === 'oneHand'
+  const shiftHeld = useShiftHeld(oneHand)
+  const controls = boardControls(controlsMode, shiftHeld)
 
   const [renaming, setRenaming] = useState<string | null>(null)
   const renamingRef = useRef(renaming)
@@ -692,6 +737,30 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     stackScrollTimer.current = window.setTimeout(() => setStackScrolling(false), 160)
   }
   useEffect(() => () => window.clearTimeout(stackScrollTimer.current), [])
+
+  // One hand: a mouse wheel zooms around the pointer, while a trackpad's
+  // scroll still pans and a pinch zooms. React Flow makes every wheel event
+  // pan or every one zoom, so the pane (inside React Flow's renderer, which
+  // listens for the wheel) takes a mouse wheel's events first. Whatever keeps
+  // the wheel to itself does as before: a `nowheel` element, and an expanded
+  // card's terminal, which stops the event before it gets here.
+  useEffect(() => {
+    if (!oneHand) return
+    const pane = wrapperRef.current?.querySelector<HTMLElement>('.react-flow__pane')
+    if (!pane) return
+    const isMouse = wheelReader()
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) return
+      if (e.target instanceof Element && e.target.closest('.nowheel')) return
+      if (!isMouse(e, e.timeStamp)) return
+      e.preventDefault()
+      e.stopPropagation()
+      const at = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+      void rf.setViewport(zoomAround(rf.getViewport(), at, wheelZoomFactor(e)))
+    }
+    pane.addEventListener('wheel', onWheel, { passive: false })
+    return () => pane.removeEventListener('wheel', onWheel)
+  }, [oneHand, rf])
 
   // Clicking anywhere else on the board folds the results back into the stack.
   useEffect(() => {
@@ -2550,17 +2619,11 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                     onInit={() => {
                       if (!board.viewport) fitActive(0)
                     }}
-                    minZoom={0.1}
-                    maxZoom={2}
-                    panOnScroll
-                    zoomOnPinch
+                    minZoom={MIN_ZOOM}
+                    maxZoom={MAX_ZOOM}
+                    {...controls}
                     zoomOnDoubleClick={false}
-                    selectionOnDrag
                     selectionMode={SelectionMode.Partial}
-                    panOnDrag={[1]}
-                    panActivationKeyCode="Space"
-                    selectionKeyCode={null}
-                    multiSelectionKeyCode={['Meta', 'Shift']}
                     deleteKeyCode={null}
                     disableKeyboardA11y
                     nodesConnectable={false}

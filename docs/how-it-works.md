@@ -83,7 +83,7 @@ A view is a small live page on the board, such as a table of your last deploymen
 
 To change a view, press ✎ and say what to change: it goes to the same brain, which still knows how it built the view. Drag a view by its title bar, and drag a selected view's corners to resize it. ⤢ opens it large. Double-click its title to rename it. Delete it from its menu (or select it and press ⌫), which asks first: its page and data go, and its brain stops. The brain's transcript stays on disk.
 
-A view's page runs in a sandboxed frame of its own, with no network. It can't fetch anything, load anything from the web, reach the board's window or keep browser storage. Links open in your browser. Until you click a view, the page is a picture: clicking selects the view and scrolling over it pans the board. Once it's selected you can use the page. Everything a page gets from the board comes through `window.nodus`, which the app answers for that view alone:
+A view's page runs in a sandboxed frame of its own, with no network. It can't fetch anything, load anything from the web, reach the board's window or keep browser storage. Links open in your browser. Its buttons, links and fields work on the first click. Scrolling over the page scrolls whatever in it can scroll that way; otherwise the board gets the scroll, as over any card, and pans (or zooms, for a mouse wheel with One hand controls). A pinch over it always zooms the board. Everything a page gets from the board comes through `window.nodus`, which the app answers for that view alone:
 
 - **Data from Claude.** The page draws from the data its brain sends with `update_view`, which updates the page in place without reloading it.
 - **Commands you allow.** A view can declare shell commands, such as `vercel ls --json` or a `psql` count, that run in the project folder with your shell environment, so your CLIs and API tokens work. A new command shows on the card, in full, with **Allow** and **Don't allow**, and nothing runs until you allow it. Your answer goes with that exact command line: change a single character and it asks again, though one Claude puts back exactly as it was keeps your answer. Commands can run on a schedule, such as every hour, and cost no tokens. Each one stops after 2 minutes.
@@ -179,7 +179,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Open a card | Click · Enter |
 | | Expand a card on the board, or collapse it | E · the card's ⤢ button |
 | | Resize an expanded card | Drag its edges or corners |
-| | Select | Drag on empty canvas · ⇧-click · ⌘-click · ⌘A (all active) |
+| | Select | Drag on empty canvas (⇧-drag with One hand controls) · ⇧-click · ⌘-click · ⌘A (all active) |
 | | Group the selection into a section | ⌘G |
 | | Archive the selection | ⌫ |
 | | Stop a session, keeping its card | **Stop** in its window or title bar · right-click › Stop session |
@@ -200,12 +200,14 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Change a view | Its ✎ button · talk to its brain with ⌨ |
 | | Rename a view · delete it | Double-click its title · ⌫ (asks first) |
 | | Fan out a card's agents | Point at the deck under it · click to pin |
-| | Pan · zoom | Two-finger scroll, Space-drag or middle-drag · pinch |
+| | Pan · zoom | Two-finger scroll, Space-drag or middle-drag · pinch or ⌘-scroll. With One hand controls, also drag on empty canvas · turn the mouse wheel |
 | Terminal | Newline in Claude's prompt | ⇧Enter |
 | | Clear · copy · select all | ⌘K · ⌘C · ⌘A |
 | New session from context | Start | ⌘Enter |
 
 In the terminal, Esc goes to Claude (it interrupts a turn), so it never closes the modal. ⌘W never closes the window.
+
+**Settings › Board › Controls** picks how the mouse gets around the board. **Two hands** is the default. **One hand** lets a mouse do it all: drag on empty canvas (or inside a section) to pan, turn the wheel to zoom around the pointer, and hold ⇧ to drag a selection box. ⇧-click and ⌘-click still add a card to the selection, and dragging a card still moves it. A trackpad's two-finger scroll still pans and a pinch still zooms: the board tells a mouse wheel from a trackpad by the events each sends. Whatever scrolls by itself keeps the wheel: a note you're writing, the archive's search results, an expanded card's terminal and a view's page. The change applies straight away.
 
 ## Known limitations
 
@@ -215,6 +217,7 @@ In the terminal, Esc goes to Claude (it interrupts a turn), so it never closes t
 - A view's commands and refreshes only run while the app is open.
 - If you update the app while sessions are running, and the update changed how the app talks to the session host, the new version asks to stop those sessions before it continues.
 - A session host started by a version without board tools keeps running sessions after an update, but sessions started on it don't get the tools. They do once every session has stopped and a new host starts.
+- One hand controls tell a mouse wheel from a trackpad by the events macOS sends for each. A mouse that scrolls smoothly, such as a Magic Mouse or a mouse whose software smooths its wheel, reads as a trackpad and pans.
 - Built and tested on macOS only.
 
 ## Project layout

@@ -511,9 +511,18 @@ export interface AppInfo {
 /** 'system' follows the macOS appearance; the others pin the app to it. */
 export type ThemePreference = 'system' | 'light' | 'dark'
 
+/**
+ * How the mouse moves around the board. 'twoHands': scroll pans, ⌘-scroll or a
+ * pinch zooms, and dragging the canvas draws a selection box. 'oneHand':
+ * dragging the canvas pans, the mouse wheel zooms and ⇧-drag draws the box; a
+ * trackpad's two-finger scroll and pinch work as in 'twoHands'.
+ */
+export type BoardControlsMode = 'twoHands' | 'oneHand'
+
 /** App-wide preferences, persisted with the rest of the state. */
 export interface AppSettings {
   theme: ThemePreference
+  boardControls: BoardControlsMode
   /** Download new versions in the background and install them when the app quits. */
   autoUpdate: boolean
   /** While the app is in the background, notify when a session needs the user or finishes. */

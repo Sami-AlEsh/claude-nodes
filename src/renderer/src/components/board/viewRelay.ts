@@ -55,6 +55,9 @@ interface PageWheel {
   /** Where in the page, which is the frame's size before the board's zoom. */
   x: number
   y: number
+  /** Chromium's legacy wheelDeltaX and wheelDeltaY, which tell a mouse wheel from a trackpad (navigation.ts). */
+  wx?: number
+  wy?: number
   ctrl?: boolean
   shift?: boolean
   alt?: boolean
@@ -75,9 +78,10 @@ const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : 0
 
 /**
  * A scroll the page had no use for, played on its frame as if the frame
- * weren't there: it pans the board, and a pinch zooms it. The board can't
- * tell whether the pointer is really over a frame of another origin, so a
- * page could move the board on its own; that's all it could do with this.
+ * weren't there: it pans the board, and a pinch zooms it (in One hand mode a
+ * mouse wheel zooms it too). The board can't tell whether the pointer is
+ * really over a frame of another origin, so a page could move the board on
+ * its own; that's all it could do with this.
  */
 function replayWheel(win: Window, w: PageWheel) {
   const el = Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === win)
@@ -91,13 +95,16 @@ function replayWheel(win: Window, w: PageWheel) {
       deltaX: num(w.dx),
       deltaY: num(w.dy),
       deltaMode: num(w.mode),
+      // Not in the standard, but Chromium takes them, and without them it makes up its own.
+      wheelDeltaX: num(w.wx),
+      wheelDeltaY: num(w.wy),
       clientX: r.left + num(w.x) * scale,
       clientY: r.top + num(w.y) * scale,
       ctrlKey: w.ctrl === true,
       shiftKey: w.shift === true,
       altKey: w.alt === true,
       metaKey: w.meta === true
-    })
+    } as WheelEventInit)
   )
 }
 
