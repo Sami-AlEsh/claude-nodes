@@ -8,6 +8,7 @@ import type {
   BoardNote,
   BoardSection,
   BoardView,
+  InkStroke,
   Project,
   ProjectAction,
   ProjectGroup,
@@ -40,6 +41,8 @@ export interface BoardState {
   sections?: Record<string, BoardSection>
   notes?: Record<string, BoardNote>
   views?: Record<string, BoardView>
+  /** Ink drawn on the board, oldest first. */
+  ink?: InkStroke[]
   viewport?: Viewport
   /** Sessions removed from the board; never re-imported. */
   hidden?: string[]

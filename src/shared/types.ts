@@ -301,6 +301,28 @@ export interface BoardNote {
   createdAt: number
 }
 
+/** Ink colours. Graphite is dark ink on the light board and light ink on the dark one. */
+export const INK_COLORS = ['graphite', 'red', 'orange', 'green', 'blue', 'purple'] as const
+export type InkColor = (typeof INK_COLORS)[number]
+export const INK_KINDS = ['pen', 'arrow', 'text'] as const
+export type InkKind = (typeof INK_KINDS)[number]
+
+/**
+ * A mark drawn on the board with the ink tools, in board coordinates: a pen
+ * stroke's path, an arrow's tail and head, or the top-left corner of a label.
+ */
+export interface InkStroke {
+  id: string
+  kind: InkKind
+  color: InkColor
+  /** Flat x, y pairs. */
+  points: number[]
+  /** How thick it's drawn, as a multiple of the default: ink keeps the size it had on screen when drawn. */
+  size: number
+  /** A label's words. */
+  text?: string
+}
+
 /**
  * A subagent a session started with Claude's Agent tool. Claude Code keeps its
  * transcript beside the session's, in <session id>/subagents/agent-<id>.jsonl.
@@ -376,6 +398,8 @@ export interface BoardSnapshot {
   sections: BoardSection[]
   notes: BoardNote[]
   views: BoardView[]
+  /** Ink drawn on the board, oldest first. */
+  ink: InkStroke[]
   viewport?: Viewport
 }
 

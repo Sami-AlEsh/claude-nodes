@@ -50,7 +50,8 @@ const api: Api = {
     nameSection: (projectId, sessionIds) =>
       ipcRenderer.invoke(IPC.boardNameSection, projectId, sessionIds),
     saveNote: (projectId, note) => ipcRenderer.invoke(IPC.boardSaveNote, projectId, note),
-    removeNotes: (projectId, noteIds) => ipcRenderer.invoke(IPC.boardRemoveNotes, projectId, noteIds)
+    removeNotes: (projectId, noteIds) => ipcRenderer.invoke(IPC.boardRemoveNotes, projectId, noteIds),
+    saveInk: (projectId, strokes) => ipcRenderer.invoke(IPC.boardSaveInk, projectId, strokes)
   },
 
   sessions: {

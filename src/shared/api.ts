@@ -19,6 +19,7 @@ import type {
   GitFileChange,
   GitFileDiff,
   GitStatus,
+  InkStroke,
   NodePatch,
   OpenCardRequest,
   OpenSessionResult,
@@ -71,6 +72,7 @@ export const IPC = {
   boardNameSection: 'board:name-section',
   boardSaveNote: 'board:save-note',
   boardRemoveNotes: 'board:remove-notes',
+  boardSaveInk: 'board:save-ink',
 
   sessionCreate: 'session:create',
   sessionOpen: 'session:open',
@@ -213,6 +215,8 @@ export interface Api {
     /** Creates or updates a sticky note. */
     saveNote(projectId: string, note: BoardNote): Promise<void>
     removeNotes(projectId: string, noteIds: string[]): Promise<void>
+    /** Replaces the board's ink with these strokes. */
+    saveInk(projectId: string, strokes: InkStroke[]): Promise<void>
   }
 
   sessions: {

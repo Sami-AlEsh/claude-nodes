@@ -164,7 +164,7 @@ export function loadBoard(project: Project): BoardSnapshot {
   // Oldest first, so newer notes draw on top.
   const notes = Object.values(board.notes!).sort((a, b) => a.createdAt - b.createdAt)
   const views = Object.values(board.views!).sort((a, b) => a.createdAt - b.createdAt)
-  return { project, cards, archive: board.archive, sections, notes, views, viewport: board.viewport }
+  return { project, cards, archive: board.archive, sections, notes, views, ink: board.ink ?? [], viewport: board.viewport }
 }
 
 /**
