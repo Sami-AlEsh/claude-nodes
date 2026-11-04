@@ -35,7 +35,7 @@ The title bar says how many Claude sessions Nodus is running, in every project. 
 
 The host starts with the first session you open, and runs Nodus's own binary as plain Node, so it has no Dock icon. It also receives the sessions' hooks, and keeps them along with the keypresses that move status (Esc, Ctrl+C, Enter and number keys), so a relaunched app can work out each session's status. The host exits by itself once no sessions are left and the app isn't open. **Quit and Stop Sessions** (⌥⌘Q) stops every session along with the app.
 
-A running session keeps its `claude` process and the MCP servers it started, so each one holds on to memory while it sits idle. Only a running session's dot has a colour: once its process has stopped, the card shows a grey ring. To let one go without quitting, press **Stop** in its window or in its expanded card's title bar, or right-click it and choose **Stop session** (with several selected, **Stop 3 sessions**). The process ends and the card stays where it is, showing **Resume**. Opening it resumes the session. A session in the middle of a turn asks first, since stopping cuts that turn off.
+A running session keeps its `claude` process and the MCP servers it started, so each one holds on to memory while it sits idle. To let one go without quitting, press **Stop** in its window or in its expanded card's title bar, or right-click it and choose **Stop session** (with several selected, **Stop 3 sessions**). The process ends and the card stays where it is. Opening it resumes the session. A session in the middle of a turn asks first, since stopping cuts that turn off.
 
 ## Terminal cards
 
@@ -53,7 +53,7 @@ Status comes from hooks that the app adds for its own processes with `--settings
 | --- | --- |
 | `UserPromptSubmit`, `PreToolUse`, `PostToolUse` | 🟠 Working |
 | `PermissionRequest`, `Notification` (permission or question), `PreToolUse` for `AskUserQuestion` | 🔴 Needs you |
-| `Stop`, `SessionEnd`, process exit | 🔵 Done, and a grey ring on the card once the process has exited |
+| `Stop`, `SessionEnd`, process exit | 🔵 Done |
 
 Interrupting with Esc or Ctrl+C doesn't fire a hook, so the app watches for those keystrokes as well.
 

@@ -50,9 +50,7 @@ function SessionCardNodeComponent({ data, selected, dragging }: NodeProps<Sessio
   const title = cardTitle(card)
   const updated = meta?.updatedAt ?? card.createdAt
   const shell = isTerminal(card)
-  // A session with no process behind it, archived ones included: its dot is a grey ring.
-  const stopped = !shell && !card.live
-  const statusLabel = shell ? (card.live ? 'Running' : 'Exited') : stopped ? 'Not running' : STATUS_LABEL[card.status]
+  const statusLabel = shell ? (card.live ? 'Running' : 'Exited') : STATUS_LABEL[card.status]
 
   // The current run's agents make a deck behind the card.
   const nodeRef = useRef<HTMLDivElement>(null)
@@ -77,7 +75,7 @@ function SessionCardNodeComponent({ data, selected, dragging }: NodeProps<Sessio
           <SquareTerminal size={14} strokeWidth={2} />
         </span>
       ) : (
-        <span className="status-dot" data-status={card.status} data-stopped={stopped} title={statusLabel} />
+        <span className="status-dot" data-status={card.status} title={statusLabel} />
       )}
       {renaming ? (
         <TitleEditor sessionId={card.sessionId} initial={card.title || meta?.title || ''} />
