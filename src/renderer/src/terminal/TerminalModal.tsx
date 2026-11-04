@@ -7,12 +7,15 @@ import {
   LoaderCircle,
   Play,
   RotateCcw,
+  Square,
   SquareTerminal,
   Trash2,
   X
 } from 'lucide-react'
 import { Modal } from '@renderer/components/Modal'
 import { UsageStats } from '@renderer/components/UsageStats'
+import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
+import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
 import { SessionMic } from '@renderer/components/voice/SessionMic'
 import { cardTitle, isTerminal, tildePath, useApp, useCard } from '@renderer/store'
 import type { SessionCard } from '@shared/types'
@@ -119,9 +122,11 @@ function TerminalHeader({
   const removeCard = useApp((s) => s.removeCard)
   const repoPath = useApp((s) => s.board?.project.repoPath)
   const [copied, setCopied] = useState(false)
+  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
   const shell = isTerminal(card)
   const status = card?.status ?? 'done'
   const branch = card?.meta?.gitBranch
+  const canStop = stoppable(card ? [card] : []).length > 0
 
   useEffect(() => {
     if (!copied) return
@@ -136,6 +141,20 @@ function TerminalHeader({
   const archive = () => {
     patchCards([{ sessionId, archived: true }])
     closeTerminal()
+  }
+
+  // The window stays open on the stopped session, with Resume in Stop's place.
+  const stop = () => {
+    if (!card) return
+    const ask = stopConfirmation([card], cardTitle)
+    if (!ask) return void stopSessions([card])
+    setConfirm({
+      ...ask,
+      resolve: (ok) => {
+        setConfirm(null)
+        if (ok) void stopSessions([card])
+      }
+    })
   }
 
   // Terminals have nothing to archive: removing one stops its shell.
@@ -215,6 +234,12 @@ function TerminalHeader({
               Resume
             </button>
           ))}
+        {canStop && (
+          <button className="btn" onClick={stop} title="Stop the session. The card stays, and Resume picks it up.">
+            <Square size={12} strokeWidth={2.4} />
+            Stop
+          </button>
+        )}
         {shell ? (
           <button className="btn" onClick={remove} title="Stop the shell and remove this terminal from the board">
             <Trash2 size={13} />
@@ -237,6 +262,7 @@ function TerminalHeader({
           <X size={16} />
         </button>
       </div>
+      <ConfirmDialog request={confirm} />
     </header>
   )
 }
