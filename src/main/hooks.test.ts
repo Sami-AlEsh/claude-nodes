@@ -11,7 +11,6 @@ import {
   getStatus,
   hookEnv,
   hookSettings,
-  lastHookTime,
   markProcess,
   noteUserInput,
   receiveHook,
@@ -65,19 +64,6 @@ describe('session status', () => {
     expect(getStatus(id)).toBe('done')
     // Only changes are reported.
     expect(changes.filter(([s]) => s === id).map(([, status]) => status)).toEqual(['done', 'working', 'done'])
-  })
-
-  it('forgets the last hook when a new process starts, so a resumed session starts fresh', () => {
-    const id = newSession()
-    receiveHook('Stop', id, {}, 1000)
-    expect(lastHookTime(id)).toBe(1000)
-    live.delete(id)
-    markProcess(id, false)
-    live.add(id)
-    markProcess(id, true)
-    expect(lastHookTime(id)).toBeUndefined()
-    receiveHook('Stop', id, {}, 2000)
-    expect(lastHookTime(id)).toBe(2000)
   })
 
   it('waits for the user on a permission prompt or a question', () => {

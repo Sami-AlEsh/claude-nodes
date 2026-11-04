@@ -96,11 +96,6 @@ export function getStatus(sessionId: string): SessionStatus {
   return isLive(sessionId) ? combined(sessionId) : 'done'
 }
 
-/** When the session's last hook fired, replayed ones included, if one has since its process started. */
-export function lastHookTime(sessionId: string): number | undefined {
-  return lastHookAt.get(sessionId)
-}
-
 function emit(sessionId: string, liveOverride?: boolean) {
   const live = liveOverride ?? isLive(sessionId)
   const status: SessionStatus = live ? combined(sessionId) : 'done'
@@ -164,9 +159,6 @@ export function markProcess(sessionId: string, live: boolean, initial: SessionSt
   statuses.set(sessionId, live ? initial : 'done')
   // Agents only run inside the process; a new one starts with none.
   agentHooks.delete(sessionId)
-  // Nor with a last hook: a resumed session hasn't been idle since before it stopped.
-  // A host's replay, which comes after, brings back the running process's own.
-  if (live) lastHookAt.delete(sessionId)
   emit(sessionId, live)
   pauseUsage(sessionId, live)
 }

@@ -60,7 +60,6 @@ import {
 import { getClaudePath, getClaudeVersion, initEnv } from './env'
 import { gitDiff, gitStatus } from './git'
 import { configureStatus, forgetStatus, getStatus } from './hooks'
-import { idleInput, idleStatus, setIdleLimit } from './idleStop'
 import { cleanInk } from './ink'
 import { installMenu, syncFocusMenu } from './menu'
 import { nameSection, type NamingSource } from './naming'
@@ -124,7 +123,6 @@ const clampSize = (n: number) => Math.round(Math.min(4000, Math.max(200, n)))
 function applySettings(settings: AppSettings) {
   nativeTheme.themeSource = settings.theme
   notify.updateBadge()
-  setIdleLimit(settings.stopIdleAfter)
   syncFocusMenu(settings)
 }
 
@@ -223,7 +221,6 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
         archiveIfAsked(sessionId)
       }
       views.brainStatus(sessionId, status, live)
-      idleStatus(sessionId, status, live)
     },
     onAgentChange: (sessionId, agentId, status) => send(IPC.evAgentStatus, sessionId, agentId, status),
     onUsage: (sessionId, usage) => send(IPC.evUsage, sessionId, usage),
@@ -838,7 +835,6 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     // Before the write: an interrupt would otherwise end the run's turn and remove it.
     if (isTakeover(sessionId, data)) claimRun(sessionId)
     views.brainInput(sessionId)
-    idleInput(sessionId)
     ptys.write(sessionId, data)
   })
 
