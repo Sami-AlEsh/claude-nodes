@@ -8,6 +8,7 @@ import type {
   BoardNote,
   BoardSection,
   BoardView,
+  InkStroke,
   Project,
   ProjectAction,
   ProjectGroup,
@@ -30,7 +31,9 @@ export function normalizeSettings(raw: unknown): AppSettings {
     notify: s.notify !== false,
     dockBadge: s.dockBadge !== false,
     pinProjectRail: s.pinProjectRail === true,
-    stopIdleAfter: IDLE_STOP_CHOICES.find((m) => m === s.stopIdleAfter) ?? null
+    stopIdleAfter: IDLE_STOP_CHOICES.find((m) => m === s.stopIdleAfter) ?? null,
+    focusFeature: s.focusFeature === true,
+    focusMode: s.focusMode === true
   }
 }
 
@@ -40,6 +43,8 @@ export interface BoardState {
   sections?: Record<string, BoardSection>
   notes?: Record<string, BoardNote>
   views?: Record<string, BoardView>
+  /** Ink drawn on the board, oldest first. */
+  ink?: InkStroke[]
   viewport?: Viewport
   /** Sessions removed from the board; never re-imported. */
   hidden?: string[]

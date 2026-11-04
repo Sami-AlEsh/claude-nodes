@@ -8,6 +8,7 @@ import type {
   BoardSection,
   BoardSnapshot,
   BoardView,
+  InkStroke,
   NodePatch,
   OpenCardRequest,
   Project,
@@ -81,6 +82,8 @@ interface AppState {
   /** Creates or updates a sticky note and persists it. */
   saveNote(note: BoardNote): void
   removeNotes(noteIds: string[]): void
+  /** Replaces the board's ink and persists it. */
+  saveInk(strokes: InkStroke[]): void
   /** Inserts or replaces a view (e.g. after creating one). */
   upsertView(view: BoardView): void
   /** Optimistically moves, resizes or renames a view, and persists it. */
@@ -302,6 +305,13 @@ export const useApp = create<AppState>((set, get) => ({
     const gone = new Set(noteIds)
     set({ board: { ...board, notes: board.notes.filter((n) => !gone.has(n.id)) } })
     window.api.board.removeNotes(board.project.id, noteIds)
+  },
+
+  saveInk(strokes) {
+    const board = get().board
+    if (!board) return
+    set({ board: { ...board, ink: strokes } })
+    window.api.board.saveInk(board.project.id, strokes)
   },
 
   upsertView(view) {

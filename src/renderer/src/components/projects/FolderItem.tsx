@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import clsx from 'clsx'
+import { Target } from 'lucide-react'
 import type { Project, ProjectStats } from '@shared/types'
 import { FolderIcon } from '../FolderIcon'
 import { projectGlyph } from './projectsUi'
@@ -11,6 +12,10 @@ interface Props {
   project: Project
   stats?: ProjectStats
   selected: boolean
+  /** Marks the folder as one of the projects in focus. */
+  focused?: boolean
+  /** Fades the folder: shown while focusing only because a session in it is waiting on you. */
+  dimmed?: boolean
   renaming: boolean
   isNew: boolean
   /** The folder can be dragged onto another section, to change its group. */
@@ -36,6 +41,8 @@ export function FolderItem({
   project,
   stats,
   selected,
+  focused = false,
+  dimmed = false,
   renaming,
   isNew,
   draggable = false,
@@ -52,7 +59,8 @@ export function FolderItem({
         'pv-item',
         selected && 'is-selected',
         isNew && 'is-new',
-        project.archived && 'is-archived'
+        project.archived && 'is-archived',
+        dimmed && 'is-unfocused'
       )}
       role="option"
       aria-selected={selected}
@@ -77,6 +85,11 @@ export function FolderItem({
     >
       <div className="pv-icon">
         <FolderIcon size={112} color={project.color} glyph={projectGlyph(project.name)} />
+        {focused && (
+          <span className="pv-focus-mark" title="In focus">
+            <Target size={12} strokeWidth={2.4} />
+          </span>
+        )}
         {stats && (stats.working > 0 || stats.waiting > 0) && (
           <div className="pv-badges">
             {stats.waiting > 0 && (

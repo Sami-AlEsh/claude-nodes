@@ -198,19 +198,44 @@
 }
 
 /* Archived folders are faded; live badges stay at full strength. */
-.pv-item.is-archived .pv-icon > svg {
+/* Archived folders, and those out of focus that show only while a session waits on you. */
+.pv-item:is(.is-archived, .is-unfocused) .pv-icon > svg {
   opacity: 0.42;
   filter: saturate(0.4);
   transition:
     transform var(--dur-med) var(--ease-out),
     opacity var(--dur-fast) ease;
 }
-.pv-item.is-archived:hover .pv-icon > svg,
-.pv-item.is-archived.is-selected .pv-icon > svg {
+.pv-item:is(.is-archived, .is-unfocused):hover .pv-icon > svg,
+.pv-item:is(.is-archived, .is-unfocused).is-selected .pv-icon > svg {
   opacity: 0.7;
 }
-.pv-item.is-archived:not(.is-selected) .pv-label span {
+.pv-item:is(.is-archived, .is-unfocused):not(.is-selected) .pv-label span {
   color: var(--text-secondary);
+}
+
+/* Marks a folder in focus, opposite the session badges. */
+.pv-focus-mark {
+  position: absolute;
+  top: 18px;
+  left: 2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+  color: var(--accent);
+}
+
+/* Under the grids while focus mode is on: what it hides. */
+.pv-focus-note {
+  margin: 28px 0 0 6px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--separator);
+  color: var(--text-tertiary);
+  font-size: var(--text-md);
 }
 
 /* Live session badges */

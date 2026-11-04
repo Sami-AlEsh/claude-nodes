@@ -2,11 +2,18 @@
   width: 440px;
 }
 
+/* The header stays put; the body scrolls once the window is too short for it. */
+.settings-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 .settings-inner:focus-visible {
   outline: none;
 }
 
 .settings-head {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -23,7 +30,10 @@
 }
 
 .settings-body {
+  flex: 1;
+  min-height: 0;
   padding: 18px 22px 22px;
+  overflow-y: auto;
 }
 
 .settings-group {

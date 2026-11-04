@@ -6,22 +6,25 @@ import { GitControls } from './git/GitControls'
 import { TITLEBAR_ACTIONS_ID } from './TitleBarActions'
 import { UpdateButton } from './UpdateButton'
 import { RunningCount } from './RunningCount'
-import { addProject } from './projects/projectsUi'
+import { addProject, toggleFocusMode } from './projects/projectsUi'
 import './TitleBar.css'
 
 export function TitleBar() {
   const route = useApp((s) => s.route)
+  const focusFeature = useApp((s) => s.settings?.focusFeature ?? false)
+  const focusMode = useApp((s) => s.settings?.focusMode ?? false)
   const project = useApp((s) =>
     s.route.view === 'board'
       ? (s.board?.project ?? s.projects.find((p) => p.id === (s.route as { projectId: string }).projectId))
       : undefined
   )
 
-  // Cmd+Shift+N works from any view, so it is handled here rather than in ProjectsView.
+  // Cmd+Shift+N and Cmd+Shift+F work from any view, so they are handled here rather than in ProjectsView.
   useEffect(
     () =>
       window.api.on.menu((command) => {
         if (command === 'new-project') addProject()
+        else if (command === 'toggle-focus') toggleFocusMode()
       }),
     []
   )
@@ -65,6 +68,19 @@ export function TitleBar() {
 
       <div className="titlebar-actions no-drag">
         <RunningCount />
+        {/* Only while focus mode is turned on in Settings. */}
+        {focusFeature && (
+          <label className="titlebar-focus" title="Show only the projects in focus (⇧⌘F)">
+            Focus
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              checked={focusMode}
+              onChange={(e) => useApp.getState().updateSettings({ focusMode: e.target.checked })}
+            />
+          </label>
+        )}
         <UpdateButton />
         {/* Each view's own buttons. */}
         <div id={TITLEBAR_ACTIONS_ID} className="titlebar-actions" />

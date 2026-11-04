@@ -1,87 +1,78 @@
-<div align="center">
+<p align="center">
+<a href="https://saleem-hadad.github.io/nodus/"><img src=".github/assets/screenshot.webp" alt="The Nodus board for a storefront repo: a card per Claude Code session, some grouped into a Checkout section, with the archive stack on the left. Blue dots mark finished sessions and red dots mark sessions that need you. A sticker on the window reads Free, open source."></a>
+</p>
 
-<img src="build/icon.png" width="96" alt="">
+<h1 align="center">Agentic coding, on one board</h1>
 
-# Nodus
+<p align="center">
+Every Claude Code session in a repo, as a live card. <br>
+See which ones need you, and start new sessions from the context of old ones.
+</p>
 
-**Agentic coding, on one board.**
+<p align="center">
+<a href="https://github.com/saleem-hadad/nodus/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/saleem-hadad/nodus/ci.yml?branch=main&label=build" alt="Build"></a>
+<a href="https://github.com/saleem-hadad/nodus/releases"><img src="https://img.shields.io/github/v/release/saleem-hadad/nodus?label=release" alt="Latest release"></a>
+<img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel-blue" alt="macOS, Apple Silicon and Intel">
+<a href="LICENSE"><img src="https://img.shields.io/github/license/saleem-hadad/nodus" alt="MIT license"></a>
+</p>
 
-Every Claude Code session in a repo, as a live card. See which ones need you, and start new sessions from the context of old ones.
+<p align="center">
+<a href="https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-arm64.dmg"><strong>Download for Mac</strong></a> ·
+<a href="https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-x64.dmg">Intel</a> ·
+<a href="https://saleem-hadad.github.io/nodus/">Website</a>
+</p>
 
-**[Download for Mac](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-arm64.dmg)** · [Intel](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-x64.dmg) · [Website](https://saleem-hadad.github.io/nodus/) · Free and open source
+---
 
-</div>
+## 🚀 Get started
 
-## What you get
+1. Download Nodus for [Apple Silicon](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-arm64.dmg) or [Intel](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-x64.dmg) and drag it into Applications.
+2. Click **New Project** and pick a repo.
+3. Press **N** to start your first session.
 
-- **Every session at once.** One card per session, with Claude's latest reply, the branch and the last activity.
-- **Know which one needs you.** 🟠 working · 🔴 needs you · 🔵 done, live from Claude Code's hooks.
-- **The real terminal.** Click a card for the actual `claude` TUI, or expand it right on the board.
-- **Never re-explain.** Select a few cards and start a session that already knows what they did.
-- **Agents as a deck.** See what each of Claude's agents is doing, right under its card.
-- **Nothing gets lost.** Finished sessions stack up in a searchable archive. Drag one out to pick it up again.
-- **Find any session.** ⌘K searches what every session said and did, live or archived, and jumps to its card.
-- **Sessions keep running** when you quit the app. Open it again and they're right where you left them.
-- **Views you describe.** Ask for a table of your deployments or your tickets, and Claude builds it on the board and keeps it up to date.
-- **For the small stuff:** action buttons Claude writes for your chores, sticky notes, and spoken prompts.
+You need [Claude Code](https://code.claude.com/docs/en/overview) installed, with `claude` on your `PATH`.
 
-## See it in action
+## ✨ Features
 
-<table>
-  <tr>
-    <td colspan="2">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/board-dark.png">
-        <img src="docs/screenshots/board.png" alt="The board: a card per session, grouped into sections, with the archive stack on the left">
-      </picture>
-      <p align="center">Every session in the repo on one board. Red cards need you.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/terminal-dark.png">
-        <img src="docs/screenshots/terminal.png" alt="A card open in the terminal modal, with Claude asking for permission">
-      </picture>
-      <p align="center">Click a card for the real <code>claude</code> TUI.</p>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/expanded-dark.png">
-        <img src="docs/screenshots/expanded.png" alt="A card expanded on the board, showing its terminal">
-      </picture>
-      <p align="center">Or expand it in place and watch it work.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/context-dark.png">
-        <img src="docs/screenshots/context.png" alt="The new session from context dialog with handoff summaries of two sessions">
-      </picture>
-      <p align="center">Start a session from the context of others.</p>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/archive-dark.png">
-        <img src="docs/screenshots/archive.png" alt="The archive stack open with search results for 404">
-      </picture>
-      <p align="center">Search the archive and drag a session back out.</p>
-    </td>
-  </tr>
-</table>
+- 🟠 working · 🔴 needs you · 🔵 done, on every session's card
+- The real `claude` terminal, in a window or right on the board
+- Start a session from what other sessions already did
+- ⌘K searches everything every session said and did
+- An archive of finished sessions. Drag one out to pick it back up
+- Sessions keep running when you quit the app
+- Focus mode hides every project but this week's
+- Views: ask Claude for a live table of your deploys or tickets
+- Sticky notes, action buttons and spoken prompts
 
-## Get started
+## 🔒 Private by design
 
-1. **Download** for [Apple Silicon](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-arm64.dmg) or [Intel](https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-x64.dmg), open the DMG and drag Nodus into Applications.
-2. **Have Claude Code installed**, with `claude` on your `PATH`. ([Install Claude Code](https://code.claude.com/docs/en/overview))
-3. **Click New Project**, pick a repo, and press **N** for your first session.
+Everything stays on your machine. Nodus reads transcripts where Claude Code keeps them and saves only the board layout. Spoken prompts use xAI's speech to text with your own key.
 
-## Learn more
+## 📖 Learn more
 
-- **Private by design.** Everything stays on your machine. The app reads transcripts where Claude Code keeps them and saves only the board layout.
-- **Spoken prompts** use xAI's speech to text with your own API key.
-- **Updates itself.** New versions download in the background and install when you quit. You can turn this off in Settings.
-- **[How it works](docs/how-it-works.md)** covers the architecture, every shortcut, known limitations and [building from source](docs/how-it-works.md#development).
+[How it works](docs/how-it-works.md) covers the architecture, every shortcut and the known limitations.
+
+<details>
+<summary>Build from source</summary>
+
+You need macOS, Node.js 22+ and pnpm.
+
+```sh
+pnpm install
+pnpm dev          # run with hot reload
+pnpm typecheck
+pnpm test
+pnpm dist         # build the DMGs into dist/
+```
+
+More in [Development](docs/how-it-works.md#development).
+
+</details>
+
+## 📄 License
+
+MIT. Made by [Saleem Hadad](https://github.com/saleem-hadad).
+
+⭐ If Nodus saves you time, star the repo. It helps other people find it.
 
 <sub>Nodus is an independent project, not affiliated with or endorsed by Anthropic. Claude is a trademark of Anthropic, PBC.</sub>

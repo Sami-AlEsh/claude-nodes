@@ -16,6 +16,7 @@ import type {
   CreateViewOptions,
   FolderColor,
   GitFileChange,
+  InkStroke,
   NodePatch,
   OpenSessionResult,
   Project,
@@ -60,7 +61,8 @@ import { getClaudePath, getClaudeVersion, initEnv } from './env'
 import { gitDiff, gitStatus } from './git'
 import { configureStatus, forgetStatus, getStatus } from './hooks'
 import { idleInput, idleStatus, setIdleLimit } from './idleStop'
-import { installMenu } from './menu'
+import { cleanInk } from './ink'
+import { installMenu, syncFocusMenu } from './menu'
 import { nameSection, type NamingSource } from './naming'
 import * as notes from './notes'
 import * as notify from './notify'
@@ -123,6 +125,7 @@ function applySettings(settings: AppSettings) {
   nativeTheme.themeSource = settings.theme
   notify.updateBadge()
   setIdleLimit(settings.stopIdleAfter)
+  syncFocusMenu(settings)
 }
 
 /**
@@ -314,7 +317,13 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     (
       _e,
       id: string,
-      patch: { name?: string; color?: FolderColor; archived?: boolean; groupId?: string | null }
+      patch: {
+        name?: string
+        color?: FolderColor
+        archived?: boolean
+        groupId?: string | null
+        focused?: boolean
+      }
     ): Project => {
       const project = getProject(id)
       const name = patch.name?.trim()
@@ -322,6 +331,8 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
       if (patch.color && FOLDER_COLORS.includes(patch.color)) project.color = patch.color
       if (patch.archived === true) project.archived = true
       else if (patch.archived === false) delete project.archived
+      if (patch.focused === true) project.focused = true
+      else if (patch.focused === false) delete project.focused
       if (patch.groupId === null) delete project.groupId
       else if (patch.groupId) project.groupId = getGroup(patch.groupId).id
       save()
@@ -510,6 +521,11 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
   ipcMain.handle(IPC.boardRemoveNotes, (_e, projectId: string, noteIds: string[]) => {
     const board = getBoard(projectId)
     for (const id of noteIds) delete board.notes![id]
+    save()
+  })
+
+  ipcMain.handle(IPC.boardSaveInk, (_e, projectId: string, strokes: InkStroke[]) => {
+    getBoard(projectId).ink = cleanInk(strokes)
     save()
   })
 

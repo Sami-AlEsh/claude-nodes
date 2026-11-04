@@ -127,12 +127,12 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
           )}
           {!shell && card.live && (
             <button
-              className="card-tool is-labelled"
+              className="card-tool"
               onClick={() => stopSession([id])}
               title="Stop the session. The card stays, and Resume picks it up."
+              aria-label="Stop"
             >
-              <Square size={11} strokeWidth={2.4} />
-              Stop
+              <Square size={14} strokeWidth={2} />
             </button>
           )}
           {!shell && (

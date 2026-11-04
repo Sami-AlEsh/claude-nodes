@@ -1,9 +1,29 @@
 import { app, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import type { MenuCommand } from '@shared/api'
+import type { AppSettings } from '@shared/types'
 import { stopAll } from './pty'
+import { getState } from './store'
 import { check } from './updater'
 
 const REPO_URL = 'https://github.com/saleem-hadad/nodus'
+const FOCUS_ITEM_ID = 'focus-mode'
+const FOCUS_SEP_ID = 'focus-mode-sep'
+
+/**
+ * Matches View › Focus Mode to the settings: there only while focus is offered
+ * in Settings (disabled too, so its shortcut can't fire), ticked while it's on.
+ */
+export function syncFocusMenu({ focusFeature, focusMode }: AppSettings) {
+  const menu = Menu.getApplicationMenu()
+  const item = menu?.getMenuItemById(FOCUS_ITEM_ID)
+  const sep = menu?.getMenuItemById(FOCUS_SEP_ID)
+  if (item) {
+    item.visible = focusFeature
+    item.enabled = focusFeature
+    item.checked = focusMode
+  }
+  if (sep) sep.visible = focusFeature
+}
 
 /** A new GitHub issue with the app and macOS versions filled in. */
 function bugReportUrl(): string {
@@ -95,6 +115,21 @@ export function installMenu(send: (command: MenuCommand) => void) {
     {
       label: 'View',
       submenu: [
+        {
+          id: FOCUS_ITEM_ID,
+          label: 'Focus Mode',
+          type: 'checkbox',
+          checked: getState().settings.focusMode,
+          visible: getState().settings.focusFeature,
+          enabled: getState().settings.focusFeature,
+          accelerator: 'CmdOrCtrl+Shift+F',
+          // The tick follows the setting the window saves, so undo the one macOS already toggled.
+          click: (item) => {
+            item.checked = getState().settings.focusMode
+            send('toggle-focus')
+          }
+        },
+        { id: FOCUS_SEP_ID, type: 'separator', visible: getState().settings.focusFeature },
         { role: 'reload' },
         { role: 'forceReload' },
         { role: 'toggleDevTools' },

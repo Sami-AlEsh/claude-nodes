@@ -126,6 +126,7 @@ import {
 } from '@renderer/components/board/notes'
 import { SelectionBar } from '@renderer/components/board/SelectionBar'
 import { BoardControls } from '@renderer/components/board/BoardControls'
+import { INK_SHORTCUTS, InkLayer, type InkHandle } from '@renderer/components/board/InkLayer'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
 import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
 import {
@@ -1494,6 +1495,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   // ---- the sidekick bar ------------------------------------------------------
 
   const sidekickRef = useRef<SidekickHandle>(null)
+  const inkRef = useRef<InkHandle>(null)
 
   /**
    * Starts a Claude session on a prompt from the bar, in auto mode. What's
@@ -2377,12 +2379,20 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       }
       if (s.terminalSessionId || s.previewSessionId || s.agentView || s.diffOpen || overlayOpenRef.current) return
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+      const ink = inkRef.current
+      if (e.key.toLowerCase() === 'z' && e.metaKey && !e.altKey && !e.ctrlKey) {
+        // Only ink has an undo on the board.
+        if (e.shiftKey ? ink?.redo() : ink?.undo()) e.preventDefault()
+        return
+      }
       const sel = selectedIds()
       const noteSel = selectedNoteIds()
       const viewSel = selectedViewIds()
       const fns = latest.current
 
       if (e.key === 'Escape') {
+        // Puts the ink tool down, or lets go of the selected ink, first.
+        if (ink?.escape()) return
         if (stackViewRef.current.open) fns.closeStack()
         if (sel.length || noteSel.length || viewSel.length) fns.clearSelection()
       } else if (e.key.toLowerCase() === 'a' && e.metaKey && !e.shiftKey && !e.altKey) {
@@ -2394,7 +2404,9 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
           fns.groupCards(sel)
         }
       } else if ((e.key === 'Backspace' || e.key === 'Delete') && !e.metaKey && !e.altKey) {
-        if (sel.length || noteSel.length || viewSel.length) {
+        if (ink?.deleteSelected()) {
+          e.preventDefault()
+        } else if (sel.length || noteSel.length || viewSel.length) {
           e.preventDefault()
           // Selected notes are deleted and cards archived; views ask first.
           fns.deleteNotes(noteSel)
@@ -2427,6 +2439,9 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
           e.preventDefault()
           fns.expandCards(sel, active.some((c) => !isExpanded(c)))
         }
+      } else if (Object.hasOwn(INK_SHORTCUTS, e.key.toLowerCase()) && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault()
+        ink?.setTool(INK_SHORTCUTS[e.key.toLowerCase()])
       }
     }
     window.addEventListener('keydown', onKey)
@@ -2583,6 +2598,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                       nodeStrokeWidth={3}
                     />
                     <BoardControls onFit={fitActive} />
+                    <InkLayer ref={inkRef} wrapperRef={wrapperRef} onSelect={clearSelection} onToast={showToast} />
                   </ReactFlow>
 
                   {activeCount === 0 && (

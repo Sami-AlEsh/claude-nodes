@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Target,
   Trash2
 } from 'lucide-react'
 import type { FolderColor, Project, ProjectGroup } from '@shared/types'
@@ -25,10 +26,12 @@ import {
   addProject,
   groupProjects,
   moveToGroup,
+  setFocused,
   sortProjects,
   updateGroup,
   useProjectsUi
 } from '@renderer/components/projects/projectsUi'
+import { focusModeOn, isFocusing, showsInFocus } from '@renderer/components/projects/focus'
 import './ProjectsView.css'
 
 /** A context menu for a project folder or for a group's header. */
@@ -48,6 +51,9 @@ export function ProjectsView() {
   const projects = useApp((s) => s.projects)
   const groups = useApp((s) => s.groups)
   const stats = useApp((s) => s.stats)
+  // Focus shows nowhere unless it's turned on in Settings.
+  const focusFeature = useApp((s) => s.settings?.focusFeature ?? false)
+  const focusMode = useApp((s) => focusModeOn(s.settings))
   const selectedId = useProjectsUi((s) => s.selectedId)
   const select = useProjectsUi((s) => s.select)
   const toast = useProjectsUi((s) => s.toast)
@@ -69,9 +75,20 @@ export function ProjectsView() {
   const seenIds = useRef<Set<string> | null>(null)
 
   const sorted = useMemo(() => sortProjects(projects), [projects])
+  const focusing = useMemo(() => isFocusing(projects, focusMode), [projects, focusMode])
   const active = useMemo(() => sorted.filter((p) => !p.archived), [sorted])
-  const archived = useMemo(() => sorted.filter((p) => p.archived), [sorted])
-  const { ungrouped, byGroup } = useMemo(() => groupProjects(active, groups), [active, groups])
+  // While focusing: the projects in focus, and any other with a session waiting on you.
+  const listed = useMemo(
+    () => (focusing ? active.filter((p) => showsInFocus(p, stats[p.id])) : active),
+    [focusing, active, stats]
+  )
+  const archived = useMemo(() => (focusing ? [] : sorted.filter((p) => p.archived)), [focusing, sorted])
+  const hiddenCount = sorted.length - listed.length - archived.length
+  const { ungrouped, byGroup } = useMemo(() => {
+    const { ungrouped, byGroup } = groupProjects(listed, groups)
+    // While focusing, groups with nothing in focus keep out of the way.
+    return { ungrouped, byGroup: focusing ? byGroup.filter((b) => b.projects.length > 0) : byGroup }
+  }, [listed, groups, focusing])
   // Reading order across all the grids, for keyboard navigation.
   const ordered = useMemo(
     () => [
@@ -137,7 +154,8 @@ export function ProjectsView() {
   }, [])
 
   const setArchived = useCallback(async (id: string, archived: boolean) => {
-    await window.api.projects.update(id, { archived })
+    // An archived project leaves the focus with it.
+    await window.api.projects.update(id, archived ? { archived, focused: false } : { archived })
     await useApp.getState().refreshProjects()
   }, [])
 
@@ -297,6 +315,15 @@ export function ProjectsView() {
           hint: '↩',
           onSelect: () => setRenamingId(menuProject.id)
         },
+        ...(menuProject.archived || !focusFeature
+          ? []
+          : [
+              {
+                label: menuProject.focused ? 'Remove from Focus' : 'Add to Focus',
+                icon: <Target />,
+                onSelect: () => setFocused(menuProject.id, !menuProject.focused)
+              }
+            ]),
         'separator',
         {
           custom: (
@@ -346,6 +373,8 @@ export function ProjectsView() {
       project={project}
       stats={stats[project.id]}
       selected={selectedId === project.id}
+      focused={focusFeature && !!project.focused && !project.archived}
+      dimmed={focusing && !project.focused}
       renaming={renamingId === project.id}
       isNew={newIds.has(project.id)}
       draggable={!project.archived}
@@ -388,8 +417,8 @@ export function ProjectsView() {
             {...dropProps(UNGROUPED)}
           >
             <header className="pv-header">
-              <h1>Projects</h1>
-              <span className="pv-count">{active.length}</span>
+              <h1>{focusing ? 'In Focus' : 'Projects'}</h1>
+              <span className="pv-count">{listed.length}</span>
             </header>
             {ungrouped.length > 0 ? (
               <div className="pv-grid" role="listbox" aria-label="Projects">
@@ -456,6 +485,19 @@ export function ProjectsView() {
                 {archived.map(renderFolder)}
               </div>
             </>
+          )}
+
+          {focusing && hiddenCount > 0 && (
+            <p className="pv-focus-note">
+              {hiddenCount} other {hiddenCount === 1 ? 'project is' : 'projects are'} hidden by focus
+              mode.
+            </p>
+          )}
+          {focusMode && !focusing && active.length > 0 && (
+            <p className="pv-focus-note">
+              Focus mode is on, but no project is in focus yet. Right-click a project and choose Add
+              to Focus.
+            </p>
           )}
         </div>
       )}

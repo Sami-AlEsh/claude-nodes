@@ -1,10 +1,12 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import clsx from 'clsx'
-import { Plus } from 'lucide-react'
+import { Plus, Target } from 'lucide-react'
 import type { ProjectStats } from '@shared/types'
 import { useApp } from '@renderer/store'
+import { ContextMenu, type MenuItem } from '../ContextMenu'
 import { FolderIcon } from '../FolderIcon'
-import { addProject, groupProjects, projectGlyph } from './projectsUi'
+import { focusModeOn, isFocusing, showsInFocus } from './focus'
+import { addProject, groupProjects, projectGlyph, setFocused } from './projectsUi'
 import './ProjectRail.css'
 
 interface Hint {
@@ -35,17 +37,24 @@ export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: bo
   const projects = useApp((s) => s.projects)
   const groups = useApp((s) => s.groups)
   const stats = useApp((s) => s.stats)
+  // Focus shows nowhere unless it's turned on in Settings.
+  const focusFeature = useApp((s) => s.settings?.focusFeature ?? false)
+  const focusMode = useApp((s) => focusModeOn(s.settings))
   const [open, setOpen] = useState(false)
   const [hint, setHint] = useState<Hint | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; projectId: string } | null>(null)
   const timer = useRef<number | undefined>(undefined)
+  const railRef = useRef<HTMLElement>(null)
   const shown = pinned || open
+  const focusing = isFocusing(projects, focusMode)
   const hinted = hint?.projectId ? projects.find((p) => p.id === hint.projectId) : undefined
   const hintName = hint && (hint.projectId ? hinted?.name : 'New Project')
   const hintGroup = hinted?.groupId ? groups.find((g) => g.id === hinted.groupId)?.name : undefined
+  const hintFocus = focusing && hinted && !hinted.focused ? 'Not in focus' : undefined
   const hintDetail =
     hint &&
     (hint.projectId
-      ? [hintGroup, activity(stats[hint.projectId])].filter(Boolean).join(' · ')
+      ? [hintGroup, activity(stats[hint.projectId]), hintFocus].filter(Boolean).join(' · ')
       : '⇧⌘N')
   const showHint = (projectId: string | null) => (e: PointerEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect()
@@ -54,11 +63,14 @@ export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: bo
 
   // Ungrouped projects first, then one block per group. Opening a board bumps its openedAt, so
   // keep the order the projects were added in: icons must not jump around while switching.
+  // While focusing, only the projects in focus, any with a session waiting on you, and this one.
   const blocks = useMemo(() => {
-    const active = projects.filter((p) => !p.archived).sort((a, b) => a.createdAt - b.createdAt)
+    const active = projects
+      .filter((p) => !p.archived && (!focusing || showsInFocus(p, stats[p.id], activeId)))
+      .sort((a, b) => a.createdAt - b.createdAt)
     const { ungrouped, byGroup } = groupProjects(active, groups)
     return [ungrouped, ...byGroup.map((b) => b.projects)].filter((block) => block.length > 0)
-  }, [projects, groups])
+  }, [projects, groups, focusing, stats, activeId])
 
   // The badges need fresh stats; the projects view isn't there to load them.
   useEffect(() => {
@@ -81,11 +93,34 @@ export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: bo
   }
   const hide = () => {
     keepOpen()
+    // The menu sits outside the rail: going to it mustn't slide the rail away.
+    if (menu) return
     timer.current = window.setTimeout(() => {
       timer.current = undefined
       setOpen(false)
       setHint(null)
     }, open ? HIDE_DELAY : 0)
+  }
+
+  const menuProject = menu ? projects.find((p) => p.id === menu.projectId) : undefined
+  const menuItems: MenuItem[] = menuProject
+    ? [
+        {
+          label: menuProject.focused ? 'Remove from Focus' : 'Add to Focus',
+          icon: <Target />,
+          onSelect: () => setFocused(menuProject.id, !menuProject.focused)
+        }
+      ]
+    : []
+  const closeMenu = () => {
+    setMenu(null)
+    if (!pinned && !railRef.current?.matches(':hover')) {
+      keepOpen()
+      timer.current = window.setTimeout(() => {
+        timer.current = undefined
+        setOpen(false)
+      }, HIDE_DELAY)
+    }
   }
 
   return (
@@ -101,6 +136,7 @@ export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: bo
       )}
 
       <nav
+        ref={railRef}
         className={clsx('rail', shown && 'is-open', pinned && 'is-pinned')}
         aria-label="Projects"
         inert={!shown}
@@ -117,12 +153,25 @@ export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: bo
               return (
                 <button
                   key={project.id}
-                  className={clsx('rail-item', active && 'is-active')}
+                  className={clsx(
+                    'rail-item',
+                    active && 'is-active',
+                    focusing && !project.focused && 'is-unfocused'
+                  )}
                   aria-label={project.name}
                   aria-current={active ? 'page' : undefined}
                   onClick={() => {
                     if (!active) useApp.getState().navigate({ view: 'board', projectId: project.id })
                   }}
+                  onContextMenu={
+                    focusFeature
+                      ? (e) => {
+                          e.preventDefault()
+                          setHint(null)
+                          setMenu({ x: e.clientX, y: e.clientY, projectId: project.id })
+                        }
+                      : undefined
+                  }
                   onPointerEnter={showHint(project.id)}
                   onPointerLeave={() => setHint(null)}
                 >
@@ -153,6 +202,10 @@ export function ProjectRail({ activeId, pinned }: { activeId: string; pinned: bo
           <span className="rail-hint-name">{hintName}</span>
           {hintDetail && <span className="rail-hint-detail">{hintDetail}</span>}
         </div>
+      )}
+
+      {menu && focusFeature && menuItems.length > 0 && (
+        <ContextMenu x={menu.x} y={menu.y} items={menuItems} onClose={closeMenu} />
       )}
     </>
   )
