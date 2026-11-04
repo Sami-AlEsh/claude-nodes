@@ -15,7 +15,7 @@ import {
 import { Modal } from '@renderer/components/Modal'
 import { UsageStats } from '@renderer/components/UsageStats'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
-import { stopConfirmation, stopSessions } from '@renderer/components/board/stopSessions'
+import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
 import { SessionMic } from '@renderer/components/voice/SessionMic'
 import { cardTitle, isTerminal, tildePath, useApp, useCard } from '@renderer/store'
 import type { SessionCard } from '@shared/types'
@@ -126,6 +126,7 @@ function TerminalHeader({
   const shell = isTerminal(card)
   const status = card?.status ?? 'done'
   const branch = card?.meta?.gitBranch
+  const canStop = stoppable(card ? [card] : []).length > 0
 
   useEffect(() => {
     if (!copied) return
@@ -233,7 +234,7 @@ function TerminalHeader({
               Resume
             </button>
           ))}
-        {!shell && card?.live && (
+        {canStop && (
           <button className="btn" onClick={stop} title="Stop the session. The card stays, and Resume picks it up.">
             <Square size={12} strokeWidth={2.4} />
             Stop

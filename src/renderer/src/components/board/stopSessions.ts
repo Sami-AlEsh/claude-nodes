@@ -3,9 +3,13 @@
 import type { SessionCard } from '@shared/types'
 import type { ConfirmRequest } from './ConfirmDialog'
 
-/** The Claude sessions among `cards` with a process to stop. Terminals are removed instead. */
+/**
+ * The Claude sessions among `cards` with a process to stop. Terminals are
+ * removed instead, and an action run has no card to keep: it leaves the board
+ * once its process ends.
+ */
 export function stoppable(cards: SessionCard[]): SessionCard[] {
-  return cards.filter((c) => c.live && c.kind !== 'terminal')
+  return cards.filter((c) => c.live && c.kind !== 'terminal' && !c.runOf)
 }
 
 /** What to ask before stopping `cards`, or null when none is mid-turn, so nothing is cut off. */

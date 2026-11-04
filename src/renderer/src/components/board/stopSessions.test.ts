@@ -20,6 +20,10 @@ describe('stoppable', () => {
     const cards = [card('a'), card('b', { live: false }), card('c', { kind: 'terminal' }), card('d', { kind: 'claude' })]
     expect(stoppable(cards).map((c) => c.sessionId)).toEqual(['a', 'd'])
   })
+
+  it('leaves out action runs, which have no card to keep', () => {
+    expect(stoppable([card('a', { runOf: 'deploy' }), card('b', { viewOf: 'stats' })]).map((c) => c.sessionId)).toEqual(['b'])
+  })
 })
 
 describe('stopConfirmation', () => {
