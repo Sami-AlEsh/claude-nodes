@@ -27,8 +27,6 @@ flowchart LR
 
 Sessions are ordinary Claude Code sessions. New cards run `claude --session-id <uuid>`, and resuming runs `claude --resume <id>`, so you can continue the same session from any terminal later. Your own settings, hooks and MCP servers still apply.
 
-**Stop idle sessions** in Settings ends the process of a session nobody has used for the time you pick, from 15 minutes to 2 hours. It's off until you choose one. That frees the memory the session and its MCP servers hold, and its card stays where it is, resuming when you open it. A session counts as idle once its turn has ended and nothing has been typed into it since. One that's working or waiting for you never is, and terminals, views' brains and action runs are left alone. It runs only while Nodus is open: when you open the app again, sessions that went idle meanwhile stop straight away.
-
 ## Sessions keep running after you quit
 
 The app doesn't run sessions itself. A background process, the session host, owns their terminals, so quitting Nodus (or a crash) leaves them running. Open the app again and the cards are still live, with their recent output and an up-to-date status.
