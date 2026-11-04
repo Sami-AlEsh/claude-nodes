@@ -1,5 +1,5 @@
 <p align="center">
-<a href="https://saleem-hadad.github.io/nodus/"><img src=".github/assets/screenshot.webp" alt="The Nodus board for a storefront repo: a card per Claude Code session, some grouped into a Checkout section, with the archive stack on the left. Blue dots mark finished sessions and red dots mark sessions that need you. A sticker on the window reads Free, open source."></a>
+<a href="https://sami-alesh.github.io/nodus/"><img src=".github/assets/screenshot.webp" alt="The Nodus board for a storefront repo: a card per Claude Code session, some grouped into a Checkout section, with the archive stack on the left. Blue dots mark finished sessions and red dots mark sessions that need you. A sticker on the window reads Free, open source."></a>
 </p>
 
 <h1 align="center">Agentic coding, on one board</h1>
@@ -19,7 +19,7 @@ See which ones need you, and start new sessions from the context of old ones.
 <p align="center">
 <a href="https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-arm64.dmg"><strong>Download for Mac</strong></a> ·
 <a href="https://github.com/saleem-hadad/nodus/releases/latest/download/Nodus-x64.dmg">Intel</a> ·
-<a href="https://saleem-hadad.github.io/nodus/">Website</a>
+<a href="https://sami-alesh.github.io/nodus/">Website</a>
 </p>
 
 ---
@@ -71,7 +71,7 @@ More in [Development](docs/how-it-works.md#development).
 
 ## 📄 License
 
-MIT. Made by [Saleem Hadad](https://github.com/saleem-hadad).
+MIT. Made by [Saleem Hadad](https://github.com/saleem-hadad), with contributions from [Sami AlEsh](https://github.com/Sami-AlEsh).
 
 ⭐ If Nodus saves you time, star the repo. It helps other people find it.
 
