@@ -80,6 +80,17 @@ export interface ProjectStats {
   active: number
   working: number
   waiting: number
+  /** Processes the app is running for the project right now. */
+  running: RunningCounts
+}
+
+export interface RunningCounts {
+  /** Claude sessions drawn as cards. */
+  sessions: number
+  /** Claude sessions not drawn on the board: views' brains and action runs. */
+  background: number
+  /** Terminal cards' shells. */
+  terminals: number
 }
 
 export interface Rect {
