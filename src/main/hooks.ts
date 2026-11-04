@@ -386,12 +386,18 @@ const postCommand = (event: string, viaConfig: boolean) => `${post(event, viaCon
  * The status line's command. It posts its JSON like a hook. Then, for a
  * session started with the person's own status line in NODUS_STATUS_LINE (see
  * statusLine.ts), it runs that on the same JSON and prints what it prints.
- * Without one it prints nothing, and the terminal shows no status line. It
- * always succeeds, so their command failing can't stop the post.
+ * Without one it prints nothing and succeeds, and the terminal shows no status
+ * line.
+ *
+ * Their command gets the JSON exactly as Claude Code sent it, with its final
+ * newline, which a script reading it with `read` needs: `$(cat)` alone would
+ * drop it. It exits as their command does, so a failing one shows no line:
+ * Claude Code ignores what a failed status line printed. The post
+ * comes first, so their command can't stop it.
  */
 const statusLineCommand = (viaConfig: boolean) =>
-  `p=$(cat); printf '%s' "$p" | ${post(STATUS_LINE_EVENT, viaConfig)}; ` +
-  `[ -n "$NODUS_STATUS_LINE" ] && printf '%s' "$p" | sh -c "$NODUS_STATUS_LINE"; exit 0`
+  `p=$(cat; printf x); p=\${p%x}; printf '%s' "$p" | ${post(STATUS_LINE_EVENT, viaConfig)}; ` +
+  `[ -z "$NODUS_STATUS_LINE" ] && exit 0; printf '%s' "$p" | sh -c "$NODUS_STATUS_LINE"`
 
 /**
  * The `--settings` JSON registering our hooks and status line. Identical for
@@ -407,7 +413,9 @@ export function hookSettings(): string {
     // Output must stay empty: UserPromptSubmit stdout is injected into Claude's context.
     hooks[event] = [{ hooks: [{ type: 'command', command: postCommand(event, viaConfig), timeout: 5 }] }]
   }
-  const statusLine = { type: 'command', command: statusLineCommand(viaConfig), padding: 0 }
+  // No padding or refresh interval: Claude Code merges flag settings into the
+  // person's key by key, so theirs still apply to their line.
+  const statusLine = { type: 'command', command: statusLineCommand(viaConfig) }
   const json = JSON.stringify({ hooks, statusLine })
   settingsJson.set(viaConfig, json)
   return json
