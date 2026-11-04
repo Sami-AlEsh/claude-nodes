@@ -31,7 +31,8 @@ export function normalizeSettings(raw: unknown): AppSettings {
     dockBadge: s.dockBadge !== false,
     pinProjectRail: s.pinProjectRail === true,
     focusFeature: s.focusFeature === true,
-    focusMode: s.focusMode === true
+    focusMode: s.focusMode === true,
+    showOwnStatusLine: s.showOwnStatusLine === true
   }
 }
 

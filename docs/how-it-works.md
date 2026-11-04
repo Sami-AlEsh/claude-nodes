@@ -27,6 +27,8 @@ flowchart LR
 
 Sessions are ordinary Claude Code sessions. New cards run `claude --session-id <uuid>`, and resuming runs `claude --resume <id>`, so you can continue the same session from any terminal later. Your own settings, hooks and MCP servers still apply.
 
+Your status line is the exception. Claude Code runs one status line, and Nodus uses its own to read each session's model, context and cost for the session window's header, so yours doesn't show by default. Turn on **Show my status line** in Settings to see it at the bottom of each session as well. Nodus then runs the status line Claude Code would pick (the repo's `.claude/settings.local.json`, then its `.claude/settings.json`, then your `~/.claude/settings.json`) on the same information, and the header keeps working. It applies to sessions you start or resume after turning it on.
+
 ## Sessions keep running after you quit
 
 The app doesn't run sessions itself. A background process, the session host, owns their terminals, so quitting Nodus (or a crash) leaves them running. Open the app again and the cards are still live, with their recent output and an up-to-date status.

@@ -226,13 +226,16 @@ describe('hook commands', () => {
     ]
   }
 
-  it('registers every hook and the status line, printing nothing', () => {
+  it('registers every hook, printing nothing, and the status line', () => {
     setHookEndpoint(4000, 'secret-token', '/tmp/hook.curlrc')
     const settings = JSON.parse(hookSettings())
     expect(Object.keys(settings.hooks)).toEqual(
       expect.arrayContaining(['SessionStart', 'UserPromptSubmit', 'PreToolUse', 'Stop', 'SubagentStop'])
     )
-    for (const command of commands()) expect(command).toMatch(/>\/dev\/null 2>&1; exit 0$/)
+    for (const command of commands().slice(0, -1)) expect(command).toMatch(/>\/dev\/null 2>&1; exit 0$/)
+    // The status line prints only the person's own, when a session has one (run below).
+    expect(settings.statusLine.command).toContain('"$NODUS_STATUS_LINE"')
+    expect(settings.statusLine.command).toMatch(/; exit 0$/)
   })
 
   it('read the token from the config file when the host takes it in a header', () => {
@@ -309,5 +312,40 @@ describe('hook commands, run by a shell', () => {
     setHookEndpoint(port, 'abc123')
     await runStopHook('s1', '{}')
     expect(await received).toMatchObject({ url: '/hook?evt=Stop&sid=s1&token=abc123', authorization: undefined })
+  })
+
+  /** Runs the status line's command as Claude Code does, with what it prints and how it exits. */
+  function runStatusLine(sessionId: string, payload: string, env: Record<string, string> = {}) {
+    const command = JSON.parse(hookSettings()).statusLine.command
+    const child = spawn('sh', ['-c', command], { env: { ...process.env, ...hookEnv(sessionId), ...env } })
+    let out = ''
+    child.stdout.on('data', (c) => (out += c))
+    child.stdin.end(payload)
+    return new Promise<{ out: string; code: number | null }>((resolve) =>
+      child.on('close', (code) => resolve({ out, code }))
+    )
+  }
+
+  it('send the status line and print nothing, by default', async () => {
+    const port = (server.address() as AddressInfo).port
+    setHookEndpoint(port, 'abc123')
+    expect(await runStatusLine('s1', '{"model":"opus"}')).toEqual({ out: '', code: 0 })
+    expect(await received).toMatchObject({ url: '/hook?evt=StatusLine&sid=s1&token=abc123', body: '{"model":"opus"}' })
+  })
+
+  it('send the status line and print the person’s own, run on the same JSON', async () => {
+    const port = (server.address() as AddressInfo).port
+    setHookEndpoint(port, 'abc123')
+    const result = await runStatusLine('s1', '{"model":"opus"}', { NODUS_STATUS_LINE: "sed 's/^/mine: /'" })
+    expect(result).toEqual({ out: 'mine: {"model":"opus"}', code: 0 })
+    expect(await received).toMatchObject({ url: '/hook?evt=StatusLine&sid=s1&token=abc123', body: '{"model":"opus"}' })
+  })
+
+  it('still send the status line when the person’s own fails', async () => {
+    const port = (server.address() as AddressInfo).port
+    setHookEndpoint(port, 'abc123')
+    const result = await runStatusLine('s1', '{}', { NODUS_STATUS_LINE: 'echo partial; exit 3' })
+    expect(result).toEqual({ out: 'partial\n', code: 0 })
+    expect(await received).toMatchObject({ body: '{}' })
   })
 })
