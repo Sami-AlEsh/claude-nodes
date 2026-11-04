@@ -11,7 +11,13 @@ const project = (id: string, extra: Partial<Project> = {}): Project => ({
   ...extra
 })
 
-const stats = (waiting: number): ProjectStats => ({ total: 1, active: 1, working: 0, waiting })
+const stats = (waiting: number): ProjectStats => ({
+  total: 1,
+  active: 1,
+  working: 0,
+  waiting,
+  running: { sessions: 0, background: 0, terminals: 0 }
+})
 
 describe('focusModeOn', () => {
   it('is on only while focus is offered in Settings and switched on', () => {

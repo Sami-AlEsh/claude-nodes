@@ -5,6 +5,7 @@ import { FolderIcon } from './FolderIcon'
 import { GitControls } from './git/GitControls'
 import { TITLEBAR_ACTIONS_ID } from './TitleBarActions'
 import { UpdateButton } from './UpdateButton'
+import { RunningCount } from './RunningCount'
 import { addProject, toggleFocusMode } from './projects/projectsUi'
 import './TitleBar.css'
 
@@ -66,6 +67,7 @@ export function TitleBar() {
       </nav>
 
       <div className="titlebar-actions no-drag">
+        <RunningCount />
         {/* Only while focus mode is turned on in Settings. */}
         {focusFeature && (
           <label className="titlebar-focus" title="Show only the projects in focus (⇧⌘F)">
