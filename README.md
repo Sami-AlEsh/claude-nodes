@@ -43,6 +43,7 @@ You need [Claude Code](https://code.claude.com/docs/en/overview) installed, with
 - Focus mode hides every project but this week's
 - Views: ask Claude for a live table of your deploys or tickets
 - Sticky notes, action buttons and spoken prompts
+- Colour schemes for dark and light mode: Graphite, Ink, Moss, Atom One Dark and Paper
 
 ## 🔒 Private by design
 

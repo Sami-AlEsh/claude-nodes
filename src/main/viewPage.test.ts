@@ -40,6 +40,16 @@ describe('buildViewPage', () => {
     expect(script).not.toContain('<script>alert')
   })
 
+  it('gives the page the board’s colours in its colour schemes, where the bridge can swap them', () => {
+    const nodus = buildViewPage('<p>x</p>', boot)
+    expect(nodus).toContain('<style id="nodus-colors">:root {\n  --nodus-bg: #ffffff;')
+    expect(nodus).toContain('--nodus-bg: #2a2a2d;')
+    const schemed = buildViewPage('<p>x</p>', boot, { darkScheme: 'ink', lightScheme: 'paper' })
+    expect(schemed).toContain('--nodus-bg: #262c34;')
+    expect(schemed).toContain('--nodus-accent: #1f62d0;')
+    expect(schemed.indexOf('id="nodus-colors"')).toBeLessThan(schemed.indexOf("getElementById('nodus-colors')"))
+  })
+
   it('is not fooled by a <header> into thinking it found the head', () => {
     const page = buildViewPage('<html><header>top</header></html>', boot)
     expect(injectedAt(page)).toBeLessThan(page.indexOf('<header>'))

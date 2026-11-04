@@ -5,6 +5,9 @@ import '@xterm/xterm/css/xterm.css'
 import './styles/global.css'
 import './styles/app.css'
 import { App } from './App'
+import { followSchemes } from './schemes'
+
+followSchemes()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
