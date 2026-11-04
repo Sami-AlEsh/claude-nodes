@@ -1,7 +1,7 @@
 // Merges sessions found on disk with the stored board and lays out new ones.
 import fs from 'fs'
 import { isEmptySession } from '@shared/sessions'
-import type { BoardNode, BoardSnapshot, Project, ProjectStats, Rect, SessionCard } from '@shared/types'
+import type { BoardNode, BoardSnapshot, Project, ProjectStats, Rect, RunningCounts, SessionCard } from '@shared/types'
 import { attachAgents } from './agents'
 import { readSession, scanRepo, transcriptDir, transcriptPath, type DiscoveredSession } from './discovery'
 import { forgetStatus, getStatus, getUsage } from './hooks'
@@ -209,11 +209,20 @@ export function projectStats(project: Project): ProjectStats {
     if (status === 'working') working++
     else if (status === 'waiting') waiting++
   }
+  // Brains included: every process the app runs for the project has a node.
+  const running: RunningCounts = { sessions: 0, background: 0, terminals: 0 }
+  for (const node of Object.values(board.nodes)) {
+    if (!isLive(node.sessionId)) continue
+    if (node.viewOf || node.runOf) running.background++
+    else if (node.kind === 'terminal') running.terminals++
+    else running.sessions++
+  }
   return {
     total: nodes.length + undiscovered,
     active: nodes.filter((n) => !n.archived).length,
     working,
-    waiting
+    waiting,
+    running
   }
 }
 
