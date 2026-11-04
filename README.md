@@ -1,5 +1,5 @@
 <p align="center">
-<a href="https://saleem-hadad.github.io/nodus/"><img src=".github/assets/screenshot.webp" alt="The Nodus board for a storefront repo: a card per Claude Code session, some grouped into a Checkout section, with the archive stack on the left. Blue dots mark finished sessions and red dots mark sessions that need you. A sticker on the window reads Free, open source."></a>
+<a href="https://saleem-hadad.github.io/nodus/"><img src=".github/assets/screenshot.webp" alt="The Nodus board for a storefront repo, with focus mode on in the title bar and the projects rail on the left. Session cards sit in a Checkout group beside the archive stack, one card is expanded to show its Claude Code terminal, a Tests view lists a failing test that someone circled in red ink with the note Fix before release, and a red ring marks a session that needs you. A sticker on the window reads Free, open source."></a>
 </p>
 
 <h1 align="center">Agentic coding, on one board</h1>
