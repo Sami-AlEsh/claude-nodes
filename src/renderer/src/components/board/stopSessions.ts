@@ -19,18 +19,15 @@ export function stopConfirmation(
 ): Omit<ConfirmRequest, 'resolve'> | null {
   const busy = cards.filter((c) => c.status !== 'done')
   if (busy.length === 0) return null
-  if (cards.length === 1) {
-    const doing = busy[0].status === 'waiting' ? 'waiting for you' : 'working'
-    return {
-      title: 'Stop a running session?',
-      message: `“${titleOf(busy[0])}” is still ${doing}. Stopping it cuts off this turn. The transcript stays, so you can resume it.`,
-      confirmLabel: 'Stop',
-      danger: true
-    }
-  }
+  const several = cards.length > 1
+  // A session alone in being mid-turn is named, even among several.
+  const cutOff =
+    busy.length === 1
+      ? `“${titleOf(busy[0])}” is still ${busy[0].status === 'waiting' ? 'waiting for you' : 'working'}. Stopping it cuts off this turn.`
+      : 'Some of these sessions are still working. Stopping them cuts off their turns.'
   return {
-    title: `Stop ${cards.length} sessions?`,
-    message: 'Some of these sessions are still working. Stopping them cuts off their turns. The transcripts stay, so you can resume them.',
+    title: several ? `Stop ${cards.length} sessions?` : 'Stop a running session?',
+    message: `${cutOff} ${several ? 'The transcripts stay, so you can resume them.' : 'The transcript stays, so you can resume it.'}`,
     confirmLabel: 'Stop',
     danger: true
   }

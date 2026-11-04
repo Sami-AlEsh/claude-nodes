@@ -42,7 +42,15 @@ describe('stopConfirmation', () => {
   })
 
   it('asks once for several, when any of them is mid-turn', () => {
-    const ask = stopConfirmation([card('a'), card('b', { status: 'working' }), card('c')], titleOf)
+    const ask = stopConfirmation([card('a'), card('b', { status: 'working' }), card('c', { status: 'working' })], titleOf)
     expect(ask?.title).toBe('Stop 3 sessions?')
+    expect(ask?.message).toContain('Some of these sessions are still working')
+  })
+
+  it('names the one session among several that’s mid-turn', () => {
+    const ask = stopConfirmation([card('a'), card('b', { status: 'waiting', title: 'Fix login' }), card('c')], titleOf)
+    expect(ask?.title).toBe('Stop 3 sessions?')
+    expect(ask?.message).toContain('“Fix login” is still waiting for you')
+    expect(ask?.message).toContain('The transcripts stay')
   })
 })
