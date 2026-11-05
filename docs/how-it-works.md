@@ -163,9 +163,9 @@ Settings shows the version you're on and how the update is going. **Check Now**,
 
 ## Colours
 
-Settings › Appearance has a row of colour schemes under System, Light and Dark. **Dark colours** are what Nodus uses while it's dark: **Nodus** (its own greys, the default), **Graphite**, **Ink**, **Moss** or **Atom One Dark**. Picking one recolours the window at once (the board, cards, title bar, project rail, archive, menus, dialogs and views), and the next launch opens in it. System, Light and Dark still decide when Nodus is dark. While it's light, it keeps its own colours.
+Settings › Appearance has a row of colour schemes under System, Light and Dark. **Dark colours** are what Nodus uses while it's dark: **Nodus** (its own greys, the default), **Graphite**, **Ink**, **Moss** or **Atom One Dark**. Picking one recolours the window at once (the board, cards, title bar, project rail, archive, menus, dialogs, views and terminals), and the next launch opens in it. System, Light and Dark still decide when Nodus is dark. While it's light, it keeps its own colours.
 
-The schemes are herdr-app's, with the colours around the cards derived from each palette by herdr's own rule. Two things never change with the scheme: the status colours (🟠 working, 🔴 needs you, 🔵 done), and the terminals, which keep their own dark colours in every scheme. A view's page gets the scheme's colours through its `--nodus-*` variables, and a view already open on the board takes the new ones in place, without reloading.
+The schemes are herdr-app's, with the colours around the cards derived from each palette by herdr's own rule. Terminals take the scheme too: its background, text, cursor, selection and the 16 colours Claude Code and shell prompts draw with, in light mode as well, since terminals are always dark. Only the status colours (🟠 working, 🔴 needs you, 🔵 done) never change. A view's page gets the scheme's colours through its `--nodus-*` variables, and a view already open on the board takes the new ones in place, without reloading.
 
 ## Your data
 

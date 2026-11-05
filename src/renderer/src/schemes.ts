@@ -1,7 +1,9 @@
-// Puts the colour schemes picked in Settings on the board, and on the views'
-// pages already open. The colours themselves come from @shared/schemes.
-import { schemeCss, viewCss, type Schemes } from '@shared/schemes'
+// Puts the colour scheme picked in Settings on the board, on the views'
+// pages already open, and on the terminals. The colours themselves come
+// from @shared/schemes.
+import { schemeCss, terminalTheme, viewCss, type Schemes } from '@shared/schemes'
 import { setViewTheme } from './components/board/viewRelay'
+import { setTerminalTheme } from './terminal/registry'
 import { useApp } from './store'
 
 let shown = ''
@@ -17,6 +19,7 @@ function show(schemes: Schemes) {
   }
   style.textContent = schemeCss(schemes)
   setViewTheme(viewCss(schemes))
+  setTerminalTheme(terminalTheme(schemes.darkScheme))
 }
 
 /**

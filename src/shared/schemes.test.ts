@@ -7,6 +7,8 @@ import {
   schemeCss,
   schemeTile,
   schemeTokens,
+  terminalTheme,
+  terminalTokens,
   viewCss,
   viewTokens,
   windowColor
@@ -86,13 +88,13 @@ describe('schemeTokens', () => {
     for (const id of schemes) expect(Object.keys(schemeTokens(id)).sort(), id).toEqual(keys)
   })
 
-  it('never touches status or terminal colours', () => {
+  it('never touches status colours', () => {
     for (const id of schemes) {
-      expect(Object.keys(schemeTokens(id)).filter((n) => /status|term/.test(n)), id).toEqual([])
+      expect(Object.keys(schemeTokens(id)).filter((n) => /status/.test(n)), id).toEqual([])
       // Views' orange is the working status's.
       expect(viewTokens(id)['--nodus-orange'], id).toBe(viewTokens('nodus')['--nodus-orange'])
     }
-    expect(schemeCss({ darkScheme: 'atom-one-dark' })).not.toMatch(/--status|--term/)
+    expect(schemeCss({ darkScheme: 'atom-one-dark' })).not.toMatch(/--status/)
   })
 })
 
@@ -163,6 +165,15 @@ describe('schemeCss', () => {
     expect(css).toContain('--bg-window: #111720;')
     expect(css).toContain(':root:root {')
   })
+
+  it('sets the terminal’s tokens outside the dark-mode block, since terminals are always dark', () => {
+    const css = schemeCss({ darkScheme: 'ink' })
+    const media = css.indexOf('@media')
+    const mediaEnd = css.indexOf('\n}\n', media) + 3
+    expect(css.slice(mediaEnd)).toContain('--term-bg: #111720;')
+    expect(css.slice(mediaEnd)).toContain('--term-fg: #cdd6e4;')
+    expect(css.slice(media, mediaEnd)).not.toContain('--term-')
+  })
 })
 
 describe('viewCss', () => {
@@ -170,6 +181,81 @@ describe('viewCss', () => {
     const css = viewCss({ darkScheme: 'graphite' })
     expect(css.indexOf('--nodus-bg: #ffffff;')).toBeLessThan(css.indexOf('@media (prefers-color-scheme: dark)'))
     expect(css.indexOf('--nodus-bg: #2c2e31;')).toBeGreaterThan(css.indexOf('@media (prefers-color-scheme: dark)'))
+  })
+})
+
+describe('terminalTheme', () => {
+  it('keeps today’s terminal for Nodus’s scheme', () => {
+    expect(terminalTheme('nodus')).toEqual({
+      background: '#1e1e20',
+      foreground: '#e6e6e6',
+      cursor: '#e6e6e6',
+      cursorAccent: '#1e1e20',
+      selectionBackground: '#0a84ff55',
+      selectionInactiveBackground: '#8e8e9340',
+      scrollbarSliderBackground: '#ffffff1f',
+      scrollbarSliderHoverBackground: '#ffffff33',
+      scrollbarSliderActiveBackground: '#ffffff47',
+      black: '#3a3a3c',
+      red: '#ff6b62',
+      green: '#5fd068',
+      yellow: '#f5c451',
+      blue: '#5aa9ff',
+      magenta: '#d68cf7',
+      cyan: '#5ad1e0',
+      white: '#d8d8dc',
+      brightBlack: '#6e6e73',
+      brightRed: '#ff8a80',
+      brightGreen: '#7fe08a',
+      brightYellow: '#ffd978',
+      brightBlue: '#80bdff',
+      brightMagenta: '#e2a8fb',
+      brightCyan: '#80e2ee',
+      brightWhite: '#f5f5f7'
+    })
+  })
+
+  it('draws a scheme’s terminal in its palette: ground, text, cursor, selection and herdr’s 16 colours', () => {
+    expect(terminalTheme('ink')).toMatchObject({
+      background: '#111720',
+      foreground: '#cdd6e4',
+      cursor: '#cdd6e4',
+      cursorAccent: '#111720',
+      selectionBackground: '#344861',
+      selectionInactiveBackground: '#8e8e9340',
+      black: '#414b5a',
+      red: '#e58c9a',
+      green: '#89c5aa',
+      yellow: '#d9be82',
+      blue: '#91b6ee',
+      magenta: '#b9a0e2',
+      cyan: '#85c4d0',
+      white: '#cdd6e4',
+      brightBlack: '#7f91a7',
+      brightRed: '#f5a5b2',
+      brightGreen: '#a5dec3',
+      brightYellow: '#edd39c',
+      brightBlue: '#accbfa',
+      brightMagenta: '#d0b7f4',
+      brightCyan: '#a0dce5',
+      brightWhite: '#f0f5fc'
+    })
+    // Atom One Dark names its own cursor.
+    expect(terminalTheme('atom-one-dark')).toMatchObject({ cursor: '#abb2bf', selectionBackground: '#323844', blue: '#61afef' })
+  })
+
+  it('gives every scheme the same keys, all set', () => {
+    const keys = Object.keys(terminalTheme('nodus')).sort()
+    for (const id of schemes) {
+      const theme = terminalTheme(id)
+      expect(Object.keys(theme).sort(), id).toEqual(keys)
+      for (const [key, value] of Object.entries(theme)) expect(value, `${id} ${key}`).toMatch(/^#[0-9a-f]{6}([0-9a-f]{2})?$/)
+    }
+  })
+
+  it('gives the frame around a terminal the theme’s ground and text', () => {
+    expect(terminalTokens('moss')).toEqual({ '--term-bg': '#151c19', '--term-fg': '#cdd7ce' })
+    expect(terminalTokens('nodus')).toEqual({ '--term-bg': '#1e1e20', '--term-fg': '#e6e6e6' })
   })
 })
 
