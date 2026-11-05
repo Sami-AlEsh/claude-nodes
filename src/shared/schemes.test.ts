@@ -158,7 +158,7 @@ describe('schemeCss', () => {
     expect(schemeCss({ darkScheme: 'nodus' })).toBe('')
   })
 
-  it('is a dark-mode block, and leaves light mode alone', () => {
+  it('puts the board’s tokens in a dark-mode block, so light mode’s board is left alone', () => {
     const css = schemeCss({ darkScheme: 'ink' })
     expect(css).toContain('@media (prefers-color-scheme: dark)')
     expect(css).not.toContain('prefers-color-scheme: light')
@@ -253,9 +253,21 @@ describe('terminalTheme', () => {
     }
   })
 
-  it('gives the frame around a terminal the theme’s ground and text', () => {
-    expect(terminalTokens('moss')).toEqual({ '--term-bg': '#151c19', '--term-fg': '#cdd7ce' })
-    expect(terminalTokens('nodus')).toEqual({ '--term-bg': '#1e1e20', '--term-fg': '#e6e6e6' })
+  it('gives the frame around a terminal the theme’s ground and text, and the preview its three colours', () => {
+    expect(terminalTokens('moss')).toEqual({
+      '--term-bg': '#151c19',
+      '--term-fg': '#cdd7ce',
+      '--term-black': '#435248',
+      '--term-blue': '#99b9cd',
+      '--term-green': '#a0c4a2'
+    })
+    expect(terminalTokens('nodus')).toEqual({
+      '--term-bg': '#1e1e20',
+      '--term-fg': '#e6e6e6',
+      '--term-black': '#3a3a3c',
+      '--term-blue': '#5aa9ff',
+      '--term-green': '#5fd068'
+    })
   })
 })
 

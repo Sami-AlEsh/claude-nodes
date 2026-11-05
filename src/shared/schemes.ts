@@ -217,10 +217,20 @@ export function terminalTheme(name: DarkScheme): TerminalTheme {
   return theme
 }
 
-/** The CSS tokens around a terminal (its padding, the session window's header): the theme's ground and text. */
+/**
+ * The CSS tokens around a terminal (its padding, the session window's header,
+ * the font preview in Settings): the theme's ground and text, and the three
+ * colours the preview's prompt segments use.
+ */
 export function terminalTokens(name: DarkScheme): Tokens {
   const theme = terminalTheme(name)
-  return { '--term-bg': theme.background, '--term-fg': theme.foreground }
+  return {
+    '--term-bg': theme.background,
+    '--term-fg': theme.foreground,
+    '--term-black': theme.black,
+    '--term-blue': theme.blue,
+    '--term-green': theme.green
+  }
 }
 
 const rgb = (color: string) => {
