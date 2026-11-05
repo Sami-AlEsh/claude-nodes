@@ -484,7 +484,7 @@ function TerminalSettings({
         <span className="settings-term-arrow is-path">{'\uE0B0'}</span>
         <span className="settings-term-seg is-branch">{'\uE0A0 main'}</span>
         <span className="settings-term-arrow is-branch">{'\uE0B0'}</span>
-        {' claude 0O 1lI {} => λ'}
+        {' claude'}
       </p>
       <p className="settings-hint">Changes every open terminal at once.</p>
     </fieldset>

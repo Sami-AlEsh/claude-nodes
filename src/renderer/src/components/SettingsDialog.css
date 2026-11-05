@@ -422,7 +422,7 @@
   outline-offset: 0;
 }
 .settings-select-size {
-  width: 88px;
+  width: 112px;
 }
 /* A line as a shell prompt draws it, in the terminal's own colours, so the symbols show in the picked font. */
 .settings-term-preview {
