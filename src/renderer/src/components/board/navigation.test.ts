@@ -4,7 +4,7 @@ import {
   MAX_ZOOM,
   MIN_ZOOM,
   ZOOM_STEP,
-  navigationProps,
+  mouseControls,
   isMouseWheel,
   shiftTracker,
   wheelReader,
@@ -29,8 +29,8 @@ const wheel = (notches: number, deltaY: number, shift = false): WheelSample =>
     ? { deltaX: deltaY, deltaY: 0, deltaMode: 0, wheelDeltaX: notches * 120, wheelDeltaY: 0 }
     : { deltaX: 0, deltaY, deltaMode: 0, wheelDeltaX: 0, wheelDeltaY: notches * 120 }
 
-describe('navigationProps', () => {
-  it('keeps today’s controls for the trackpad', () => {
+describe('mouseControls', () => {
+  it('keeps today’s controls with the keyboard', () => {
     const expected = {
       panOnScroll: true,
       zoomOnPinch: true,
@@ -40,12 +40,12 @@ describe('navigationProps', () => {
       selectionKeyCode: null,
       multiSelectionKeyCode: ['Meta', 'Shift']
     }
-    expect(navigationProps('trackpad', false)).toEqual(expected)
-    expect(navigationProps('trackpad', true)).toEqual(expected)
+    expect(mouseControls('withKeyboard', false)).toEqual(expected)
+    expect(mouseControls('withKeyboard', true)).toEqual(expected)
   })
 
-  it('pans with a left-drag for the mouse, and leaves scrolls and pinches to the trackpad', () => {
-    expect(navigationProps('mouse', false)).toEqual({
+  it('pans with a left-drag for the mouse alone, and leaves scrolls and pinches to the trackpad', () => {
+    expect(mouseControls('mouseOnly', false)).toEqual({
       panOnScroll: true,
       zoomOnPinch: true,
       selectionOnDrag: false,
@@ -58,7 +58,7 @@ describe('navigationProps', () => {
   })
 
   it('draws a selection box with ⇧ held, without making ⇧ a selection key that would catch cards', () => {
-    const shifted = navigationProps('mouse', true)
+    const shifted = mouseControls('mouseOnly', true)
     expect(shifted.selectionOnDrag).toBe(true)
     expect(shifted.panOnDrag).toEqual([1])
     expect(shifted.selectionKeyCode).toBeNull()
@@ -66,8 +66,8 @@ describe('navigationProps', () => {
   })
 
   it('gives React Flow the same objects each render', () => {
-    expect(navigationProps('mouse', false)).toBe(navigationProps('mouse', false))
-    expect(navigationProps('trackpad', false)).toBe(navigationProps('mouse', true))
+    expect(mouseControls('mouseOnly', false)).toBe(mouseControls('mouseOnly', false))
+    expect(mouseControls('withKeyboard', false)).toBe(mouseControls('mouseOnly', true))
   })
 })
 

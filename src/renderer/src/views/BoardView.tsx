@@ -129,7 +129,7 @@ import { BoardControls } from '@renderer/components/board/BoardControls'
 import {
   MAX_ZOOM,
   MIN_ZOOM,
-  navigationProps,
+  mouseControls,
   shiftTracker,
   wheelReader,
   wheelZoomFactor,
@@ -477,7 +477,7 @@ interface MenuState {
 }
 
 /**
- * Whether ⇧ is held, tracked only while `enabled` (Mouse mode, where ⇧-drag
+ * Whether ⇧ is held, tracked only while `enabled` (Mouse only, where ⇧-drag
  * on the canvas draws a selection box). The pointer says so too, which covers
  * a ⇧ pressed while a view's frame had the keyboard. It doesn't change while a
  * button is down (shiftTracker).
@@ -562,10 +562,10 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   const titleClickTimer = useRef<number | undefined>(undefined)
   const wrapperRef = useRef<HTMLDivElement>(null)
   /** Settings › Board › Controls: how the mouse pans, zooms and selects. */
-  const navigation = useApp((s) => s.settings?.navigation ?? 'trackpad')
-  const mouseMode = navigation === 'mouse'
-  const shiftHeld = useShiftHeld(mouseMode)
-  const controls = navigationProps(navigation, shiftHeld)
+  const mouseMode = useApp((s) => s.settings?.mouseMode ?? 'withKeyboard')
+  const mouseOnly = mouseMode === 'mouseOnly'
+  const shiftHeld = useShiftHeld(mouseOnly)
+  const controls = mouseControls(mouseMode, shiftHeld)
 
   const [renaming, setRenaming] = useState<string | null>(null)
   const renamingRef = useRef(renaming)
@@ -742,14 +742,14 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   }
   useEffect(() => () => window.clearTimeout(stackScrollTimer.current), [])
 
-  // Mouse mode: a mouse wheel zooms around the pointer, while a trackpad's
+  // Mouse only: a mouse wheel zooms around the pointer, while a trackpad's
   // scroll still pans and a pinch zooms. React Flow makes every wheel event
   // pan or every one zoom, so the pane (inside React Flow's renderer, which
   // listens for the wheel) takes a mouse wheel's events first. Whatever keeps
   // the wheel to itself does as before: a `nowheel` element, and an expanded
   // card's terminal, which stops the event before it gets here.
   useEffect(() => {
-    if (!mouseMode) return
+    if (!mouseOnly) return
     const pane = wrapperRef.current?.querySelector<HTMLElement>('.react-flow__pane')
     if (!pane) return
     const isMouse = wheelReader()
@@ -765,7 +765,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     }
     pane.addEventListener('wheel', onWheel, { passive: false })
     return () => pane.removeEventListener('wheel', onWheel)
-  }, [mouseMode, rf])
+  }, [mouseOnly, rf])
 
   // Clicking anywhere else on the board folds the results back into the stack.
   useEffect(() => {

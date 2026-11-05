@@ -1,18 +1,18 @@
-// How the pointer moves around the board, as picked in Settings › Board ›
-// Navigation. Trackpad: scroll pans, ⌘-scroll or a pinch zooms, and dragging
-// the canvas draws a selection box. Mouse: dragging the canvas pans, the
-// mouse wheel zooms and ⇧-drag draws the box, while a trackpad's two-finger
-// scroll and pinch work as before. Most of it is React Flow's props; the one
+// How the mouse moves around the board, as picked in Settings › Board ›
+// Mouse. Keyboard + mouse: scrolling pans, ⌘-scroll zooms, and dragging the
+// canvas draws a selection box. Mouse only: dragging the canvas pans, the
+// wheel zooms and ⇧-drag draws the box. A trackpad's two-finger scroll and
+// pinch work the same in both. Most of it is React Flow's props; the one
 // thing React Flow can't do is tell a mouse wheel from a trackpad scroll, so
 // the board does that here.
 import type { ReactFlowProps } from '@xyflow/react'
 import type { Point } from '@shared/geometry'
-import type { NavigationMode, Viewport } from '@shared/types'
+import type { MouseMode, Viewport } from '@shared/types'
 
 export const MIN_ZOOM = 0.1
 export const MAX_ZOOM = 2
 
-export type NavigationProps = Pick<
+export type MouseControlProps = Pick<
   ReactFlowProps,
   | 'panOnScroll'
   | 'zoomOnPinch'
@@ -25,7 +25,7 @@ export type NavigationProps = Pick<
 >
 
 // Constants, so React Flow sees the same arrays from one render to the next.
-const TRACKPAD: NavigationProps = {
+const WITH_KEYBOARD: MouseControlProps = {
   panOnScroll: true,
   zoomOnPinch: true,
   selectionOnDrag: true,
@@ -36,8 +36,8 @@ const TRACKPAD: NavigationProps = {
   multiSelectionKeyCode: ['Meta', 'Shift']
 }
 
-const MOUSE: NavigationProps = {
-  ...TRACKPAD,
+const MOUSE_ONLY: MouseControlProps = {
+  ...WITH_KEYBOARD,
   selectionOnDrag: false,
   panOnDrag: [0, 1],
   // A left press on the canvas now starts a pan, so a click that wobbles a
@@ -47,18 +47,18 @@ const MOUSE: NavigationProps = {
 }
 
 /**
- * The React Flow props for `mode`. In Mouse mode, holding ⇧ gives the canvas
- * Trackpad mode's left-drag, which draws a selection box. That's done here
+ * The React Flow props for `mode`. In Mouse only, holding ⇧ gives the canvas
+ * the keyboard mode's left-drag, which draws a selection box. That's done here
  * rather than with React Flow's `selectionKeyCode: 'Shift'`, which would also
  * start a box from a ⇧-press on a card, so ⇧-click could no longer add a card
  * to the selection, nor ⇧-drag move one.
  */
-export function navigationProps(mode: NavigationMode, shiftHeld: boolean): NavigationProps {
-  return mode === 'mouse' && !shiftHeld ? MOUSE : TRACKPAD
+export function mouseControls(mode: MouseMode, shiftHeld: boolean): MouseControlProps {
+  return mode === 'mouseOnly' && !shiftHeld ? MOUSE_ONLY : WITH_KEYBOARD
 }
 
 /**
- * Follows ⇧ for Mouse mode's selection box, calling `onChange` when the
+ * Follows ⇧ for the Mouse only selection box, calling `onChange` when the
  * board should swap its props. Never while a button is down: React Flow
  * finishes a press with the props it ends under, so swapping them mid-press
  * (⇧ let go before the button) would leave a selection box half-started, and

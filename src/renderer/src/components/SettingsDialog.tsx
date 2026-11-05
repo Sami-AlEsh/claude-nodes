@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
-import type { AppSettings, NavigationMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
+import type { AppSettings, MouseMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
-import { NavigationDemo } from './NavigationDemo'
+import { MouseDemo } from './MouseDemo'
 import { useUpdateStatus } from './UpdateButton'
 import './SettingsDialog.css'
 
@@ -15,17 +15,17 @@ const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'dark', label: 'Dark' }
 ]
 
-/** Settings › Board › Navigation, each with what it does under the choices. */
-const NAVIGATION_MODES: { value: NavigationMode; label: string; hint: string }[] = [
+/** Settings › Board › Mouse: what the demo above doesn't show of each choice. */
+const MOUSE_MODES: { value: MouseMode; label: string; hint: string }[] = [
   {
-    value: 'trackpad',
-    label: 'Trackpad',
-    hint: 'Space-drag or middle-drag pans too, and ⌘-scroll zooms.'
+    value: 'withKeyboard',
+    label: 'Keyboard + mouse',
+    hint: 'Scrolling the wheel pans, and middle-drag pans too.'
   },
   {
-    value: 'mouse',
-    label: 'Mouse',
-    hint: 'Trackpad gestures still work, and ⇧-click still adds a card to the selection.'
+    value: 'mouseOnly',
+    label: 'Mouse only',
+    hint: '⇧-click still adds a card to the selection, and Space-drag still pans.'
   }
 ]
 
@@ -127,29 +127,31 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
         <fieldset className="settings-group">
           <legend className="settings-label">Board</legend>
           <div className="settings-row-text">
-            <span className="settings-row-title" id="board-navigation-title">
-              Navigation
+            <span className="settings-row-title" id="board-mouse-title">
+              Mouse
             </span>
-            <span className="settings-row-hint">How you move around the board.</span>
+            <span className="settings-row-hint">
+              How the mouse moves around the board. The trackpad works the same either way.
+            </span>
           </div>
-          <NavigationDemo key={settings?.navigation ?? 'trackpad'} mode={settings?.navigation ?? 'trackpad'} />
-          <div className="settings-choices" role="radiogroup" aria-labelledby="board-navigation-title">
-            {NAVIGATION_MODES.map((c) => (
+          <MouseDemo key={settings?.mouseMode ?? 'withKeyboard'} mode={settings?.mouseMode ?? 'withKeyboard'} />
+          <div className="settings-choices" role="radiogroup" aria-labelledby="board-mouse-title">
+            {MOUSE_MODES.map((c) => (
               <label key={c.value} className="settings-choice">
                 <input
                   type="radio"
-                  name="navigation"
+                  name="mouseMode"
                   className="settings-choice-input"
-                  checked={(settings?.navigation ?? 'trackpad') === c.value}
+                  checked={(settings?.mouseMode ?? 'withKeyboard') === c.value}
                   disabled={!settings}
-                  onChange={() => update({ navigation: c.value })}
+                  onChange={() => update({ mouseMode: c.value })}
                 />
                 <span className="settings-choice-name">{c.label}</span>
               </label>
             ))}
           </div>
           <p className="settings-hint settings-choice-hint">
-            {NAVIGATION_MODES.find((c) => c.value === (settings?.navigation ?? 'trackpad'))?.hint}
+            {MOUSE_MODES.find((c) => c.value === (settings?.mouseMode ?? 'withKeyboard'))?.hint}
           </p>
         </fieldset>
 
