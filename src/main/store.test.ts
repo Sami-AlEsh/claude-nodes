@@ -15,4 +15,11 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ boardControls: 'mouse' }).boardControls).toBe('twoHands')
     expect(normalizeSettings({ boardControls: true }).boardControls).toBe('twoHands')
   })
+
+  it('hides the person’s own status line unless they turned it on', () => {
+    expect(normalizeSettings(null).showOwnStatusLine).toBe(false)
+    expect(normalizeSettings({}).showOwnStatusLine).toBe(false)
+    expect(normalizeSettings({ showOwnStatusLine: 'yes' }).showOwnStatusLine).toBe(false)
+    expect(normalizeSettings({ showOwnStatusLine: true }).showOwnStatusLine).toBe(true)
+  })
 })

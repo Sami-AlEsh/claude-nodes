@@ -368,21 +368,41 @@ export function hookEnv(sessionId: string): Record<string, string> {
 const settingsJson = new Map<boolean, string>()
 
 /**
- * A command posting its stdin to the host under `event`, and printing nothing.
- * curl reads the token from the config file, as anything on its command line
- * shows up in process listings. An older host only takes it in the URL.
+ * curl posting its stdin to the host under `event`, printing nothing. It reads
+ * the token from the config file, as anything on its command line shows up in
+ * process listings. An older host only takes it in the URL.
  */
-const postCommand = (event: string, viaConfig: boolean) =>
+const post = (event: string, viaConfig: boolean) =>
   `curl -s -m 2 -X POST -H 'Content-Type: application/json' --data-binary @- ` +
   (viaConfig
     ? `-K "$NODUS_HOOK_CONFIG" "http://127.0.0.1:$NODUS_PORT/hook?evt=${event}&sid=$NODUS_SESSION" `
     : `"http://127.0.0.1:$NODUS_PORT/hook?evt=${event}&sid=$NODUS_SESSION&token=$NODUS_TOKEN" `) +
-  `>/dev/null 2>&1; exit 0`
+  `>/dev/null 2>&1`
+
+/** A hook's command: posts its stdin and prints nothing. */
+const postCommand = (event: string, viaConfig: boolean) => `${post(event, viaConfig)}; exit 0`
+
+/**
+ * The status line's command. It posts its JSON like a hook. Then, for a
+ * session started with the person's own status line in NODUS_STATUS_LINE (see
+ * statusLine.ts), it runs that on the same JSON and prints what it prints.
+ * Without one it prints nothing and succeeds, and the terminal shows no status
+ * line.
+ *
+ * Their command gets the JSON exactly as Claude Code sent it, with its final
+ * newline, which a script reading it with `read` needs: `$(cat)` alone would
+ * drop it. It exits as their command does, so a failing one shows no line:
+ * Claude Code ignores what a failed status line printed. The post
+ * comes first, so their command can't stop it.
+ */
+const statusLineCommand = (viaConfig: boolean) =>
+  `p=$(cat; printf x); p=\${p%x}; printf '%s' "$p" | ${post(STATUS_LINE_EVENT, viaConfig)}; ` +
+  `[ -z "$NODUS_STATUS_LINE" ] && exit 0; printf '%s' "$p" | sh -c "$NODUS_STATUS_LINE"`
 
 /**
  * The `--settings` JSON registering our hooks and status line. Identical for
  * every process on a host. Flag settings outrank the user's, so their own
- * status line makes way for ours.
+ * status line makes way for ours, which runs theirs when they ask for it.
  */
 export function hookSettings(): string {
   const viaConfig = Boolean(endpoint.config)
@@ -393,8 +413,9 @@ export function hookSettings(): string {
     // Output must stay empty: UserPromptSubmit stdout is injected into Claude's context.
     hooks[event] = [{ hooks: [{ type: 'command', command: postCommand(event, viaConfig), timeout: 5 }] }]
   }
-  // With no output, the terminal shows no status line.
-  const statusLine = { type: 'command', command: postCommand(STATUS_LINE_EVENT, viaConfig), padding: 0 }
+  // No padding or refresh interval: Claude Code merges flag settings into the
+  // person's key by key, so theirs still apply to their line.
+  const statusLine = { type: 'command', command: statusLineCommand(viaConfig) }
   const json = JSON.stringify({ hooks, statusLine })
   settingsJson.set(viaConfig, json)
   return json
