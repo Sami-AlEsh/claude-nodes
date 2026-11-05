@@ -6,6 +6,7 @@ import {
   ZOOM_STEP,
   boardControls,
   isMouseWheel,
+  shiftTracker,
   wheelReader,
   wheelZoomFactor,
   zoomAround,
@@ -51,7 +52,8 @@ describe('boardControls', () => {
       panOnDrag: [0, 1],
       panActivationKeyCode: 'Space',
       selectionKeyCode: null,
-      multiSelectionKeyCode: ['Meta', 'Shift']
+      multiSelectionKeyCode: ['Meta', 'Shift'],
+      paneClickDistance: 4
     })
   })
 
@@ -99,6 +101,66 @@ describe('isMouseWheel', () => {
 
   it('reads a scroll by lines as a mouse', () => {
     expect(isMouseWheel({ deltaX: 0, deltaY: 3, deltaMode: 1 })).toBe(true)
+  })
+})
+
+describe('isMouseWheel with the window zoomed', () => {
+  // Chromium divides both fields by the page zoom: at 110% a notch reads −109.
+  const zoomed = (e: WheelSample, zoom: number): WheelSample => ({
+    ...e,
+    deltaY: e.deltaY / zoom,
+    wheelDeltaY: Math.trunc((e.wheelDeltaY ?? 0) / zoom)
+  })
+
+  it('still reads a notch as a mouse wheel, and zooms a notch’s worth', () => {
+    for (const zoom of [0.9, 1.1, 1.25, 1.5, 2]) {
+      expect(isMouseWheel(zoomed(wheel(-1, 4.000244140625), zoom), zoom), String(zoom)).toBe(true)
+      expect(isMouseWheel(zoomed(wheel(2, -30), zoom), zoom), String(zoom)).toBe(true)
+      expect(wheelZoomFactor(zoomed(wheel(1, -4), zoom), zoom), String(zoom)).toBeCloseTo(ZOOM_STEP)
+    }
+  })
+
+  it('still reads a trackpad as a trackpad, a notch-sized delta included', () => {
+    for (const zoom of [0.9, 1.1, 1.25, 1.5, 2]) {
+      for (const d of [7, -2, 40, -80]) expect(isMouseWheel(zoomed(trackpad(d), zoom), zoom), `${zoom} ${d}`).toBe(false)
+    }
+  })
+})
+
+describe('shiftTracker', () => {
+  const track = () => {
+    const changes: boolean[] = []
+    return { shift: shiftTracker((held) => changes.push(held)), changes }
+  }
+
+  it('follows ⇧ from the keyboard and the pointer', () => {
+    const { shift, changes } = track()
+    shift.key({ shiftKey: true })
+    shift.key({ shiftKey: false })
+    shift.pointer({ shiftKey: true, buttons: 0 })
+    shift.pointer({ shiftKey: true, buttons: 0 })
+    shift.blur()
+    expect(changes).toEqual([true, false, true, false])
+  })
+
+  it('waits for the button to come up before swapping, so a press ends with the props it began with', () => {
+    const { shift, changes } = track()
+    shift.key({ shiftKey: true })
+    shift.pointer({ shiftKey: true, buttons: 1 })
+    shift.key({ shiftKey: false })
+    shift.pointer({ shiftKey: false, buttons: 1 })
+    expect(changes).toEqual([true])
+    shift.pointer({ shiftKey: false, buttons: 0 })
+    expect(changes).toEqual([true, false])
+  })
+
+  it('doesn’t start a box from ⇧ pressed mid-pan', () => {
+    const { shift, changes } = track()
+    shift.pointer({ shiftKey: false, buttons: 1 })
+    shift.key({ shiftKey: true })
+    expect(changes).toEqual([])
+    shift.pointer({ shiftKey: true, buttons: 0 })
+    expect(changes).toEqual([true])
   })
 })
 

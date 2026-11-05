@@ -130,6 +130,7 @@ import {
   MAX_ZOOM,
   MIN_ZOOM,
   boardControls,
+  shiftTracker,
   wheelReader,
   wheelZoomFactor,
   zoomAround
@@ -478,28 +479,31 @@ interface MenuState {
 /**
  * Whether ⇧ is held, tracked only while `enabled` (One hand mode, where ⇧-drag
  * on the canvas draws a selection box). The pointer says so too, which covers
- * a ⇧ pressed while a view's frame had the keyboard.
+ * a ⇧ pressed while a view's frame had the keyboard. It doesn't change while a
+ * button is down (shiftTracker).
  */
 function useShiftHeld(enabled: boolean): boolean {
   const [held, setHeld] = useState(false)
   useEffect(() => {
     if (!enabled) return
-    let current = false
-    const set = (shift: boolean) => {
-      if (shift === current) return
-      current = shift
-      setHeld(shift)
-    }
-    const onInput = (e: KeyboardEvent | PointerEvent) => set(e.shiftKey)
-    const onBlur = () => set(false)
-    window.addEventListener('keydown', onInput, true)
-    window.addEventListener('keyup', onInput, true)
-    window.addEventListener('pointermove', onInput, true)
+    const shift = shiftTracker(setHeld)
+    const onKey = (e: KeyboardEvent) => shift.key(e)
+    const onPointer = (e: PointerEvent) => shift.pointer(e)
+    const onBlur = () => shift.blur()
+    const keys = ['keydown', 'keyup'] as const
+    const presses = ['pointerdown', 'pointermove'] as const
+    // A release is read after the board has handled it, bubbling up to the
+    // window last: React re-renders between listeners, and React Flow must
+    // end the press with the props it started with.
+    const releases = ['pointerup', 'pointercancel'] as const
+    for (const type of keys) window.addEventListener(type, onKey, true)
+    for (const type of presses) window.addEventListener(type, onPointer, true)
+    for (const type of releases) window.addEventListener(type, onPointer)
     window.addEventListener('blur', onBlur)
     return () => {
-      window.removeEventListener('keydown', onInput, true)
-      window.removeEventListener('keyup', onInput, true)
-      window.removeEventListener('pointermove', onInput, true)
+      for (const type of keys) window.removeEventListener(type, onKey, true)
+      for (const type of presses) window.removeEventListener(type, onPointer, true)
+      for (const type of releases) window.removeEventListener(type, onPointer)
       window.removeEventListener('blur', onBlur)
       setHeld(false)
     }
@@ -752,11 +756,12 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) return
       if (e.target instanceof Element && e.target.closest('.nowheel')) return
-      if (!isMouse(e, e.timeStamp)) return
+      const pageZoom = window.api.pageZoom()
+      if (!isMouse(e, e.timeStamp, pageZoom)) return
       e.preventDefault()
       e.stopPropagation()
       const at = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
-      void rf.setViewport(zoomAround(rf.getViewport(), at, wheelZoomFactor(e)))
+      void rf.setViewport(zoomAround(rf.getViewport(), at, wheelZoomFactor(e, pageZoom)))
     }
     pane.addEventListener('wheel', onWheel, { passive: false })
     return () => pane.removeEventListener('wheel', onWheel)

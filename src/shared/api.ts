@@ -156,6 +156,8 @@ export interface Api {
   takeOpenRequest(): Promise<OpenCardRequest | null>
   /** Absolute path of a File from a drag-and-drop event ('' if it has none). */
   pathForFile(file: File): string
+  /** The window's zoom from View › Zoom In and Out, 1 at actual size. */
+  pageZoom(): number
 
   settings: {
     get(): Promise<AppSettings>
