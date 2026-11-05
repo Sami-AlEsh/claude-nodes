@@ -15,6 +15,7 @@ import type {
   Rect,
   Viewport
 } from '@shared/types'
+import { normalizeSchemes } from '@shared/schemes'
 
 /** Six 288px card columns with 24px gaps and 40px side padding. */
 const DEFAULT_ARCHIVE_W = 2 * 40 + 6 * 288 + 5 * 24
@@ -32,7 +33,8 @@ export function normalizeSettings(raw: unknown): AppSettings {
     pinProjectRail: s.pinProjectRail === true,
     focusFeature: s.focusFeature === true,
     focusMode: s.focusMode === true,
-    showOwnStatusLine: s.showOwnStatusLine === true
+    showOwnStatusLine: s.showOwnStatusLine === true,
+    ...normalizeSchemes(s)
   }
 }
 

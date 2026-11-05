@@ -49,6 +49,7 @@ export const IPC = {
 
   settingsGet: 'settings:get',
   settingsUpdate: 'settings:update',
+  settingsGetSync: 'settings:get-sync',
 
   projectsList: 'projects:list',
   projectsAdd: 'projects:add',
@@ -161,6 +162,11 @@ export interface Api {
     get(): Promise<AppSettings>
     /** Saves and applies the changed settings; resolves with the full settings. */
     update(patch: Partial<AppSettings>): Promise<AppSettings>
+    /**
+     * The settings, synchronously, which blocks the window until the main
+     * process answers. Only for the first paint, which can't wait (main.tsx).
+     */
+    getSync(): AppSettings
   }
 
   projects: {

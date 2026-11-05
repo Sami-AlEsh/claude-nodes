@@ -16,7 +16,8 @@ const api: Api = {
 
   settings: {
     get: () => ipcRenderer.invoke(IPC.settingsGet),
-    update: (patch) => ipcRenderer.invoke(IPC.settingsUpdate, patch)
+    update: (patch) => ipcRenderer.invoke(IPC.settingsUpdate, patch),
+    getSync: () => ipcRenderer.sendSync(IPC.settingsGetSync)
   },
 
   projects: {

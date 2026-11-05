@@ -32,6 +32,7 @@ import type {
   Viewport
 } from '@shared/types'
 import { FOLDER_COLORS } from '@shared/types'
+import { windowColor } from '@shared/schemes'
 import { draftAction, normalizeAction, runArgs } from './actions'
 import { hasPendingWork, readAgents } from './agents'
 import {
@@ -126,6 +127,11 @@ function applySettings(settings: AppSettings) {
   notify.updateBadge()
   syncFocusMenu(settings)
   setShowOwnStatusLine(settings.showOwnStatusLine)
+}
+
+/** The window's own background: --bg-window in the colour scheme showing now, so resizing or reloading never flashes another colour. */
+export function windowBackground() {
+  return windowColor(getState().settings, nativeTheme.shouldUseDarkColors)
 }
 
 /**
@@ -245,11 +251,16 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
   ipcMain.handle(IPC.appTakeOpenRequest, () => notify.takeOpenRequest())
 
   ipcMain.handle(IPC.settingsGet, (): AppSettings => getState().settings)
+  ipcMain.on(IPC.settingsGetSync, (e) => {
+    e.returnValue = getState().settings
+  })
 
   ipcMain.handle(IPC.settingsUpdate, (_e, patch: Partial<AppSettings>): AppSettings => {
     const state = getState()
     state.settings = normalizeSettings({ ...state.settings, ...patch })
     applySettings(state.settings)
+    // nativeTheme only says when the mode changes, not the colour scheme.
+    getWindow()?.setBackgroundColor(windowBackground())
     save()
     if (patch.autoUpdate) void updater.check()
     return state.settings

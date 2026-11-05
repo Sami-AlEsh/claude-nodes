@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
 import type { AppSettings, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
+import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
 import { useUpdateStatus } from './UpdateButton'
@@ -78,12 +79,20 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
                   disabled={!settings}
                   onChange={() => update({ theme: t.value })}
                 />
-                <ThemePreview theme={t.value} />
+                <ThemePreview theme={t.value} settings={settings} />
                 <span className="settings-theme-name">{t.label}</span>
               </label>
             ))}
           </div>
           <p className="settings-hint">System follows the appearance set in macOS.</p>
+          <SchemeRow
+            label="Dark colours"
+            name="darkScheme"
+            options={DARK_SCHEMES.map((s) => ({ ...s, tile: schemeTile(s.id) }))}
+            value={settings?.darkScheme}
+            disabled={!settings}
+            onPick={(darkScheme) => update({ darkScheme })}
+          />
           <label className="settings-row">
             <span className="settings-row-text">
               <span className="settings-row-title">Always show the project sidebar</span>
@@ -361,19 +370,87 @@ function trapTab(e: KeyboardEvent<HTMLElement>, panel: HTMLElement) {
   }
 }
 
+/**
+ * A row of colour schemes for one mode, as tiles: each in the scheme's ground,
+ * with a bar of its text colour and five of its colours.
+ */
+function SchemeRow<T extends string>({
+  label,
+  name,
+  options,
+  value,
+  disabled,
+  onPick
+}: {
+  label: string
+  name: string
+  options: { id: T; name: string; tile: SchemeTile }[]
+  value: T | undefined
+  disabled: boolean
+  onPick: (id: T) => void
+}) {
+  return (
+    <div className="settings-schemes" role="radiogroup" aria-label={label}>
+      <span className="settings-schemes-label" aria-hidden="true">
+        {label}
+      </span>
+      <div className="settings-scheme-tiles">
+        {options.map((o) => (
+          <label key={o.id} className="settings-theme settings-scheme">
+            <input
+              type="radio"
+              name={name}
+              className="settings-theme-input"
+              value={o.id}
+              checked={value === o.id}
+              disabled={disabled}
+              onChange={() => onPick(o.id)}
+            />
+            <span className="settings-preview scheme-tile" style={{ background: o.tile.background }} aria-hidden="true">
+              <span className="scheme-tile-text" style={{ background: o.tile.text }} />
+              <span className="scheme-tile-dots">
+                {o.tile.dots.map((color, i) => (
+                  <span key={i} className="scheme-tile-dot" style={{ background: color }} />
+                ))}
+              </span>
+              <Check className="scheme-tile-check" size={11} strokeWidth={3} style={{ color: o.tile.text }} />
+            </span>
+            <span className="settings-theme-name">{o.name}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /** A miniature board window in the theme's colours; System shows both, split diagonally. */
-function ThemePreview({ theme }: { theme: ThemePreference }) {
+function ThemePreview({ theme, settings }: { theme: ThemePreference; settings: AppSettings | null }) {
   return (
     <span className="settings-preview" aria-hidden="true">
       {theme !== 'dark' && <MiniWindow tone="light" />}
-      {theme !== 'light' && <MiniWindow tone="dark" split={theme === 'system'} />}
+      {theme !== 'light' && <MiniWindow tone="dark" scheme={settings?.darkScheme} split={theme === 'system'} />}
     </span>
   )
 }
 
-function MiniWindow({ tone, split }: { tone: 'light' | 'dark'; split?: boolean }) {
+/** The dark preview in the colour scheme. Nodus's own colours are the stylesheet's. */
+function schemeChrome(scheme: AppSettings['darkScheme'] | undefined) {
+  if (!scheme || scheme === 'nodus') return undefined
+  const c = schemeColors(scheme)
+  return { '--mw-canvas': c.board, '--mw-bar': c.toolbar, '--mw-card': c.cards } as CSSProperties
+}
+
+function MiniWindow({
+  tone,
+  scheme,
+  split
+}: {
+  tone: Mode
+  scheme?: AppSettings['darkScheme']
+  split?: boolean
+}) {
   return (
-    <span className={clsx('mini-window', `is-${tone}`, split && 'is-split')}>
+    <span className={clsx('mini-window', `is-${tone}`, split && 'is-split')} style={schemeChrome(scheme)}>
       <span className="mini-bar">
         <span className="mini-light" />
         <span className="mini-light" />

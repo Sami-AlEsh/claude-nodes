@@ -11,6 +11,8 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.test.ts'],
-    environment: 'node'
+    environment: 'node',
+    // Vitest empties stylesheets, even imported ?raw. tokens.test.ts reads this one.
+    css: { include: [/styles\/tokens\.css/] }
   }
 })

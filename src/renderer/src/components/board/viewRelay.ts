@@ -48,6 +48,19 @@ export function broadcast(event: string, payload?: unknown, except?: string) {
   }
 }
 
+/** The colours pages show now (viewCss in schemes.ts), or undefined until the board sets them. */
+let theme: string | undefined
+
+/**
+ * Gives every open page new colours. A page still loading misses the
+ * broadcast and may have been served the old ones, so each page gets them
+ * again once it says it has loaded.
+ */
+export function setViewTheme(css: string) {
+  theme = css
+  broadcast('theme', css)
+}
+
 interface PageWheel {
   dx: number
   dy: number
@@ -149,6 +162,7 @@ window.addEventListener('message', (e: MessageEvent) => {
     return
   }
   if (msg.loaded) {
+    if (theme) win.postMessage({ nodus: 1, event: 'theme', payload: theme }, '*')
     window.api.views.report(frame.projectId, frame.viewId, { loaded: frame.version })
     return
   }

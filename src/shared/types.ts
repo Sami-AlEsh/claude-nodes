@@ -511,6 +511,9 @@ export interface AppInfo {
 /** 'system' follows the macOS appearance; the others pin the app to it. */
 export type ThemePreference = 'system' | 'light' | 'dark'
 
+/** Colour schemes for dark mode (schemes.ts). 'nodus' is the look of tokens.css. */
+export type DarkScheme = 'nodus' | 'graphite' | 'ink' | 'moss' | 'atom-one-dark'
+
 /** App-wide preferences, persisted with the rest of the state. */
 export interface AppSettings {
   theme: ThemePreference
@@ -528,6 +531,8 @@ export interface AppSettings {
   focusMode: boolean
   /** Sessions show the person's own Claude Code status line too. Applies to sessions started or resumed after. */
   showOwnStatusLine: boolean
+  /** The colours while the app is dark. Light mode keeps Nodus's own, and status colours and terminals never change. */
+  darkScheme: DarkScheme
 }
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */

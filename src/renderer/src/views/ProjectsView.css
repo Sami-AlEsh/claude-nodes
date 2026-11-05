@@ -440,7 +440,8 @@
 .pv-btn-danger {
   background: var(--status-waiting);
   border-color: transparent;
-  color: var(--text-on-accent);
+  /* White, like .btn-danger: status colours never change, and the text on them shouldn't either. */
+  color: #fff;
 }
 .pv-btn-danger:hover {
   background: color-mix(in srgb, var(--status-waiting) 88%, black);
