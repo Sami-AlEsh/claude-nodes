@@ -511,9 +511,8 @@ export interface AppInfo {
 /** 'system' follows the macOS appearance; the others pin the app to it. */
 export type ThemePreference = 'system' | 'light' | 'dark'
 
-/** Colour schemes (schemes.ts): the ones for dark mode, and for light. 'nodus' is the look of tokens.css. */
+/** Colour schemes for dark mode (schemes.ts). 'nodus' is the look of tokens.css. */
 export type DarkScheme = 'nodus' | 'graphite' | 'ink' | 'moss' | 'atom-one-dark'
-export type LightScheme = 'nodus' | 'paper'
 
 /** App-wide preferences, persisted with the rest of the state. */
 export interface AppSettings {
@@ -530,10 +529,8 @@ export interface AppSettings {
   focusFeature: boolean
   /** The title bar's Focus switch: show only the projects in focus, in the grid and the rail. */
   focusMode: boolean
-  /** The colours while the app is dark. Status colours and terminals never change with it. */
+  /** The colours while the app is dark. Light mode keeps Nodus's own, and status colours and terminals never change. */
   darkScheme: DarkScheme
-  /** The colours while the app is light. */
-  lightScheme: LightScheme
 }
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */

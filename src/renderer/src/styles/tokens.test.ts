@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { schemeTokens } from '@shared/schemes'
+import { NODUS_SCHEMES, schemeTokens, windowColor } from '@shared/schemes'
 import css from './tokens.css?raw'
 
 /** The custom properties a block of tokens.css sets. */
@@ -15,8 +15,12 @@ const light = declarations(css.slice(0, darkAt))
 const dark = { ...light, ...declarations(css.slice(darkAt)) }
 
 describe('tokens.css and the Nodus colour scheme', () => {
-  it('agree on every token a scheme sets, in both modes', () => {
-    for (const [name, value] of Object.entries(schemeTokens('light', 'nodus'))) expect(light[name], name).toBe(value)
-    for (const [name, value] of Object.entries(schemeTokens('dark', 'nodus'))) expect(dark[name], name).toBe(value)
+  it('agree on every dark token a scheme sets', () => {
+    for (const [name, value] of Object.entries(schemeTokens('nodus'))) expect(dark[name], name).toBe(value)
+  })
+
+  it('agree on the window’s colour in both modes', () => {
+    expect(windowColor(NODUS_SCHEMES, false)).toBe(light['--bg-window'])
+    expect(windowColor(NODUS_SCHEMES, true)).toBe(dark['--bg-window'])
   })
 })

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } f
 import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
 import type { AppSettings, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
-import { DARK_SCHEMES, LIGHT_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
+import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
 import { useUpdateStatus } from './UpdateButton'
@@ -88,18 +88,10 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
           <SchemeRow
             label="Dark colours"
             name="darkScheme"
-            options={DARK_SCHEMES.map((s) => ({ ...s, tile: schemeTile('dark', s.id) }))}
+            options={DARK_SCHEMES.map((s) => ({ ...s, tile: schemeTile(s.id) }))}
             value={settings?.darkScheme}
             disabled={!settings}
             onPick={(darkScheme) => update({ darkScheme })}
-          />
-          <SchemeRow
-            label="Light colours"
-            name="lightScheme"
-            options={LIGHT_SCHEMES.map((s) => ({ ...s, tile: schemeTile('light', s.id) }))}
-            value={settings?.lightScheme}
-            disabled={!settings}
-            onPick={(lightScheme) => update({ lightScheme })}
           />
           <label className="settings-row">
             <span className="settings-row-text">
@@ -414,16 +406,16 @@ function SchemeRow<T extends string>({
 function ThemePreview({ theme, settings }: { theme: ThemePreference; settings: AppSettings | null }) {
   return (
     <span className="settings-preview" aria-hidden="true">
-      {theme !== 'dark' && <MiniWindow tone="light" scheme={settings?.lightScheme} />}
+      {theme !== 'dark' && <MiniWindow tone="light" />}
       {theme !== 'light' && <MiniWindow tone="dark" scheme={settings?.darkScheme} split={theme === 'system'} />}
     </span>
   )
 }
 
-/** The preview in the mode's colour scheme. Nodus's own colours are the stylesheet's. */
-function schemeChrome(tone: Mode, scheme: AppSettings['darkScheme' | 'lightScheme'] | undefined) {
+/** The dark preview in the colour scheme. Nodus's own colours are the stylesheet's. */
+function schemeChrome(scheme: AppSettings['darkScheme'] | undefined) {
   if (!scheme || scheme === 'nodus') return undefined
-  const c = schemeColors(tone, scheme)
+  const c = schemeColors(scheme)
   return { '--mw-canvas': c.board, '--mw-bar': c.toolbar, '--mw-card': c.cards } as CSSProperties
 }
 
@@ -433,11 +425,11 @@ function MiniWindow({
   split
 }: {
   tone: Mode
-  scheme?: AppSettings['darkScheme' | 'lightScheme']
+  scheme?: AppSettings['darkScheme']
   split?: boolean
 }) {
   return (
-    <span className={clsx('mini-window', `is-${tone}`, split && 'is-split')} style={schemeChrome(tone, scheme)}>
+    <span className={clsx('mini-window', `is-${tone}`, split && 'is-split')} style={schemeChrome(scheme)}>
       <span className="mini-bar">
         <span className="mini-light" />
         <span className="mini-light" />

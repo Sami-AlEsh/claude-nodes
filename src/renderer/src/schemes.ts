@@ -7,9 +7,8 @@ import { useApp } from './store'
 let shown = ''
 
 function show(schemes: Schemes) {
-  const key = `${schemes.darkScheme}/${schemes.lightScheme}`
-  if (key === shown) return
-  shown = key
+  if (schemes.darkScheme === shown) return
+  shown = schemes.darkScheme
   let style = document.getElementById('color-schemes')
   if (!style) {
     style = document.createElement('style')

@@ -159,13 +159,13 @@ Settings shows the version you're on and how the update is going. **Check Now**,
 
 ## Colours
 
-Settings › Appearance has two rows of colour schemes under System, Light and Dark. **Dark colours** are what Nodus uses while it's dark: **Nodus** (its own greys, the default), **Graphite**, **Ink**, **Moss** or **Atom One Dark**. **Light colours** are for while it's light: **Nodus** or **Paper**. Picking one recolours the window at once (the board, cards, title bar, project rail, archive, menus, dialogs and views), and the next launch opens in it. System, Light and Dark keep deciding which of the two shows.
+Settings › Appearance has a row of colour schemes under System, Light and Dark. **Dark colours** are what Nodus uses while it's dark: **Nodus** (its own greys, the default), **Graphite**, **Ink**, **Moss** or **Atom One Dark**. Picking one recolours the window at once (the board, cards, title bar, project rail, archive, menus, dialogs and views), and the next launch opens in it. System, Light and Dark still decide when Nodus is dark. While it's light, it keeps its own colours.
 
 The schemes are herdr-app's, with the colours around the cards derived from each palette by herdr's own rule. Two things never change with the scheme: the status colours (🟠 working, 🔴 needs you, 🔵 done), and the terminals, which keep their own dark colours in every scheme. A view's page gets the scheme's colours through its `--nodus-*` variables, and a view already open on the board takes the new ones in place, without reloading.
 
 ## Your data
 
-Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme and colour schemes, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
+Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme and dark colour scheme, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
 The session host keeps its socket and log in the `host` folder next to it. Only your user can open the folder, which matters because anything that can connect to the socket can start processes as you.
 
 ## Shortcuts
@@ -174,7 +174,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | --- | --- | --- |
 | Anywhere | Add a project | ⌘⇧N |
 | | Show only the projects in focus, or all (once focus is on in Settings) | ⌘⇧F · the title bar's Focus switch |
-| | Settings (theme: System, Light or Dark, and the colours for each) | ⌘, |
+| | Settings (theme: System, Light or Dark, and the dark colours) | ⌘, |
 | | Quit and stop every session | ⌥⌘Q |
 | | Close the modal, or go back to projects | ⌘W |
 | Projects | Open the selected project | Double-click · ⌘O · ⌘↓ |

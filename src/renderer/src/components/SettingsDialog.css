@@ -291,7 +291,7 @@
   width: 60%;
 }
 
-/* Colour schemes: a row of tiles per mode, five to a row so both rows line up. */
+/* Colour schemes for dark mode: a row of five tiles. */
 .settings-schemes {
   margin-top: 18px;
 }
