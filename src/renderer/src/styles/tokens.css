@@ -42,6 +42,8 @@
   /* Accent (macOS system blue) */
   --accent: #007aff;
   --accent-hover: #0068d9;
+  /* Where the accent's gradient ends, on icon badges */
+  --accent-gradient-to: #5e5ce6;
   --focus-ring: rgba(0, 122, 255, 0.5);
 
   /* Session status */

@@ -5,6 +5,8 @@
 // can't reach the board's window either; nodus posts messages to it, and the
 // board answers them for this view alone (viewRelay.ts in the renderer).
 
+import { NODUS_SCHEMES, viewCss, type Schemes } from '@shared/schemes'
+
 /** The scheme views are served on: nodus-view://<view id>/. */
 export const VIEW_SCHEME = 'nodus-view'
 
@@ -34,7 +36,7 @@ export const VIEW_GUIDE = `How a view works:
 - Fresh data comes two ways:
   1. Commands, for anything a CLI or curl can fetch. Declare them with update_view's commands. Each runs in the project folder with the user's shell environment (their PATH, their CLIs, and env vars such as API tokens), and the page gets its output to parse. The user allows each command line once on the card before it can run. The page runs one with nodus.run(name), or give it every (minutes) to run on a schedule while the app is open. Commands cost no tokens, so prefer them, and make their output easy to parse (JSON flags, --format options, jq). Try a command yourself before declaring it.
   2. You, for what needs your tools (MCP servers such as Linear or Sentry) or judgment. Set refresh to be asked to update the view every so often (each refresh costs tokens; at least every 10 minutes), and the page can ask you with nodus.ask(prompt). Fetch what's needed, then send it with update_view's data.
-- The card starts 480×360 and the user resizes it, so keep the layout fluid and readable at that size. Use the board's colours, which follow light and dark mode: var(--nodus-bg), --nodus-surface, --nodus-hover, --nodus-text, --nodus-text-2, --nodus-text-3, --nodus-border, --nodus-accent, --nodus-green, --nodus-red, --nodus-orange, --nodus-yellow, --nodus-purple, and the fonts --nodus-font and --nodus-mono. The body is 13px on var(--nodus-bg) with no margin, so add your own padding. Show when the data is from, and a clear state while there's no data yet or when a command failed.
+- The card starts 480×360 and the user resizes it, so keep the layout fluid and readable at that size. Use the board's colours, which follow light and dark mode and the colour scheme picked in Settings: var(--nodus-bg), --nodus-surface, --nodus-hover, --nodus-text, --nodus-text-2, --nodus-text-3, --nodus-border, --nodus-accent, --nodus-green, --nodus-red, --nodus-orange, --nodus-yellow, --nodus-purple, and the fonts --nodus-font and --nodus-mono. The body is 13px on var(--nodus-bg) with no margin, so add your own padding. Show when the data is from, and a clear state while there's no data yet or when a command failed.
 - The page's JavaScript API is window.nodus:
   nodus.on('data', fn): calls fn with nodus.data once the page has loaded, and again whenever new data is sent.
   nodus.run(name): runs one of the view's commands, and resolves to { name, code, stdout, stderr, at, error }. nodus.results[name] holds each command's last result, and nodus.on('result', fn) gets every new one, scheduled runs included.
@@ -56,42 +58,16 @@ export interface ViewBoot {
   results?: Record<string, unknown>
 }
 
-/** The board's colours (tokens.css), light then dark. A view sits on a card, so its ground is the card's. */
-const THEME = `
+/**
+ * What every page gets besides its colours: the board's fonts, and its body
+ * on the card's ground. The colours (viewCss in schemes.ts) go in a style of
+ * their own, which the bridge swaps when the colour scheme changes.
+ */
+const BASE = `
 :root {
   color-scheme: light dark;
-  --nodus-bg: #ffffff;
-  --nodus-surface: rgba(0, 0, 0, 0.035);
-  --nodus-hover: rgba(0, 0, 0, 0.05);
-  --nodus-text: rgba(0, 0, 0, 0.88);
-  --nodus-text-2: rgba(0, 0, 0, 0.56);
-  --nodus-text-3: rgba(0, 0, 0, 0.36);
-  --nodus-border: rgba(0, 0, 0, 0.1);
-  --nodus-accent: #007aff;
-  --nodus-green: #2da44e;
-  --nodus-red: #cf222e;
-  --nodus-orange: #ff9500;
-  --nodus-yellow: #d4a72c;
-  --nodus-purple: #8250df;
   --nodus-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --nodus-mono: 'SF Mono', ui-monospace, Menlo, Monaco, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --nodus-bg: #2a2a2d;
-    --nodus-surface: rgba(255, 255, 255, 0.04);
-    --nodus-hover: rgba(255, 255, 255, 0.07);
-    --nodus-text: rgba(255, 255, 255, 0.9);
-    --nodus-text-2: rgba(255, 255, 255, 0.58);
-    --nodus-text-3: rgba(255, 255, 255, 0.36);
-    --nodus-border: rgba(255, 255, 255, 0.1);
-    --nodus-accent: #0a84ff;
-    --nodus-green: #3fb950;
-    --nodus-red: #f85149;
-    --nodus-orange: #ff9f0a;
-    --nodus-yellow: #e3b341;
-    --nodus-purple: #a371f7;
-  }
 }
 :where(html, body) {
   margin: 0;
@@ -113,6 +89,8 @@ const THEME = `
 const BRIDGE = `
 (function () {
   var boot = __BOOT__;
+  // The page's own markup comes after this script, so this is the board's.
+  var colors = document.getElementById('nodus-colors');
   var seq = 0, pending = {}, listeners = {};
   var current = { data: boot.data, state: boot.state, results: boot.results || {} };
   function post(msg) { msg.nodus = 1; parent.postMessage(msg, '*'); }
@@ -140,6 +118,11 @@ const BRIDGE = `
     if (e.source !== parent) return;
     var m = e.data;
     if (!m || m.nodus !== 1) return;
+    // A new colour scheme, picked in Settings: the board's colours, swapped in place.
+    if (m.event === 'theme') {
+      if (colors && typeof m.payload === 'string') colors.textContent = m.payload;
+      return;
+    }
     if (m.id) {
       var p = pending[m.id];
       if (!p) return;
@@ -256,14 +239,16 @@ export function scriptJson(value: unknown): string {
 /**
  * The page as served: what every view gets, at the top of its <head>, then
  * the HTML Claude wrote. Put in front of the doctype it would switch the page
- * into quirks mode, so it goes after it.
+ * into quirks mode, so it goes after it. Its colours are the board's in
+ * `schemes`.
  */
-export function buildViewPage(html: string, boot: ViewBoot): string {
+export function buildViewPage(html: string, boot: ViewBoot, schemes: Schemes = NODUS_SCHEMES): string {
   const injected =
     `<meta charset="utf-8">` +
     `<meta http-equiv="Content-Security-Policy" content="${VIEW_CSP}">` +
     `<meta name="viewport" content="width=device-width, initial-scale=1">` +
-    `<style>${THEME}</style>` +
+    `<style id="nodus-colors">${viewCss(schemes)}</style>` +
+    `<style>${BASE}</style>` +
     `<script>${BRIDGE.replace('__BOOT__', () => scriptJson(boot))}</script>`
   const insertAfter = (match: RegExpMatchArray, text: string) =>
     html.slice(0, match.index! + match[0].length) + text + html.slice(match.index! + match[0].length)

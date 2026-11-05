@@ -310,7 +310,7 @@ export function servePage(url: string): Response {
     data: rt.data,
     state: rt.state,
     results: rt.results
-  })
+  }, getState().settings)
   return new Response(page, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',

@@ -1,14 +1,11 @@
 import { app, BrowserWindow, nativeTheme, protocol, shell } from 'electron'
 import { join } from 'path'
 import { pathToFileURL } from 'url'
-import { registerIpc, shutdown } from './ipc'
+import { registerIpc, shutdown, windowBackground } from './ipc'
 import { VIEW_SCHEME } from './viewPage'
 import { servePage } from './views'
 
 let mainWindow: BrowserWindow | null = null
-
-/** Matches --bg-window, so resizing or reloading never flashes the other theme. */
-const windowBackground = () => (nativeTheme.shouldUseDarkColors ? '#1e1e20' : '#f5f5f4')
 
 const rendererUrl =
   process.env.ELECTRON_RENDERER_URL ?? pathToFileURL(join(__dirname, '../renderer/index.html')).href
