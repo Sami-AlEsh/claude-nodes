@@ -87,7 +87,7 @@ const PALETTES: Record<Exclude<DarkScheme | LightScheme, 'nodus'>, Palette> = {
     yellow: '#d4bc8b',
     purple: '#bba4c8'
   },
-  // Atom One Dark gives its blue for both.
+  // Atom One Dark gives its blue for both; schemeColors lifts the hover.
   'atom-one-dark': {
     background: '#21252b',
     foreground: '#abb2bf',
@@ -177,7 +177,9 @@ export function schemeColors(mode: Mode, name: Exclude<DarkScheme | LightScheme,
     text2: mix(bg, text, light ? 0.66 : 0.6),
     text3: mix(bg, text, light ? 0.46 : 0.38),
     accent: p.blue,
-    accentHover: p.brightBlue,
+    // Atom One Dark gives one blue for both, so its hover is lifted toward
+    // white (darkened, in light mode), as Nodus's own is.
+    accentHover: p.brightBlue !== p.blue ? p.brightBlue : mix(p.blue, light ? '#000000' : '#ffffff', 0.15),
     onAccent: bg,
     green: p.green,
     red: p.red,
@@ -207,6 +209,7 @@ const NODUS_BOARD: Record<Mode, Tokens> = {
     '--text-on-accent': '#ffffff',
     '--accent': '#007aff',
     '--accent-hover': '#0068d9',
+    '--accent-gradient-to': '#5e5ce6',
     '--focus-ring': 'rgba(0, 122, 255, 0.5)',
     '--diff-add': '#2da44e',
     '--diff-del': '#cf222e',
@@ -226,6 +229,7 @@ const NODUS_BOARD: Record<Mode, Tokens> = {
     '--text-on-accent': '#ffffff',
     '--accent': '#0a84ff',
     '--accent-hover': '#3396ff',
+    '--accent-gradient-to': '#5e5ce6',
     '--focus-ring': 'rgba(10, 132, 255, 0.55)',
     '--diff-add': '#3fb950',
     '--diff-del': '#f85149',
@@ -254,6 +258,7 @@ export function schemeTokens(mode: Mode, name: DarkScheme | LightScheme): Tokens
     '--text-on-accent': c.onAccent,
     '--accent': c.accent,
     '--accent-hover': c.accentHover,
+    '--accent-gradient-to': c.purple,
     '--focus-ring': rgba(c.accent, light ? 0.5 : 0.55),
     '--diff-add': c.green,
     '--diff-del': c.red,

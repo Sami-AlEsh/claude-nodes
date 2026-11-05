@@ -1780,8 +1780,8 @@ kbd {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent), #5e5ce6);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-gradient-to));
+  color: var(--text-on-accent);
 }
 .merge-title {
   margin: 0;

@@ -1,7 +1,7 @@
 // Puts the colour schemes picked in Settings on the board, and on the views'
 // pages already open. The colours themselves come from @shared/schemes.
 import { schemeCss, viewCss, type Schemes } from '@shared/schemes'
-import { broadcast } from './components/board/viewRelay'
+import { setViewTheme } from './components/board/viewRelay'
 import { useApp } from './store'
 
 let shown = ''
@@ -17,8 +17,7 @@ function show(schemes: Schemes) {
     document.head.appendChild(style)
   }
   style.textContent = schemeCss(schemes)
-  // Pages loaded from now on get the new colours from the main process.
-  broadcast('theme', viewCss(schemes))
+  setViewTheme(viewCss(schemes))
 }
 
 /**

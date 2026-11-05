@@ -59,6 +59,12 @@ describe('schemeColors', () => {
     })
     expect(schemeColors('light', 'paper')).toMatchObject({ accentHover: '#0969da', onAccent: '#ffffff' })
   })
+
+  it('lifts the hover toward white when a palette gives one blue for both, as Atom One Dark does', () => {
+    const c = schemeColors('dark', 'atom-one-dark')
+    expect(c.accent).toBe('#61afef')
+    expect(c.accentHover).toBe('#79bbf1')
+  })
 })
 
 describe('schemeTokens', () => {
@@ -75,6 +81,7 @@ describe('schemeTokens', () => {
       '--text-on-accent': '#17191d',
       '--accent': '#96b2d7',
       '--accent-hover': '#b0cbef',
+      '--accent-gradient-to': '#b5a2ce',
       '--focus-ring': 'rgba(150, 178, 215, 0.55)',
       '--diff-add': '#a6bd91',
       '--diff-del': '#dc8c95',
