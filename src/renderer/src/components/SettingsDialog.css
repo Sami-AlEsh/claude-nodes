@@ -402,3 +402,62 @@
 .settings-theme-input:checked + .scheme-tile .scheme-tile-check {
   opacity: 1;
 }
+
+/* Terminal font */
+.settings-select {
+  flex: none;
+  max-width: 220px;
+  height: 28px;
+  padding: 0 26px 0 10px;
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  text-overflow: ellipsis;
+}
+.settings-select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 0;
+}
+.settings-select-size {
+  width: 112px;
+}
+/* A line as a shell prompt draws it, in the terminal's own colours, so the symbols show in the picked font. */
+.settings-term-preview {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--term-bg);
+  color: var(--term-fg);
+  line-height: 1.4;
+  white-space: pre;
+}
+.settings-term-seg {
+  padding: 0 6px 0 8px;
+}
+.settings-term-seg.is-user {
+  background: #3a3a3c;
+}
+.settings-term-seg.is-path {
+  background: #5aa9ff;
+  color: #1e1e20;
+}
+.settings-term-seg.is-branch {
+  background: #5fd068;
+  color: #1e1e20;
+}
+/* Each arrow is the colour of the segment before it, on the one after. */
+.settings-term-arrow.is-user {
+  color: #3a3a3c;
+  background: #5aa9ff;
+}
+.settings-term-arrow.is-path {
+  color: #5aa9ff;
+  background: #5fd068;
+}
+.settings-term-arrow.is-branch {
+  color: #5fd068;
+}

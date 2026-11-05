@@ -22,4 +22,12 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ showOwnStatusLine: 'yes' }).showOwnStatusLine).toBe(false)
     expect(normalizeSettings({ showOwnStatusLine: true }).showOwnStatusLine).toBe(true)
   })
+
+  it('gives terminals the bundled font at 14 px unless they were set, within the size limits', () => {
+    expect(normalizeSettings({})).toMatchObject({ terminalFont: 'JetBrains Mono', terminalFontSize: 14 })
+    expect(normalizeSettings({ terminalFont: 'Menlo', terminalFontSize: 40 })).toMatchObject({
+      terminalFont: 'Menlo',
+      terminalFontSize: 24
+    })
+  })
 })

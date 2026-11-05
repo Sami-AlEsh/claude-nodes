@@ -2,15 +2,25 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@xyflow/react/dist/style.css'
 import '@xterm/xterm/css/xterm.css'
+import './styles/fonts.css'
 import './styles/global.css'
 import './styles/app.css'
 import { App } from './App'
 import { followSchemes } from './schemes'
+import { followTerminalFont, loadBundledFonts } from './terminal/font'
 
 followSchemes()
+followTerminalFont()
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+// The terminal's fonts first: xterm measures its font when a terminal is
+// created, and terminals are created synchronously once the app is drawn. A
+// font that can't load, or is slow to, must not keep the window blank: after
+// a moment the app is drawn with the fallback.
+const fontsReady = Promise.race([loadBundledFonts().catch(() => undefined), new Promise((r) => setTimeout(r, 3000))])
+void fontsReady.then(() =>
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  )
 )

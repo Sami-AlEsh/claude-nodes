@@ -11,6 +11,7 @@
 import { Terminal, type ITheme } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
+import { DEFAULT_TERMINAL_FONT, DEFAULT_TERMINAL_FONT_SIZE, terminalFontFamily } from '@shared/terminalFont'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import type { SessionKind } from '@shared/types'
@@ -36,6 +37,23 @@ interface Entry {
 }
 
 const entries = new Map<string, Entry>()
+
+/** The font terminals are created with, from Settings › Terminal. */
+let font = { family: DEFAULT_TERMINAL_FONT, size: DEFAULT_TERMINAL_FONT_SIZE }
+
+/**
+ * Gives every open terminal `family` at `size` px, keeping what it shows and
+ * refitting its columns and rows, and new terminals from now on.
+ */
+export function setTerminalFont(family: string, size: number) {
+  if (family === font.family && size === font.size) return
+  font = { family, size }
+  for (const entry of entries.values()) {
+    entry.term.options.fontFamily = terminalFontFamily(family)
+    entry.term.options.fontSize = size
+    fitEntry(entry)
+  }
+}
 
 /** Words to type into a session once its terminal is open, and, if it's `starting`, listening. */
 const pendingText = new Map<string, { text: string; starting: boolean }>()
@@ -142,8 +160,8 @@ function createEntry(sessionId: string, kind: SessionKind, container: HTMLElemen
   container.appendChild(host)
 
   const term = new Terminal({
-    fontFamily: "'SF Mono', ui-monospace, Menlo, Monaco, monospace",
-    fontSize: 13,
+    fontFamily: terminalFontFamily(font.family),
+    fontSize: font.size,
     lineHeight: 1.2,
     cursorBlink: true,
     allowProposedApi: true,

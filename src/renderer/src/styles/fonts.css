@@ -1,0 +1,29 @@
+/*
+ * The terminal's fonts, shipped with the app so every terminal looks the same
+ * on every Mac: JetBrains Mono (OFL 1.1) and Symbols Nerd Font Mono (Nerd
+ * Fonts; licences in src/renderer/public/fonts), which fills in the glyphs
+ * shell prompts use, such as powerline arrows, the git branch sign and the
+ * icon sets, for a font that lacks them. font-display: block, so a font
+ * that's loading is never swapped for a fallback.
+ */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/JetBrainsMono-Variable.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/JetBrainsMono-Italic-Variable.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Symbols Nerd Font Mono';
+  src: url('../assets/fonts/SymbolsNerdFontMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
