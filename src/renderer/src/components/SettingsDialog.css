@@ -424,7 +424,7 @@
 .settings-select-size {
   width: 112px;
 }
-/* A line as a shell prompt draws it, in the terminal's own colours, so the symbols show in the picked font. */
+/* A line as a shell prompt draws it, in the terminal's own colours (the scheme's), so the symbols show in the picked font. */
 .settings-term-preview {
   margin: 12px 0 0;
   padding: 10px 12px;
@@ -439,25 +439,25 @@
   padding: 0 6px 0 8px;
 }
 .settings-term-seg.is-user {
-  background: #3a3a3c;
+  background: var(--term-black);
 }
 .settings-term-seg.is-path {
-  background: #5aa9ff;
-  color: #1e1e20;
+  background: var(--term-blue);
+  color: var(--term-bg);
 }
 .settings-term-seg.is-branch {
-  background: #5fd068;
-  color: #1e1e20;
+  background: var(--term-green);
+  color: var(--term-bg);
 }
 /* Each arrow is the colour of the segment before it, on the one after. */
 .settings-term-arrow.is-user {
-  color: #3a3a3c;
-  background: #5aa9ff;
+  color: var(--term-black);
+  background: var(--term-blue);
 }
 .settings-term-arrow.is-path {
-  color: #5aa9ff;
-  background: #5fd068;
+  color: var(--term-blue);
+  background: var(--term-green);
 }
 .settings-term-arrow.is-branch {
-  color: #5fd068;
+  color: var(--term-green);
 }

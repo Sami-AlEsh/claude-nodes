@@ -67,7 +67,7 @@ const EXIT_LINE: Record<SessionKind, string> = {
 }
 
 /** Today's terminal theme, which the Nodus scheme keeps; the others come from terminalTheme (schemes.ts). */
-export const TERMINAL_THEME: ITheme = terminalTheme('nodus')
+const TERMINAL_THEME: ITheme = terminalTheme('nodus')
 
 /** The theme terminals are created with, from the dark colour scheme. */
 let theme: ITheme = TERMINAL_THEME
