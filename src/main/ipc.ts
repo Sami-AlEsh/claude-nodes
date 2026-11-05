@@ -79,6 +79,7 @@ import {
 } from './store'
 import { summarizeSessions } from './summarize'
 import { searchSessions } from './search'
+import { setShowOwnStatusLine } from './statusLine'
 import * as updater from './updater'
 import * as views from './views'
 import * as voice from './voice'
@@ -124,6 +125,7 @@ function applySettings(settings: AppSettings) {
   nativeTheme.themeSource = settings.theme
   notify.updateBadge()
   syncFocusMenu(settings)
+  setShowOwnStatusLine(settings.showOwnStatusLine)
 }
 
 /**

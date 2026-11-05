@@ -526,6 +526,8 @@ export interface AppSettings {
   focusFeature: boolean
   /** The title bar's Focus switch: show only the projects in focus, in the grid and the rail. */
   focusMode: boolean
+  /** Sessions show the person's own Claude Code status line too. Applies to sessions started or resumed after. */
+  showOwnStatusLine: boolean
 }
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */
