@@ -4,6 +4,18 @@ import { normalizeSettings } from './store'
 vi.mock('electron', () => ({ app: {} }))
 
 describe('normalizeSettings', () => {
+  it('keeps the mouse with the keyboard unless mouse only was picked', () => {
+    expect(normalizeSettings(null).mouseMode).toBe('withKeyboard')
+    expect(normalizeSettings({}).mouseMode).toBe('withKeyboard')
+    expect(normalizeSettings({ mouseMode: 'mouseOnly' }).mouseMode).toBe('mouseOnly')
+    expect(normalizeSettings({ mouseMode: 'withKeyboard' }).mouseMode).toBe('withKeyboard')
+  })
+
+  it('drops mouse modes this version doesn’t know', () => {
+    expect(normalizeSettings({ mouseMode: 'oneHand' }).mouseMode).toBe('withKeyboard')
+    expect(normalizeSettings({ mouseMode: true }).mouseMode).toBe('withKeyboard')
+  })
+
   it('hides the person’s own status line unless they turned it on', () => {
     expect(normalizeSettings(null).showOwnStatusLine).toBe(false)
     expect(normalizeSettings({}).showOwnStatusLine).toBe(false)

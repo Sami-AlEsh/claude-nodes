@@ -126,6 +126,7 @@ import {
 } from '@renderer/components/board/notes'
 import { SelectionBar } from '@renderer/components/board/SelectionBar'
 import { BoardControls } from '@renderer/components/board/BoardControls'
+import { MAX_ZOOM, MIN_ZOOM, mouseControls, shiftTracker } from '@renderer/components/board/navigation'
 import { INK_SHORTCUTS, InkLayer, type InkHandle } from '@renderer/components/board/InkLayer'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
 import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
@@ -467,6 +468,41 @@ interface MenuState {
   items: MenuItem[]
 }
 
+/**
+ * Whether ⇧ is held, tracked only while `enabled` (Mouse only, where ⇧-drag
+ * on the canvas draws a selection box). The pointer says so too, which covers
+ * a ⇧ pressed while a view's frame had the keyboard. It doesn't change while a
+ * button is down (shiftTracker).
+ */
+function useShiftHeld(enabled: boolean): boolean {
+  const [held, setHeld] = useState(false)
+  useEffect(() => {
+    if (!enabled) return
+    const shift = shiftTracker(setHeld)
+    const onKey = (e: KeyboardEvent) => shift.key(e)
+    const onPointer = (e: PointerEvent) => shift.pointer(e)
+    const onBlur = () => shift.blur()
+    const keys = ['keydown', 'keyup'] as const
+    const presses = ['pointerdown', 'pointermove'] as const
+    // A release is read after the board has handled it, bubbling up to the
+    // window last: React re-renders between listeners, and React Flow must
+    // end the press with the props it started with.
+    const releases = ['pointerup', 'pointercancel'] as const
+    for (const type of keys) window.addEventListener(type, onKey, true)
+    for (const type of presses) window.addEventListener(type, onPointer, true)
+    for (const type of releases) window.addEventListener(type, onPointer)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      for (const type of keys) window.removeEventListener(type, onKey, true)
+      for (const type of presses) window.removeEventListener(type, onPointer, true)
+      for (const type of releases) window.removeEventListener(type, onPointer)
+      window.removeEventListener('blur', onBlur)
+      setHeld(false)
+    }
+  }, [enabled])
+  return enabled && held
+}
+
 function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnapshot }) {
   const rf = useReactFlow<FlowNode, Edge>()
   const patchCards = useApp((s) => s.patchCards)
@@ -517,6 +553,11 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   const sectionDrag = useRef<{ id: string; last: Point; members: Set<string> } | null>(null)
   const titleClickTimer = useRef<number | undefined>(undefined)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  /** Settings › Board › Controls: how the mouse pans, zooms and selects. */
+  const mouseMode = useApp((s) => s.settings?.mouseMode ?? 'withKeyboard')
+  const mouseOnly = mouseMode === 'mouseOnly'
+  const shiftHeld = useShiftHeld(mouseOnly)
+  const controls = mouseControls(mouseMode, shiftHeld)
 
   const [renaming, setRenaming] = useState<string | null>(null)
   const renamingRef = useRef(renaming)
@@ -2550,17 +2591,11 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                     onInit={() => {
                       if (!board.viewport) fitActive(0)
                     }}
-                    minZoom={0.1}
-                    maxZoom={2}
-                    panOnScroll
-                    zoomOnPinch
+                    minZoom={MIN_ZOOM}
+                    maxZoom={MAX_ZOOM}
+                    {...controls}
                     zoomOnDoubleClick={false}
-                    selectionOnDrag
                     selectionMode={SelectionMode.Partial}
-                    panOnDrag={[1]}
-                    panActivationKeyCode="Space"
-                    selectionKeyCode={null}
-                    multiSelectionKeyCode={['Meta', 'Shift']}
                     deleteKeyCode={null}
                     disableKeyboardA11y
                     nodesConnectable={false}

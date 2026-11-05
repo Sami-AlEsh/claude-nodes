@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
-import type { AppSettings, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
+import type { AppSettings, MouseMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
+import { MouseDemo } from './MouseDemo'
 import { useUpdateStatus } from './UpdateButton'
 import './SettingsDialog.css'
 
@@ -12,6 +13,20 @@ const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' }
+]
+
+/** Settings › Board › Mouse: what the demo above doesn't show of each choice. */
+const MOUSE_MODES: { value: MouseMode; label: string; hint: string }[] = [
+  {
+    value: 'withKeyboard',
+    label: 'Keyboard + mouse',
+    hint: 'Scrolling the wheel pans, and middle-drag pans too.'
+  },
+  {
+    value: 'mouseOnly',
+    label: 'Mouse only',
+    hint: 'Scrolling and middle-drag still pan, and ⇧-click still adds a card to the selection.'
+  }
 ]
 
 /** App-wide preferences, opened with Cmd+, (Nodus › Settings…). */
@@ -107,6 +122,37 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
               onChange={(e) => update({ pinProjectRail: e.target.checked })}
             />
           </label>
+        </fieldset>
+
+        <fieldset className="settings-group">
+          <legend className="settings-label">Board</legend>
+          <div className="settings-row-text">
+            <span className="settings-row-title" id="board-mouse-title">
+              Mouse
+            </span>
+            <span className="settings-row-hint">
+              How the mouse moves around the board. The trackpad works the same either way.
+            </span>
+          </div>
+          <MouseDemo key={settings?.mouseMode ?? 'withKeyboard'} mode={settings?.mouseMode ?? 'withKeyboard'} />
+          <div className="settings-choices" role="radiogroup" aria-labelledby="board-mouse-title">
+            {MOUSE_MODES.map((c) => (
+              <label key={c.value} className="settings-choice">
+                <input
+                  type="radio"
+                  name="mouseMode"
+                  className="settings-choice-input"
+                  checked={(settings?.mouseMode ?? 'withKeyboard') === c.value}
+                  disabled={!settings}
+                  onChange={() => update({ mouseMode: c.value })}
+                />
+                <span className="settings-choice-name">{c.label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="settings-hint settings-choice-hint">
+            {MOUSE_MODES.find((c) => c.value === (settings?.mouseMode ?? 'withKeyboard'))?.hint}
+          </p>
         </fieldset>
 
         <fieldset className="settings-group">

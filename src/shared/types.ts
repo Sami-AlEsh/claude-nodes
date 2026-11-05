@@ -511,12 +511,21 @@ export interface AppInfo {
 /** 'system' follows the macOS appearance; the others pin the app to it. */
 export type ThemePreference = 'system' | 'light' | 'dark'
 
+/**
+ * How the mouse moves around the board. 'withKeyboard': Space-drag pans,
+ * ⌘-scroll zooms, and dragging the canvas draws a selection box. 'mouseOnly':
+ * dragging the canvas pans and ⇧-drag draws the box, while ⌘-scroll still
+ * zooms. A trackpad works the same in both.
+ */
+export type MouseMode = 'withKeyboard' | 'mouseOnly'
+
 /** Colour schemes for dark mode (schemes.ts). 'nodus' is the look of tokens.css. */
 export type DarkScheme = 'nodus' | 'graphite' | 'ink' | 'moss' | 'atom-one-dark'
 
 /** App-wide preferences, persisted with the rest of the state. */
 export interface AppSettings {
   theme: ThemePreference
+  mouseMode: MouseMode
   /** Download new versions in the background and install them when the app quits. */
   autoUpdate: boolean
   /** While the app is in the background, notify when a session needs the user or finishes. */

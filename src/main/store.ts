@@ -21,12 +21,14 @@ import { normalizeSchemes } from '@shared/schemes'
 const DEFAULT_ARCHIVE_W = 2 * 40 + 6 * 288 + 5 * 24
 
 const THEMES: AppSettings['theme'][] = ['system', 'light', 'dark']
+const MOUSE_MODES: AppSettings['mouseMode'][] = ['withKeyboard', 'mouseOnly']
 
 /** Fills in defaults and drops values this version doesn't understand. */
 export function normalizeSettings(raw: unknown): AppSettings {
   const s = (raw && typeof raw === 'object' ? raw : {}) as Partial<AppSettings>
   return {
     theme: s.theme && THEMES.includes(s.theme) ? s.theme : 'system',
+    mouseMode: s.mouseMode && MOUSE_MODES.includes(s.mouseMode) ? s.mouseMode : 'withKeyboard',
     autoUpdate: s.autoUpdate !== false,
     notify: s.notify !== false,
     dockBadge: s.dockBadge !== false,
