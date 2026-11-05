@@ -10,9 +10,9 @@
 // palette with herdr's own rule (`resolve()`), so no colour here is picked by
 // hand.
 //
-// Two things never change with the scheme: the status colours (working
-// orange, needs-you red, done blue), and the terminals, whose colours stay
-// --term-bg, --term-fg and TERMINAL_THEME in every scheme.
+// Terminals take the scheme too (terminalTheme), in light mode as well,
+// since they're always dark. The status colours (working orange, needs-you
+// red, done blue) never change.
 
 import type { AppSettings, DarkScheme } from './types'
 
@@ -93,6 +93,146 @@ const PALETTES: Record<Exclude<DarkScheme, 'nodus'>, Palette> = {
   }
 }
 
+export type Tokens = Record<string, string>
+
+/** What a terminal is drawn with: xterm's theme, for a scheme. */
+export interface TerminalTheme {
+  background: string
+  foreground: string
+  cursor: string
+  cursorAccent: string
+  selectionBackground: string
+  selectionInactiveBackground: string
+  scrollbarSliderBackground: string
+  scrollbarSliderHoverBackground: string
+  scrollbarSliderActiveBackground: string
+  black: string
+  red: string
+  green: string
+  yellow: string
+  blue: string
+  magenta: string
+  cyan: string
+  white: string
+  brightBlack: string
+  brightRed: string
+  brightGreen: string
+  brightYellow: string
+  brightBlue: string
+  brightMagenta: string
+  brightCyan: string
+  brightWhite: string
+}
+
+/** Today's terminal: Nodus's dark window colour, with its own 16 colours. The scheme 'nodus' keeps it exactly. */
+const NODUS_TERMINAL: TerminalTheme = {
+  background: '#1e1e20',
+  foreground: '#e6e6e6',
+  cursor: '#e6e6e6',
+  cursorAccent: '#1e1e20',
+  selectionBackground: '#0a84ff55',
+  selectionInactiveBackground: '#8e8e9340',
+  scrollbarSliderBackground: '#ffffff1f',
+  scrollbarSliderHoverBackground: '#ffffff33',
+  scrollbarSliderActiveBackground: '#ffffff47',
+  black: '#3a3a3c',
+  red: '#ff6b62',
+  green: '#5fd068',
+  yellow: '#f5c451',
+  blue: '#5aa9ff',
+  magenta: '#d68cf7',
+  cyan: '#5ad1e0',
+  white: '#d8d8dc',
+  brightBlack: '#6e6e73',
+  brightRed: '#ff8a80',
+  brightGreen: '#7fe08a',
+  brightYellow: '#ffd978',
+  brightBlue: '#80bdff',
+  brightMagenta: '#e2a8fb',
+  brightCyan: '#80e2ee',
+  brightWhite: '#f5f5f7'
+}
+
+/**
+ * herdr's terminal colours for each scheme: the selection, the cursor where
+ * it sets one, and the 16 ANSI colours in order (black, red, green, yellow,
+ * blue, magenta, cyan, white, then their bright versions).
+ */
+const TERMINAL_PALETTES: Record<Exclude<DarkScheme, 'nodus'>, { selection: string; cursor?: string; ansi: string[] }> = {
+  graphite: {
+    selection: '#394454',
+    ansi: [
+      '#45484f', '#dc8c95', '#a6bd91', '#d8be87', '#96b2d7', '#b5a2ce', '#8cbdc3', '#d2d4d9',
+      '#818793', '#f0a5ad', '#bad5a2', '#ead2a1', '#b0cbef', '#cbb7e6', '#a4d5db', '#f0f0f2'
+    ]
+  },
+  ink: {
+    selection: '#344861',
+    ansi: [
+      '#414b5a', '#e58c9a', '#89c5aa', '#d9be82', '#91b6ee', '#b9a0e2', '#85c4d0', '#cdd6e4',
+      '#7f91a7', '#f5a5b2', '#a5dec3', '#edd39c', '#accbfa', '#d0b7f4', '#a0dce5', '#f0f5fc'
+    ]
+  },
+  moss: {
+    selection: '#354a40',
+    ansi: [
+      '#435248', '#df978d', '#a0c4a2', '#d4bc8b', '#99b9cd', '#bba4c8', '#8bbdb5', '#cdd7ce',
+      '#82968a', '#f1afa3', '#b8dab9', '#e9d2a5', '#b1d0e2', '#d1bddc', '#a4d6ca', '#eff5ee'
+    ]
+  },
+  'atom-one-dark': {
+    selection: '#323844',
+    cursor: '#abb2bf',
+    ansi: [
+      '#454c59', '#e06c75', '#98c379', '#e5c07b', '#61afef', '#c678dd', '#56b6c2', '#abb2bf',
+      '#767676', '#e06c75', '#98c379', '#e5c07b', '#61afef', '#c678dd', '#56b6c2', '#abb2bf'
+    ]
+  }
+}
+
+const ANSI_NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'] as const
+
+/**
+ * xterm's theme for a scheme: the palette's ground and text, its cursor (the
+ * text colour unless herdr sets one) on the ground, herdr's selection and 16
+ * colours, and Nodus's translucent scrollbar and inactive-selection greys,
+ * which suit any ground. Nodus's scheme is today's terminal.
+ */
+export function terminalTheme(name: DarkScheme): TerminalTheme {
+  if (name === 'nodus') return { ...NODUS_TERMINAL }
+  const p = PALETTES[name]
+  const t = TERMINAL_PALETTES[name]
+  const theme: TerminalTheme = {
+    ...NODUS_TERMINAL,
+    background: p.background,
+    foreground: p.foreground,
+    cursor: t.cursor ?? p.foreground,
+    cursorAccent: p.background,
+    selectionBackground: t.selection
+  }
+  ANSI_NAMES.forEach((colour, i) => {
+    theme[colour] = t.ansi[i]
+    theme[`bright${colour[0].toUpperCase()}${colour.slice(1)}` as `bright${Capitalize<typeof colour>}`] = t.ansi[i + 8]
+  })
+  return theme
+}
+
+/**
+ * The CSS tokens around a terminal (its padding, the session window's header,
+ * the font preview in Settings): the theme's ground and text, and the three
+ * colours the preview's prompt segments use.
+ */
+export function terminalTokens(name: DarkScheme): Tokens {
+  const theme = terminalTheme(name)
+  return {
+    '--term-bg': theme.background,
+    '--term-fg': theme.foreground,
+    '--term-black': theme.black,
+    '--term-blue': theme.blue,
+    '--term-green': theme.green
+  }
+}
+
 const rgb = (color: string) => {
   const n = parseInt(color.slice(1), 16)
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
@@ -167,7 +307,6 @@ export function schemeColors(name: Exclude<DarkScheme, 'nodus'>): SchemeColors {
   }
 }
 
-export type Tokens = Record<string, string>
 
 /**
  * Today's dark values (tokens.css) of every board token a scheme sets. A
@@ -312,14 +451,20 @@ const declarations = (tokens: Tokens, indent: string) =>
 
 /**
  * The board's stylesheet for a scheme, for the renderer's
- * <style id="color-schemes">: a dark-mode block, or nothing for 'nodus'.
+ * <style id="color-schemes">: a dark-mode block and the terminal's tokens,
+ * or nothing for 'nodus'.
  * `:root:root` outranks tokens.css's `:root` wherever the two stylesheets end
  * up in the document.
  */
 export function schemeCss(schemes: Schemes): string {
   if (schemes.darkScheme === 'nodus') return ''
   const tokens = declarations(schemeTokens(schemes.darkScheme), '    ')
-  return `@media (prefers-color-scheme: dark) {\n  :root:root {\n${tokens}\n  }\n}\n`
+  // Terminals are always dark, so their tokens hold in light mode too.
+  const terminal = declarations(terminalTokens(schemes.darkScheme), '  ')
+  return (
+    `@media (prefers-color-scheme: dark) {\n  :root:root {\n${tokens}\n  }\n}\n` +
+    `:root:root {\n${terminal}\n}\n`
+  )
 }
 
 /** A view page's colours: Nodus's light ones, then the scheme's dark ones. */

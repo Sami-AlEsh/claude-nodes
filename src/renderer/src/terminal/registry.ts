@@ -11,6 +11,7 @@
 import { Terminal, type ITheme } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
+import { terminalTheme } from '@shared/schemes'
 import { DEFAULT_TERMINAL_FONT, DEFAULT_TERMINAL_FONT_SIZE, terminalFontFamily } from '@shared/terminalFont'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebLinksAddon } from '@xterm/addon-web-links'
@@ -65,32 +66,16 @@ const EXIT_LINE: Record<SessionKind, string> = {
   terminal: '\r\n\x1b[2m[shell exited · press Restart or reopen the card for a new shell]\x1b[0m\r\n'
 }
 
-export const TERMINAL_THEME: ITheme = {
-  background: '#1e1e20',
-  foreground: '#e6e6e6',
-  cursor: '#e6e6e6',
-  cursorAccent: '#1e1e20',
-  selectionBackground: '#0a84ff55',
-  selectionInactiveBackground: '#8e8e9340',
-  scrollbarSliderBackground: '#ffffff1f',
-  scrollbarSliderHoverBackground: '#ffffff33',
-  scrollbarSliderActiveBackground: '#ffffff47',
-  black: '#3a3a3c',
-  red: '#ff6b62',
-  green: '#5fd068',
-  yellow: '#f5c451',
-  blue: '#5aa9ff',
-  magenta: '#d68cf7',
-  cyan: '#5ad1e0',
-  white: '#d8d8dc',
-  brightBlack: '#6e6e73',
-  brightRed: '#ff8a80',
-  brightGreen: '#7fe08a',
-  brightYellow: '#ffd978',
-  brightBlue: '#80bdff',
-  brightMagenta: '#e2a8fb',
-  brightCyan: '#80e2ee',
-  brightWhite: '#f5f5f7'
+/** Today's terminal theme, which the Nodus scheme keeps; the others come from terminalTheme (schemes.ts). */
+const TERMINAL_THEME: ITheme = terminalTheme('nodus')
+
+/** The theme terminals are created with, from the dark colour scheme. */
+let theme: ITheme = TERMINAL_THEME
+
+/** Gives every open terminal `next`, repainted in place, and new terminals from now on. */
+export function setTerminalTheme(next: ITheme) {
+  theme = next
+  for (const entry of entries.values()) entry.term.options.theme = next
 }
 
 let holder: HTMLDivElement | null = null
@@ -167,7 +152,7 @@ function createEntry(sessionId: string, kind: SessionKind, container: HTMLElemen
     allowProposedApi: true,
     macOptionIsMeta: false,
     scrollback: 10000,
-    theme: TERMINAL_THEME
+    theme
   })
 
   const fit = new FitAddon()

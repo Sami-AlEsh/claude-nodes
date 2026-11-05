@@ -87,6 +87,10 @@
   /* Terminal */
   --term-bg: #1e1e20;
   --term-fg: #e6e6e6;
+  /* The terminal's black, blue and green, for the prompt drawn in Settings' font preview */
+  --term-black: #3a3a3c;
+  --term-blue: #5aa9ff;
+  --term-green: #5fd068;
 
   /* Elevation */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
