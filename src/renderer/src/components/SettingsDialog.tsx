@@ -5,6 +5,7 @@ import type { AppSettings, NavigationMode, ThemePreference, UpdateStatus, VoiceK
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
+import { NavigationDemo } from './NavigationDemo'
 import { useUpdateStatus } from './UpdateButton'
 import './SettingsDialog.css'
 
@@ -19,12 +20,12 @@ const NAVIGATION_MODES: { value: NavigationMode; label: string; hint: string }[]
   {
     value: 'trackpad',
     label: 'Trackpad',
-    hint: 'Scroll or Space-drag to pan, pinch or ⌘-scroll to zoom, and drag across the board to select.'
+    hint: 'Space-drag or middle-drag pans too, and ⌘-scroll zooms.'
   },
   {
     value: 'mouse',
     label: 'Mouse',
-    hint: 'Drag the board to pan, turn the mouse wheel to zoom, and ⇧-drag to select. Trackpad gestures still work.'
+    hint: 'Trackpad gestures still work, and ⇧-click still adds a card to the selection.'
   }
 ]
 
@@ -131,6 +132,7 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
             </span>
             <span className="settings-row-hint">How you move around the board.</span>
           </div>
+          <NavigationDemo key={settings?.navigation ?? 'trackpad'} mode={settings?.navigation ?? 'trackpad'} />
           <div className="settings-choices" role="radiogroup" aria-labelledby="board-navigation-title">
             {NAVIGATION_MODES.map((c) => (
               <label key={c.value} className="settings-choice">
