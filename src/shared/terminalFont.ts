@@ -2,10 +2,9 @@
 // xterm gets from them. Shared because the main process normalizes the
 // settings and the renderer draws with them.
 
-/** Shipped with the app (fonts.css): the default text face, and the symbols shell prompts use. */
+/** Shipped with the app (fonts.css): the default text face, and the symbols shell prompts use, one cell each. */
 export const DEFAULT_TERMINAL_FONT = 'JetBrains Mono'
-export const SYMBOLS_FONT = 'Symbols Nerd Font'
-export const BUNDLED_FONTS = [DEFAULT_TERMINAL_FONT, SYMBOLS_FONT]
+export const SYMBOLS_FONT = 'Symbols Nerd Font Mono'
 
 export const DEFAULT_TERMINAL_FONT_SIZE = 14
 export const MIN_TERMINAL_FONT_SIZE = 9

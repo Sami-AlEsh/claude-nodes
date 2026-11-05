@@ -13,8 +13,11 @@ followSchemes()
 followTerminalFont()
 
 // The terminal's fonts first: xterm measures its font when a terminal is
-// created, and terminals are created synchronously once the app is drawn.
-void loadBundledFonts().then(() =>
+// created, and terminals are created synchronously once the app is drawn. A
+// font that can't load, or is slow to, must not keep the window blank: after
+// a moment the app is drawn with the fallback.
+const fontsReady = Promise.race([loadBundledFonts().catch(() => undefined), new Promise((r) => setTimeout(r, 3000))])
+void fontsReady.then(() =>
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

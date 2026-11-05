@@ -36,12 +36,12 @@ describe('normalizeTerminalFont', () => {
 describe('terminalFontFamily', () => {
   it('puts the font first, then the prompt symbols, then the fonts terminals used before', () => {
     expect(terminalFontFamily('JetBrains Mono')).toBe(
-      "'JetBrains Mono', 'Symbols Nerd Font', 'SF Mono', ui-monospace, 'Menlo', 'Monaco', monospace"
+      "'JetBrains Mono', 'Symbols Nerd Font Mono', 'SF Mono', ui-monospace, 'Menlo', 'Monaco', monospace"
     )
   })
 
   it('doesn’t repeat a font already in the stack', () => {
-    expect(terminalFontFamily('Menlo')).toBe("'Menlo', 'Symbols Nerd Font', 'SF Mono', ui-monospace, 'Monaco', monospace")
+    expect(terminalFontFamily('Menlo')).toBe("'Menlo', 'Symbols Nerd Font Mono', 'SF Mono', ui-monospace, 'Monaco', monospace")
   })
 
   it('quotes a name with a quote in it', () => {

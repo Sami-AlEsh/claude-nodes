@@ -1,19 +1,32 @@
 // The terminal's font on this Mac: loading the bundled faces before any
 // terminal is measured, finding which candidate fonts are installed, and
 // following the font picked in Settings.
-import { BUNDLED_FONTS, DEFAULT_TERMINAL_FONT_SIZE, FONT_CANDIDATES, normalizeTerminalFont } from '@shared/terminalFont'
+import {
+  DEFAULT_TERMINAL_FONT,
+  DEFAULT_TERMINAL_FONT_SIZE,
+  FONT_CANDIDATES,
+  SYMBOLS_FONT,
+  normalizeTerminalFont
+} from '@shared/terminalFont'
 import type { AppSettings } from '@shared/types'
 import { useApp } from '@renderer/store'
 import { setTerminalFont } from './registry'
 
 /**
- * Loads the fonts shipped with the app. xterm measures its font when a
- * terminal is created, and terminals are created synchronously, so this runs
- * before React renders anything. A face that fails to load just leaves the
- * fallback; `load` doesn't reject for that.
+ * Loads the fonts shipped with the app: the text face upright and italic
+ * (a style not loaded would be drawn in a fallback the first time, and cached
+ * that way in xterm's glyph atlas), and the symbols. xterm measures its font
+ * when a terminal is created, and terminals are created synchronously, so
+ * this runs before React renders anything. It rejects for a face that can't
+ * be fetched; main.tsx renders anyway then, in the fallback.
  */
 export function loadBundledFonts(): Promise<unknown> {
-  return Promise.all(BUNDLED_FONTS.map((font) => document.fonts.load(`${DEFAULT_TERMINAL_FONT_SIZE}px '${font}'`)))
+  const size = `${DEFAULT_TERMINAL_FONT_SIZE}px`
+  return Promise.all([
+    document.fonts.load(`${size} '${DEFAULT_TERMINAL_FONT}'`),
+    document.fonts.load(`italic ${size} '${DEFAULT_TERMINAL_FONT}'`),
+    document.fonts.load(`${size} '${SYMBOLS_FONT}'`)
+  ])
 }
 
 /**

@@ -261,6 +261,8 @@ src/
     terminal/     xterm.js registry, TerminalModal, TranscriptPreview, AgentViewer
 ```
 
+Terminals use JetBrains Mono (SIL Open Font License 1.1) and Symbols Nerd Font Mono (Nerd Fonts v3.5.1), shipped with the app with their licences in its `fonts` folder.
+
 Built with Electron, electron-vite, React, TypeScript, [React Flow](https://reactflow.dev), [xterm.js](https://xtermjs.org), [node-pty](https://github.com/microsoft/node-pty) and zustand.
 
 ## Development

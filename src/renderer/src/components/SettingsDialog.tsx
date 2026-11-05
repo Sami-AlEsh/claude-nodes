@@ -5,6 +5,7 @@ import type { AppSettings, MouseMode, ThemePreference, UpdateStatus, VoiceKeySou
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import {
   DEFAULT_TERMINAL_FONT,
+  DEFAULT_TERMINAL_FONT_SIZE,
   MAX_TERMINAL_FONT_SIZE,
   MIN_TERMINAL_FONT_SIZE,
   terminalFontFamily
@@ -432,7 +433,7 @@ function TerminalSettings({
   const [fonts, setFonts] = useState<string[] | null>(null)
   useEffect(() => setFonts(installedFonts()), [])
   const font = settings?.terminalFont ?? DEFAULT_TERMINAL_FONT
-  const size = settings?.terminalFontSize ?? 14
+  const size = settings?.terminalFontSize ?? DEFAULT_TERMINAL_FONT_SIZE
   // A saved font this Mac doesn't have stays selectable, so the setting isn't lost.
   const options = fonts === null ? [font] : fonts.includes(font) ? fonts : [font, ...fonts]
 
