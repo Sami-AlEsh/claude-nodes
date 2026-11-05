@@ -44,6 +44,7 @@ You need [Claude Code](https://code.claude.com/docs/en/overview) installed, with
 - Views: ask Claude for a live table of your deploys or tickets
 - Sticky notes, action buttons and spoken prompts
 - Colour schemes for dark mode: Graphite, Ink, Moss and Atom One Dark
+- Terminals in JetBrains Mono with the Nerd Font symbols prompts use, and a font and size setting
 
 ## 🔒 Private by design
 

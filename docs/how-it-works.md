@@ -29,6 +29,8 @@ Sessions are ordinary Claude Code sessions. New cards run `claude --session-id <
 
 Your status line is the exception. Claude Code runs one status line, and Nodus uses its own to read each session's model, context and cost for the session window's header, so yours doesn't show by default. Turn on **Show my status line** in Settings to see it at the bottom of each session as well. Nodus then runs the status line Claude Code would pick (`.claude/settings.local.json` at the repository's root, or the main checkout's for a worktree, then the project's `.claude/settings.json`, then your `~/.claude/settings.json`) on the same information, and the header keeps working. It applies to sessions you start or resume after turning it on.
 
+Terminals are drawn in **JetBrains Mono at 14 px**, which ships with Nodus along with the Nerd Font symbols that shell prompts use (powerline arrows, the git branch sign), so a prompt such as agnoster's looks right with no setup. **Settings › Terminal** picks another monospace font from your Mac, and a size from 9 to 24 px; the change reaches every open terminal at once.
+
 ## Sessions keep running after you quit
 
 The app doesn't run sessions itself. A background process, the session host, owns their terminals, so quitting Nodus (or a crash) leaves them running. Open the app again and the cards are still live, with their recent output and an up-to-date status.
@@ -167,7 +169,7 @@ The schemes are herdr-app's, with the colours around the cards derived from each
 
 ## Your data
 
-Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme and dark colour scheme, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
+Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme, dark colour scheme, mouse, terminal font and size, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
 The session host keeps its socket and log in the `host` folder next to it. Only your user can open the folder, which matters because anything that can connect to the socket can start processes as you.
 
 ## Shortcuts
@@ -176,7 +178,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | --- | --- | --- |
 | Anywhere | Add a project | ⌘⇧N |
 | | Show only the projects in focus, or all (once focus is on in Settings) | ⌘⇧F · the title bar's Focus switch |
-| | Settings (theme: System, Light or Dark, and the dark colours) | ⌘, |
+| | Settings (theme and dark colours, the mouse, the terminal's font and size) | ⌘, |
 | | Quit and stop every session | ⌥⌘Q |
 | | Close the modal, or go back to projects | ⌘W |
 | Projects | Open the selected project | Double-click · ⌘O · ⌘↓ |

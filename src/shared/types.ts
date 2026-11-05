@@ -542,6 +542,9 @@ export interface AppSettings {
   showOwnStatusLine: boolean
   /** The colours while the app is dark. Light mode keeps Nodus's own, and status colours and terminals never change. */
   darkScheme: DarkScheme
+  /** The terminal's font family, and its size in px (Settings › Terminal). */
+  terminalFont: string
+  terminalFontSize: number
 }
 
 /** A card to open, from a notification the user clicked. Without a session, just its project's board. */

@@ -3,7 +3,14 @@ import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
 import type { AppSettings, MouseMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
+import {
+  DEFAULT_TERMINAL_FONT,
+  MAX_TERMINAL_FONT_SIZE,
+  MIN_TERMINAL_FONT_SIZE,
+  terminalFontFamily
+} from '@shared/terminalFont'
 import { useApp } from '@renderer/store'
+import { installedFonts } from '@renderer/terminal/font'
 import { Modal } from './Modal'
 import { MouseDemo } from './MouseDemo'
 import { useUpdateStatus } from './UpdateButton'
@@ -154,6 +161,8 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
             {MOUSE_MODES.find((c) => c.value === (settings?.mouseMode ?? 'withKeyboard'))?.hint}
           </p>
         </fieldset>
+
+        <TerminalSettings settings={settings} update={update} />
 
         <fieldset className="settings-group">
           <legend className="settings-label">Focus</legend>
@@ -401,9 +410,90 @@ function updateText(status: UpdateStatus): string | null {
   }
 }
 
+/** Every whole size from the smallest to the largest. */
+const FONT_SIZES = Array.from(
+  { length: MAX_TERMINAL_FONT_SIZE - MIN_TERMINAL_FONT_SIZE + 1 },
+  (_, i) => MIN_TERMINAL_FONT_SIZE + i
+)
+
+/**
+ * The terminal's font and size, with a preview drawn like a shell prompt:
+ * its arrows and branch sign come from the bundled symbols, so they show
+ * whichever font is picked.
+ */
+function TerminalSettings({
+  settings,
+  update
+}: {
+  settings: AppSettings | null
+  update: (patch: Partial<AppSettings>) => void
+}) {
+  // Measuring every candidate font is quick, but only worth doing once the dialog is open.
+  const [fonts, setFonts] = useState<string[] | null>(null)
+  useEffect(() => setFonts(installedFonts()), [])
+  const font = settings?.terminalFont ?? DEFAULT_TERMINAL_FONT
+  const size = settings?.terminalFontSize ?? 14
+  // A saved font this Mac doesn't have stays selectable, so the setting isn't lost.
+  const options = fonts === null ? [font] : fonts.includes(font) ? fonts : [font, ...fonts]
+
+  return (
+    <fieldset className="settings-group">
+      <legend className="settings-label">Terminal</legend>
+      <div className="settings-row">
+        <span className="settings-row-text">
+          <span className="settings-row-title">Font</span>
+          <span className="settings-row-hint">The monospace fonts on this Mac. JetBrains Mono comes with Nodus.</span>
+        </span>
+        <select
+          className="settings-select"
+          aria-label="Terminal font"
+          value={font}
+          disabled={!settings || fonts === null}
+          onChange={(e) => update({ terminalFont: e.target.value })}
+        >
+          {options.map((f) => (
+            <option key={f} value={f}>
+              {f}
+              {fonts !== null && !fonts.includes(f) ? ' (not installed)' : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="settings-row">
+        <span className="settings-row-text">
+          <span className="settings-row-title">Size</span>
+        </span>
+        <select
+          className="settings-select settings-select-size"
+          aria-label="Terminal font size"
+          value={size}
+          disabled={!settings}
+          onChange={(e) => update({ terminalFontSize: Number(e.target.value) })}
+        >
+          {FONT_SIZES.map((n) => (
+            <option key={n} value={n}>
+              {n} px
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="settings-term-preview" style={{ fontFamily: terminalFontFamily(font), fontSize: size }} aria-hidden="true">
+        <span className="settings-term-seg is-user">sami@mac</span>
+        <span className="settings-term-arrow is-user">{'\uE0B0'}</span>
+        <span className="settings-term-seg is-path">~/nodus</span>
+        <span className="settings-term-arrow is-path">{'\uE0B0'}</span>
+        <span className="settings-term-seg is-branch">{'\uE0A0 main'}</span>
+        <span className="settings-term-arrow is-branch">{'\uE0B0'}</span>
+        {' claude 0O 1lI {} => λ'}
+      </p>
+      <p className="settings-hint">Changes every open terminal at once.</p>
+    </fieldset>
+  )
+}
+
 /** Keeps Tab cycling inside the dialog instead of escaping to the page behind it. */
 function trapTab(e: KeyboardEvent<HTMLElement>, panel: HTMLElement) {
-  const stops = Array.from(panel.querySelectorAll<HTMLButtonElement | HTMLInputElement>('button, input')).filter(
+  const stops = Array.from(panel.querySelectorAll<HTMLButtonElement | HTMLInputElement>('button, input, select')).filter(
     (el) => !el.disabled && (el.type !== 'radio' || (el as HTMLInputElement).checked)
   )
   if (stops.length === 0) return
