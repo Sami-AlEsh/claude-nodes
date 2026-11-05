@@ -27,6 +27,9 @@ function NoteNodeComponent({ id, data, selected, dragging }: NodeProps<NoteFlowN
   const saveNote = useApp((s) => s.saveNote)
   // The session that wrote it, while its card is on the board.
   const from = useApp((s) => (note.from ? s.board?.cards.find((c) => c.sessionId === note.from) : undefined))
+  // Or its project, when it wrote from another project's board.
+  const away = useApp((s) => (note.fromProject ? s.projects.find((p) => p.id === note.fromProject) : undefined))
+  const showCard = useApp((s) => s.showCard)
   const noteRef = useRef(note)
   noteRef.current = note
   // Stable, so React Flow doesn't rebind the resize handles on every render.
@@ -51,7 +54,7 @@ function NoteNodeComponent({ id, data, selected, dragging }: NodeProps<NoteFlowN
           selected && 'is-selected',
           dragging && 'is-dragging',
           editing && 'is-editing',
-          from && 'has-from'
+          (from || away) && 'has-from'
         )}
         style={{ '--note-hue': FOLDER_HUES[note.color].frontTop } as CSSProperties}
         title={draft ? 'Drag a note onto the board, or click for one beside the pad' : undefined}
@@ -74,6 +77,19 @@ function NoteNodeComponent({ id, data, selected, dragging }: NodeProps<NoteFlowN
             title={`Written by Claude in “${cardTitle(from)}”. Click to open that session.`}
           >
             — {cardTitle(from)}
+          </button>
+        )}
+        {!from && away && !editing && (
+          <button
+            className="note-from nodrag"
+            onClick={(e) => {
+              e.stopPropagation()
+              showCard({ projectId: away.id, sessionId: note.from })
+            }}
+            onDoubleClick={stop}
+            title={`Written by Claude in “${note.fromTitle}”, on the ${away.name} board. Click to open that session.`}
+          >
+            — {note.fromTitle} · {away.name}
           </button>
         )}
         {!draft && !editing && note.text.trim() && (

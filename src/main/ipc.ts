@@ -2,6 +2,7 @@
 import { dialog, ipcMain, nativeTheme, shell, type BrowserWindow } from 'electron'
 import crypto from 'crypto'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { IPC } from '@shared/api'
 import type {
@@ -112,6 +113,56 @@ function pickFolderColor(projects: Project[]): FolderColor {
   const fewest = Math.min(...FOLDER_COLORS.map(uses))
   const candidates = FOLDER_COLORS.filter((c) => uses(c) === fewest)
   return candidates[Math.floor(Math.random() * candidates.length)]
+}
+
+/**
+ * Adds a folder as a project, or gives back the project it already is. Adding
+ * an archived project's folder again brings it back. A project added while
+ * focusing joins the focus, or it would vanish as it arrives.
+ */
+function addProject(folder: string, name?: string): { project: Project; added: boolean } {
+  let real: string
+  try {
+    real = fs.realpathSync(folder)
+  } catch {
+    throw new Error(`Folder not found: ${folder}`)
+  }
+  if (!fs.statSync(real).isDirectory()) throw new Error(`Not a folder: ${real}`)
+
+  const state = getState()
+  // As isFocusing in the renderer's focus.ts: focus mode is on and some project is in focus.
+  const { focusFeature, focusMode } = state.settings
+  const focusing = focusFeature && focusMode && state.projects.some((p) => p.focused && !p.archived)
+  const existing = state.projects.find((p) => realRepoPath(p.repoPath) === real)
+  if (existing) {
+    if (existing.archived || (focusing && !existing.focused)) {
+      delete existing.archived
+      if (focusing) existing.focused = true
+      save()
+    }
+    return { project: existing, added: false }
+  }
+
+  const project: Project = {
+    id: crypto.randomUUID(),
+    name: name?.trim() || path.basename(real),
+    repoPath: real,
+    color: pickFolderColor(state.projects),
+    createdAt: Date.now(),
+    focused: focusing || undefined
+  }
+  state.projects.push(project)
+  save()
+  return { project, added: true }
+}
+
+/** A session's title, as its card would show it: a view's brain goes by its view's. */
+function sessionTitle(projectId: string, sessionId: string): string {
+  const board = getBoard(projectId)
+  const node = board.nodes[sessionId]
+  if (node?.viewOf) return board.views?.[node.viewOf]?.title || 'A view'
+  const meta = readSession(sessionId, transcriptPath(getProject(projectId).repoPath, sessionId))?.meta
+  return node?.title || meta?.title || (node?.kind === 'terminal' ? 'Terminal' : 'New session')
 }
 
 /** Bounds for an expanded card's size, in board units. */
@@ -290,36 +341,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
       if (res.canceled || !res.filePaths[0]) return null
       target = res.filePaths[0]
     }
-
-    let real: string
-    try {
-      real = fs.realpathSync(target)
-    } catch {
-      throw new Error(`Folder not found: ${target}`)
-    }
-    if (!fs.statSync(real).isDirectory()) throw new Error(`Not a folder: ${real}`)
-
-    const state = getState()
-    const existing = state.projects.find((p) => realRepoPath(p.repoPath) === real)
-    if (existing) {
-      // Adding an archived project's folder again brings it back.
-      if (existing.archived) {
-        delete existing.archived
-        save()
-      }
-      return existing
-    }
-
-    const project: Project = {
-      id: crypto.randomUUID(),
-      name: path.basename(real),
-      repoPath: real,
-      color: pickFolderColor(state.projects),
-      createdAt: Date.now()
-    }
-    state.projects.push(project)
-    save()
-    return project
+    return addProject(target).project
   })
 
   ipcMain.handle(
@@ -644,6 +666,44 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
       const projectId = projectIdForSession(sessionId)
       return Boolean(projectId && getBoard(projectId).nodes[sessionId]?.runOf)
     },
+    listProjects: (own) =>
+      getState().projects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        folder: p.repoPath,
+        archived: p.archived || undefined,
+        thisSessionsBoard: p.id === own || undefined
+      })),
+    createProject(folder, name) {
+      if (typeof folder !== 'string' || !folder.trim()) throw new Error('path is required')
+      const target = folder.trim().replace(/^~(?=$|\/)/, os.homedir())
+      if (!path.isAbsolute(target)) throw new Error('path must be absolute')
+      const madeFolder = !fs.existsSync(target)
+      if (madeFolder) fs.mkdirSync(target, { recursive: true })
+      const { project, added } = addProject(target, typeof name === 'string' ? name : undefined)
+      send(IPC.evProjectsChanged)
+      return {
+        projectId: project.id,
+        name: project.name,
+        folder: project.repoPath,
+        madeFolder: madeFolder || undefined,
+        alreadyAProject: added ? undefined : true
+      }
+    },
+    findProject(ref) {
+      const projects = getState().projects
+      const asked = typeof ref === 'string' ? ref.trim() : ''
+      if (!asked) throw new Error('project must be a project’s id or name, from list_projects')
+      const byId = projects.find((p) => p.id === asked)
+      if (byId) return byId.id
+      const named = projects.filter((p) => p.name.toLowerCase() === asked.toLowerCase())
+      if (named.length === 1) return named[0].id
+      throw new Error(
+        named.length
+          ? `More than one project is called “${asked}”; use its id from list_projects`
+          : `There’s no project called “${asked}”; list_projects lists them`
+      )
+    },
     listSessions: (projectId, self, includeArchived) => sessionList(getProject(projectId), self, includeArchived),
     archiveSessions(projectId, self, sessionIds, force) {
       const project = getProject(projectId)
@@ -702,7 +762,10 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     },
     listNotes: notes.listNotes,
     createNote(projectId, self, note) {
-      const { id } = notes.createNote(projectId, self, note)
+      // Written from another project's board, where its card isn't, it says where it came from.
+      const own = projectIdForSession(self)
+      const away = own && own !== projectId ? { project: own, title: sessionTitle(own, self) } : undefined
+      const { id } = notes.createNote(projectId, self, note, away)
       send(IPC.evBoardChanged, projectId)
       return { noteId: id }
     },

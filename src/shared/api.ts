@@ -122,6 +122,7 @@ export const IPC = {
   evAgentStatus: 'ev:agent-status',
   evUsage: 'ev:usage',
   evBoardChanged: 'ev:board-changed',
+  evProjectsChanged: 'ev:projects-changed',
   evSummarizeProgress: 'ev:summarize-progress',
   evRunFinished: 'ev:run-finished',
   evMenu: 'ev:menu',
@@ -334,6 +335,8 @@ export interface Api {
     usage(cb: (sessionId: string, usage: SessionUsage) => void): Unsubscribe
     /** Transcripts or board state changed on disk; the renderer should reload the board. */
     boardChanged(cb: (projectId: string) => void): Unsubscribe
+    /** A project was added from outside the renderer (create_project). */
+    projectsChanged(cb: () => void): Unsubscribe
     summarizeProgress(cb: (progress: SummarizeProgress) => void): Unsubscribe
     /** An action run finished, and its card and section left the board. */
     runFinished(cb: (result: ActionRunResult) => void): Unsubscribe

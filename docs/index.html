@@ -53,6 +53,16 @@
   --waiting: #ff3b30;
   --note: color-mix(in srgb, #ffd60a 52%, #fff);
 
+  /* Ink colours, and the green and red a view's page uses. */
+  --ink-graphite: #1d1d1f;
+  --ink-red: #ff3b30;
+  --ink-orange: #ff9500;
+  --ink-green: #28cd41;
+  --ink-blue: #007aff;
+  --ink-purple: #af52de;
+  --v-green: #2da44e;
+  --v-red: #cf222e;
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 22px 54px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(0, 0, 0, 0.12);
@@ -83,6 +93,15 @@
     --waiting: #ff453a;
     /* Dimmer paper, so notes don't glare against the dark canvas. */
     --note: color-mix(in srgb, #ffd60a 50%, #b4b4b8);
+
+    --ink-graphite: #f2f2f4;
+    --ink-red: #ff453a;
+    --ink-orange: #ff9f0a;
+    --ink-green: #32d74b;
+    --ink-blue: #0a84ff;
+    --ink-purple: #bf5af2;
+    --v-green: #3fb950;
+    --v-red: #f85149;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
     --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
@@ -252,20 +271,68 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
   font-weight: 500;
 }
 .window-bar > div { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.window-bar svg { flex: none; }
 .window-bar .name { color: var(--text); font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
 .window-bar .tool { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; color: var(--text); white-space: nowrap; }
 .window-bar .tool.is-outlined { border: 0.5px solid var(--border-strong); border-radius: 6px; background: var(--elevated); box-shadow: var(--shadow-sm); }
 .window-bar button.tool { font: inherit; cursor: pointer; }
 .window-bar button.tool:hover { background: color-mix(in srgb, var(--text) 6%, var(--elevated)); }
+.window-bar .back { display: grid; place-items: center; width: 28px; height: 28px; margin-right: 2px; }
+.window-bar .branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  box-shadow: inset 0 0 0 0.5px var(--border);
+  font-size: 12px;
+}
+.window-bar .changes, .window-bar .running { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; font-size: 12px; white-space: nowrap; }
+.window-bar .changes b { min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; line-height: 16px; text-align: center; }
+.window-bar .running { padding: 0 6px; font-variant-numeric: tabular-nums; }
+/* The title bar's Focus switch: it narrows the rail down to the projects in focus. */
+.window-bar .focus { display: inline-flex; align-items: center; gap: 7px; padding: 0 4px; border: 0; background: none; color: var(--text-2); font: inherit; cursor: pointer; }
+.switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: inset 0 0 0 0.5px var(--border);
+  transition: background 160ms ease;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 160ms ease;
+}
+[aria-checked='true'] > .switch { background: var(--accent); box-shadow: none; }
+[aria-checked='true'] > .switch::after { transform: translateX(14px); }
+/* New Session, with New terminal and New view under its chevron. */
+.window-bar .split { display: inline-flex; border-radius: 6px; box-shadow: var(--shadow-sm); }
+.window-bar .split .tool.is-outlined { border-radius: 6px 0 0 6px; box-shadow: none; }
+@media (max-width: 640px) { .window-bar .split .tool.is-outlined { border-radius: 6px; } }
+.window-bar .split .more { display: grid; place-items: center; width: 22px; height: 28px; border: 0.5px solid var(--border-strong); border-left: 0; border-radius: 0 6px 6px 0; background: var(--elevated); color: var(--text-2); }
+@media (max-width: 900px) { .hide-md { display: none !important; } }
 
-/* The board is laid out at 1320×720 and scaled to fit (by script, or the breakpoints below without it). */
-.board-frame { --s: 1; --dx: 0px; position: relative; height: calc(720px * var(--s)); overflow: hidden; }
+/* The board is laid out at 1320×820 and scaled to fit (by script, or the breakpoints below without it). */
+.board-frame { --s: 1; --dx: 0px; position: relative; height: calc(820px * var(--s)); overflow: hidden; }
 .board {
   position: absolute;
   top: 0;
   left: 50%;
   width: 1320px;
-  height: 720px;
+  height: 820px;
   margin-left: -660px;
   transform: translateX(var(--dx)) scale(var(--s));
   transform-origin: 50% 0;
@@ -273,6 +340,35 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
   user-select: none;
   -webkit-user-select: none;
 }
+/* The projects rail, pinned to the board's left edge. Focus narrows it to this week's projects. */
+.rail {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 52px;
+  padding: 8px 0;
+  border-right: 0.5px solid var(--separator);
+  background: var(--bg);
+}
+.rail-item { position: relative; display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; }
+.rail-item.is-active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.rail-item.is-active::before { content: ''; position: absolute; left: -6px; top: 11px; width: 3px; height: 18px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.rail-item svg { width: 34px; height: 34px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18)); transition: opacity 200ms ease, filter 200ms ease; }
+.rail-item b { position: absolute; top: 21px; left: 0; right: 0; color: var(--glyph); font-size: 11px; font-weight: 600; line-height: 1; text-align: center; opacity: 0.8; transform: translateY(-50%); }
+.rail-item .dot { position: absolute; top: 4px; right: 3px; width: 9px; height: 9px; margin: 0; border: 1.5px solid var(--elevated); }
+.rail-item.is-hidden { display: none; }
+.rail-item.is-unfocused svg { opacity: 0.45; filter: saturate(0.4); }
+.rail.is-all .rail-item.is-hidden { display: grid; animation: pop 320ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+.rail.is-all .rail-item.is-unfocused svg { opacity: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18)); }
+.rail-sep { flex: none; width: 24px; height: 0.5px; margin: 2px 0; background: var(--border-strong); }
+.rail-add { display: grid; place-items: center; width: 40px; height: 40px; color: var(--text-2); }
+
 @media (max-width: 1367px) { .board-frame { --s: 0.84; } }
 @media (max-width: 1100px) { .board-frame { --s: 0.72; } }
 @media (max-width: 900px) { .board-frame { --s: 0.62; --dx: -160px; } }
@@ -306,7 +402,7 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 .archive-head { --hue: #8e8e93; display: flex; align-items: center; gap: 9px; height: 50px; padding: 0 20px; color: var(--text-3); font-size: 15px; font-weight: 600; }
 
 /* Anything with data-node can be picked up and moved. */
-[data-node] { position: absolute; width: 288px; height: 216px; cursor: grab; touch-action: none; }
+[data-node] { position: absolute; width: 264px; height: 196px; cursor: grab; touch-action: none; }
 [data-node].is-dragging { cursor: grabbing; }
 
 .card {
@@ -442,7 +538,7 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 @media (hover: none) { .card-expand { opacity: 1; } }
 
 /* Expanded on the board: the card's title bar over its session's terminal, like the app. */
-[data-node].is-expanded { width: 720px; height: 480px; }
+[data-node].is-expanded { width: 576px; height: 356px; }
 .is-expanded > .card, .is-expanded > .layer { display: none; }
 .xcard {
   display: flex;
@@ -460,7 +556,12 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 .is-dragging .xcard { box-shadow: 0 0 0 2px var(--accent), var(--shadow-lg); }
 .xhead { display: flex; align-items: center; gap: 9px; flex: none; height: 40px; padding: 0 6px 0 14px; }
 .xhead .dot { margin-top: 0; }
-.xtitle { flex: 1; min-width: 0; overflow: hidden; font-family: var(--font-display); font-size: 13px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.xtitle { min-width: 0; overflow: hidden; font-family: var(--font-display); font-size: 13px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.xlive { flex: none; color: var(--text-3); opacity: 0.7; }
+.xstats { display: flex; flex: none; align-items: center; gap: 10px; margin-left: auto; padding-left: 6px; color: var(--text-3); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.xmeter { display: inline-block; width: 28px; height: 4px; margin-left: 5px; border-radius: 2px; vertical-align: 1px; background: linear-gradient(90deg, var(--accent) var(--fill), color-mix(in srgb, var(--text) 12%, transparent) 0); }
+.xtools { display: flex; flex: none; gap: 2px; margin-left: auto; }
+.xstats + .xtools { margin-left: 4px; }
 .xtool { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text-2); cursor: pointer; }
 .xtool:hover { background: var(--hover); color: var(--text); }
 .term {
@@ -479,6 +580,16 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 .term .t-prompt { margin: 6px -10px 14px; padding: 6px 10px; border-radius: 4px; background: #2c2c2e; color: #fff; }
 .term .t-input { margin: auto 0 0; padding: 7px 0; border-top: 1px solid #3a3a3c; border-bottom: 1px solid #3a3a3c; }
 .term .t-mode { margin: 6px 0 0; font-size: 11.5px; }
+.term.is-dense { padding: 12px 16px 10px; font-size: 12px; line-height: 1.5; }
+.term.is-dense p { margin: 0 0 7px; }
+.term.is-dense .t-prompt { margin: 2px -8px 9px; padding: 4px 8px; }
+.term.is-dense .t-input { margin: auto 0 0; padding: 5px 0; }
+.term.is-dense .t-mode { margin: 5px 0 0; }
+.t-diff { margin: -3px 0 8px 18px; }
+.t-diff span { display: block; padding: 0 6px; white-space: pre; }
+.t-add { background: #12361d; color: #b8f0c6; }
+.t-del { background: #4a1a1a; color: #f6c4c4; }
+.t-ok { color: #32d74b; }
 .t-dim { color: #8e8e93; }
 .t-spark, .t-work { color: #d97757; }
 .t-working { color: #ff9f0a; }
@@ -495,25 +606,89 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 
 .zoom {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
+  z-index: 4;
+  left: 68px;
+  bottom: 16px;
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 40px;
-  padding: 0 6px;
-  border-radius: 12px;
+  height: 34px;
+  padding: 0 3px;
+  border-radius: 11px;
   background: var(--elevated);
   box-shadow: var(--shadow-md);
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 .zoom span { display: grid; place-items: center; min-width: 28px; height: 28px; }
-.minimap { position: absolute; right: 20px; bottom: 20px; width: 168px; height: 108px; overflow: hidden; border-radius: 12px; background: var(--elevated); box-shadow: var(--shadow-md); }
-.minimap i { position: absolute; border-radius: 2px; }
+.zoom .sep { width: 1px; height: 16px; margin: 0 2px; background: var(--separator); }
+.minimap { position: absolute; z-index: 4; right: 16px; bottom: 16px; width: 168px; height: 108px; overflow: hidden; border-radius: 12px; background: var(--elevated); box-shadow: var(--shadow-md); }
+.minimap i { position: absolute; border-radius: 3px; }
+
+/* A view: Claude's own page on the board, with the app's tools in its header. */
+.view { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; border-radius: 14px; background: var(--elevated); box-shadow: var(--shadow-sm); transition: box-shadow 220ms var(--ease-out); }
+[data-node]:hover .view { box-shadow: var(--shadow-md); }
+.is-dragging .view { box-shadow: 0 0 0 2px var(--accent), var(--shadow-lg); }
+.view-head { display: flex; align-items: center; gap: 8px; flex: none; height: 38px; padding: 0 6px 0 13px; border-bottom: 0.5px solid var(--separator); }
+.view-head > .icon { color: var(--text-3); }
+.view-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.view-tools { display: flex; color: var(--text-2); opacity: 0.55; }
+.view-tools span { display: grid; place-items: center; width: 24px; height: 28px; }
+.view-body { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 12px 16px 12px; font-size: 13px; line-height: 1.45; }
+.vt-sum { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; color: var(--text-2); }
+.vt-sum b { color: var(--text); font-family: var(--font-display); font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+.vt-sum em { color: var(--v-red); font-style: normal; font-weight: 500; }
+.vt-row { display: flex; align-items: center; gap: 9px; min-height: 31px; border-top: 0.5px solid var(--separator); }
+.vt-row:first-of-type { border-top: 0; }
+.vt-row code { flex: 1; min-width: 0; font-size: 12px; }
+.vt-row > span { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.vt-icon { display: grid; flex: none; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--v-green); color: #fff; }
+.vt-row.is-failing .vt-icon { background: var(--v-red); }
+.vt-msg { margin: -6px 0 8px 25px; color: var(--v-red); font-size: 12px; }
+.vt-fix { height: 20px; padding: 0 9px; border: 0; border-radius: 5px; background: var(--accent); color: #fff; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.vt-fix:hover { background: var(--button-hover); }
+.vt-fix:disabled { opacity: 0.55; cursor: default; }
+.vt-foot { margin: auto 0 0; padding-top: 8px; color: var(--text-3); font-size: 11.5px; }
+.edges path.is-view-edge { stroke: color-mix(in srgb, var(--accent) 70%, transparent); stroke-width: 2; stroke-dasharray: 6 4; animation: flow 1s linear infinite; }
+
+/* Ink: pen, arrow and text drawn over the board, with the app's tools stacked above the zoom. */
+.ink { position: absolute; z-index: 5000; inset: 0; overflow: visible; pointer-events: none; }
+.ink path { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ink text { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.ink-catch { fill: transparent; }
+.board.is-inking { touch-action: none; }
+.board.is-inking .ink { pointer-events: auto; cursor: crosshair; }
+.board.is-inking[data-tool='text'] .ink { cursor: text; }
+.board.is-inking[data-tool='eraser'] .ink { cursor: cell; }
+.ink-dock {
+  position: absolute;
+  z-index: 5001;
+  left: 68px;
+  bottom: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--elevated);
+  box-shadow: var(--shadow-md);
+}
+.ink-tool { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-2); cursor: pointer; }
+.ink-tool:hover { background: var(--hover); color: var(--text); }
+.ink-tool.is-on { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.ink-dock .sep { width: 16px; height: 1px; margin: 2px 0; background: var(--separator); }
+.ink-swatch { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.25); }
+.ink-palette { position: absolute; left: calc(100% + 10px); bottom: 34px; display: flex; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--elevated); box-shadow: var(--shadow-lg); }
+.ink-palette[hidden] { display: none; }
+.ink-palette button { width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--c); cursor: pointer; }
+.ink-palette button.is-on { box-shadow: 0 0 0 2px var(--elevated), 0 0 0 3.5px var(--accent); }
+.ink-input { position: absolute; z-index: 5002; min-width: 40px; height: 22px; padding: 0; border: 0; outline: 0; background: transparent; font-family: var(--font-display); font-size: 16px; font-weight: 600; user-select: text; -webkit-user-select: text; }
 
 /* A hint pointer near the card that needs you, until someone picks a card up. */
-.pointer { position: absolute; left: 1236px; top: 214px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); animation: point 5s ease-in-out infinite; pointer-events: none; transition: opacity 300ms ease; }
+.pointer { position: absolute; z-index: 4; left: 1232px; top: 196px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); animation: point 5s ease-in-out infinite; pointer-events: none; transition: opacity 300ms ease; }
 @keyframes point { 0%, 100% { transform: translate(0, 0); } 45%, 60% { transform: translate(-26px, -14px); } }
 .board.is-touched .pointer { opacity: 0; }
 
@@ -897,36 +1072,57 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
         <div class="window-bar" aria-hidden="true">
           <div>
             <span class="lights"><i></i><i></i><i></i></span>
+            <span class="back hide-sm"><svg class="icon" width="18" height="18" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
             <span class="hide-sm">Projects</span>
             <svg class="icon hide-sm" width="13" height="13" viewBox="0 0 24 24" style="opacity: 0.6"><path d="m9 18 6-6-6-6"/></svg>
             <svg width="19" height="15" viewBox="0 0 20 16" style="margin-left: 4px"><path d="M1 3a2 2 0 0 1 2-2h4.3l1.8 2H17a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z" fill="#3d9df5"/><path d="M1 5.6h18V13a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z" fill="#5eb5fb"/></svg>
             <span class="name">storefront</span>
+            <span class="branch hide-md"><svg class="icon" width="13" height="13" viewBox="0 0 24 24"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>main</span>
+            <span class="changes hide-md"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M9 10h6"/><path d="M12 13V7"/><path d="M9 17h6"/></svg>Changes<b>2</b></span>
           </div>
           <div>
-            <span class="tool hide-sm"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>Terminal</span>
-            <button class="tool is-outlined" type="button" tabindex="-1" data-new-session><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>New Session</button>
+            <span class="running hide-md"><svg class="icon" width="13" height="13" viewBox="0 0 24 24"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>3 running</span>
+            <button class="focus hide-sm" type="button" role="switch" aria-checked="true" tabindex="-1" data-focus-switch title="Show only the projects in focus">Focus<i class="switch"></i></button>
+            <span class="split">
+              <button class="tool is-outlined" type="button" tabindex="-1" data-new-session><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>New Session</button>
+              <span class="more hide-sm"><svg class="icon" width="13" height="13" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+            </span>
           </div>
         </div>
 
         <div class="board-frame dots" data-board-frame>
           <div class="board" data-board aria-hidden="true">
-            <svg class="edges" width="1320" height="720">
-              <path data-edge="fix merged" d="M534 292 C534 348 980 348 980 404"/>
-              <path class="is-flowing" data-edge="discount merged" d="M850 292 C850 348 980 348 980 404"/>
+            <svg class="edges" width="1320" height="820">
+              <path data-edge="fix merged" d="M544 260 C544 300 1008 282 1008 322"/>
+              <path class="is-flowing" data-edge="discount merged" d="M828 260 C828 300 1008 282 1008 322"/>
             </svg>
 
-            <div class="archive" style="left: 24px; top: 32px; width: 320px; height: 302px">
+            <!-- Focus is on: only this week's projects, and admin-dashboard because a session there needs you. -->
+            <nav class="rail" data-rail>
+              <span class="rail-item is-active" style="--back: #1d8be0; --front: #2da4f3; --glyph: #1478c8"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>S</b><i class="dot is-waiting"></i></span>
+              <span class="rail-item is-hidden" style="--back: #76767b; --front: #9a9aa0; --glyph: #636368"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>D</b></span>
+              <span class="rail-item" style="--back: #8b5bd9; --front: #a77beb; --glyph: #7447c4"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>C</b><i class="dot is-working"></i></span>
+              <span class="rail-item is-hidden" style="--back: #e0508f; --front: #f074aa; --glyph: #c83a78"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>M</b></span>
+              <span class="rail-item" style="--back: #3db352; --front: #5dcd6b; --glyph: #2a9340"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>M</b></span>
+              <span class="rail-item is-hidden" style="--back: #e0443e; --front: #f76760; --glyph: #c4302b"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>I</b></span>
+              <span class="rail-item is-unfocused" style="--back: #ee8420; --front: #fba343; --glyph: #d06d10"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>A</b><i class="dot is-waiting"></i></span>
+              <span class="rail-item is-hidden" style="--back: #e6b020; --front: #f9cb45; --glyph: #be8e0c"><svg viewBox="0 0 128 128"><use href="#fv-folder"/></svg><b>D</b></span>
+              <i class="rail-sep"></i>
+              <span class="rail-add"><svg class="icon" width="18" height="18" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+            </nav>
+
+            <div class="archive" style="left: 76px; top: 24px; width: 296px; height: 282px">
               <div class="archive-head">
                 <svg class="icon" width="17" height="17" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
                 Archive <span class="count">9</span>
               </div>
             </div>
 
-            <div class="zone" style="--hue: #0a84ff; left: 372px; top: 28px; width: 640px; height: 292px">
+            <div class="zone" style="--hue: #0a84ff; left: 396px; top: 20px; width: 576px; height: 262px">
               <div class="zone-head">Checkout <span class="count">2</span></div>
             </div>
 
-            <div class="is-archived" data-node="tests" data-prompt="Write tests for createOrder in checkout.js, including the error cases." style="left: 40px; top: 90px">
+            <div class="is-archived" data-node="tests" data-prompt="Write tests for createOrder in checkout.js, including the error cases." style="left: 92px; top: 82px">
               <div class="layer depth-2"></div>
               <div class="layer depth-1"></div>
               <div class="card">
@@ -936,7 +1132,7 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
               </div>
             </div>
 
-            <div data-node="fix" data-prompt="The cart subtotal test fails. Find out why and fix it." style="left: 390px; top: 76px">
+            <div data-node="fix" data-prompt="The cart subtotal test fails. Find out why and fix it." style="left: 412px; top: 64px">
               <div class="card">
                 <div class="card-head"><i class="dot"></i><p class="card-title">Fix cart rounding</p></div>
                 <p class="card-text">All 6 tests pass now. Prices are summed in cents, so the subtotal comes out as 56.20 instead of 56.1999.</p>
@@ -944,15 +1140,15 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
               </div>
             </div>
 
-            <div data-node="discount" data-prompt="Add discount codes at checkout: SAVE10 for 10% off, and WELCOME5 for $5 off orders over $30." style="left: 706px; top: 76px">
+            <div data-node="discount" data-prompt="Add discount codes at checkout: SAVE10 for 10% off, and WELCOME5 for $5 off orders over $30." style="left: 696px; top: 64px">
               <div class="card">
-                <div class="card-head"><i class="dot is-working"></i><p class="card-title">Discount codes at checkout</p></div>
-                <p class="card-text">Adding SAVE10 and WELCOME5 to src/discounts.js, then running the checkout tests.</p>
-                <div class="card-foot"><span>feat/discount-codes</span><span>7 prompts</span><span class="time">working</span></div>
+                <div class="card-head"><i class="dot"></i><p class="card-title">Discount codes at checkout</p></div>
+                <p class="card-text">All 17 tests pass. SAVE10 takes 10% off, and WELCOME5 takes $5 off orders over $30.</p>
+                <div class="card-foot"><span>feat/discount-codes</span><span>7 prompts</span><span class="time">21m ago</span></div>
               </div>
             </div>
 
-            <div data-node="shipping" data-prompt="Add a free-shipping progress bar to the cart page. Free shipping starts at $50." style="left: 1012px; top: 76px">
+            <div data-node="shipping" data-prompt="Add a free-shipping progress bar to the cart page. Free shipping starts at $50." style="left: 1020px; top: 64px">
               <div class="card is-waiting">
                 <div class="card-head"><i class="dot is-waiting"></i><p class="card-title">Free-shipping progress bar</p></div>
                 <p class="card-text">Should the bar show in the mini cart too, or only on the cart page?</p>
@@ -960,37 +1156,112 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
               </div>
             </div>
 
-            <div class="sticky" data-node="note" style="left: 66px; top: 410px; width: 210px; height: 168px">Drag a card around, expand one, or double-click the board to start a session.</div>
+            <div class="sticky" data-node="note" style="left: 104px; top: 350px; width: 200px; height: 150px">Drag a card around, draw with the pen, or double-click the board to start a session.</div>
 
-            <div data-node="search" data-prompt="Add product search. Use agents to compare a few approaches on the 10k-product fixture." style="left: 470px; top: 404px">
-              <div class="layer depth-3" style="--edge: var(--working)"></div>
-              <div class="layer depth-2 is-peeking" style="--edge: var(--done)"></div>
-              <div class="layer depth-1" style="--edge: var(--working)"></div>
-              <div class="card">
-                <div class="card-head"><i class="dot is-working"></i><p class="card-title">Product search</p></div>
-                <p class="card-text">Running 3 agents, one per search approach, to compare them on the 10k-product fixture.</p>
-                <div class="card-foot"><span>feat/search</span><span>14 prompts</span><span class="time">3 agents</span></div>
+            <!-- A view Claude built from "show me the tests". Fix starts a session on the failing one. -->
+            <div data-node="view" style="left: 396px; top: 322px; width: 300px; height: 304px">
+              <div class="view">
+                <div class="view-head">
+                  <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                  <span class="view-title">Tests</span>
+                  <span class="view-tools">
+                    <span><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span>
+                    <span><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg></span>
+                    <span><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg></span>
+                    <span><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/></svg></span>
+                  </span>
+                </div>
+                <div class="view-body" data-tests>
+                  <p class="vt-sum"><b data-passing>30</b><span>passing<span data-failing> · <em>1 failing</em></span></span></p>
+                  <div class="vt-row is-failing" data-failing-row><i class="vt-icon" data-mark><svg class="icon" width="10" height="10" viewBox="0 0 24 24" style="stroke-width: 3.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></i><code>shipping.test.js</code><span data-count>3/4</span><button class="vt-fix" type="button" tabindex="-1" data-fix>Fix</button></div>
+                  <p class="vt-msg" data-failing>free shipping starts at $50</p>
+                  <div class="vt-row"><i class="vt-icon"><svg class="icon" width="10" height="10" viewBox="0 0 24 24" style="stroke-width: 3.5"><path d="M20 6 9 17l-5-5"/></svg></i><code>cart.test.js</code><span>6</span></div>
+                  <div class="vt-row"><i class="vt-icon"><svg class="icon" width="10" height="10" viewBox="0 0 24 24" style="stroke-width: 3.5"><path d="M20 6 9 17l-5-5"/></svg></i><code>checkout.test.js</code><span>12</span></div>
+                  <div class="vt-row"><i class="vt-icon"><svg class="icon" width="10" height="10" viewBox="0 0 24 24" style="stroke-width: 3.5"><path d="M20 6 9 17l-5-5"/></svg></i><code>discounts.test.js</code><span>9</span></div>
+                  <p class="vt-foot">Ran just now · every 10 minutes</p>
+                </div>
               </div>
             </div>
 
-            <div data-node="merged" data-prompt="Apply the discount codes to the cents-based subtotal and show the discount on the cart page." style="left: 836px; top: 404px">
+            <!-- Expanded on the board: the session started from the two Checkout cards, at work in its terminal. -->
+            <div class="is-expanded" data-node="merged" data-home="744,370" data-prompt="Apply the discount codes to the cents-based subtotal and show the discount on the cart page." style="left: 720px; top: 322px">
               <div class="card">
                 <div class="card-head"><i class="dot is-working"></i><p class="card-title">From: Fix cart rounding + Discount codes at checkout</p></div>
                 <span class="chip"><svg class="icon" width="11" height="11" viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>merged from 2</span>
-                <p class="card-text">Both branches are merged into main. Next I'll apply discounts to the cents-based subtotal.</p>
-                <div class="card-foot"><span>main</span><span>2 prompts</span><span class="time">just now</span></div>
+                <p class="card-text">Applying the discount codes to the subtotal in cents, then running the cart tests.</p>
+                <div class="card-foot"><span>main</span><span>2 prompts</span><span class="time">working</span></div>
+              </div>
+              <div class="xcard" data-keep>
+                <div class="xhead">
+                  <i class="dot is-working"></i>
+                  <span class="xtitle">From: Fix cart rounding + Discount codes at checkout</span>
+                  <svg class="icon xlive" width="13" height="13" viewBox="0 0 24 24"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+                  <span class="xstats"><span>Ctx 18%<i class="xmeter" style="--fill: 18%"></i></span><span>4m</span></span>
+                  <span class="xtools">
+                    <button class="xtool" type="button" tabindex="-1" title="Speak"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg></button>
+                    <button class="xtool" type="button" tabindex="-1" title="Stop"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><rect width="14" height="14" x="5" y="5" rx="2"/></svg></button>
+                    <button class="xtool" type="button" tabindex="-1" title="Archive"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></button>
+                    <button class="xtool" type="button" tabindex="-1" title="Open in a window"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/></svg></button>
+                    <button class="xtool" type="button" tabindex="-1" data-collapse title="Collapse"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg></button>
+                  </span>
+                </div>
+                <div class="term is-dense">
+                  <p><span class="t-spark">✻</span> <b>Claude Code</b> <span class="t-dim">~/Code/storefront</span></p>
+                  <p class="t-prompt">&gt; Apply the discount codes to the cents-based subtotal and show the discount on the cart page.</p>
+                  <p><span class="t-done">●</span> Both branches are in main. Applying the discount in cents.</p>
+                  <p><span class="t-ok">●</span> <b>Update</b>(src/cart.js)<br><span class="t-dim">  ⎿  Updated src/cart.js with 3 additions and 1 removal</span></p>
+                  <div class="t-diff"><span class="t-del">41 -  return { subtotal, total: subtotal }</span><span class="t-add">41 +  const discount = applyDiscount(code, cents)</span><span class="t-add">42 +  const total = (cents - discount) / 100</span><span class="t-add">43 +  return { subtotal, discount, total }</span></div>
+                  <p><span class="t-spin"></span> <span class="t-work">Running the cart tests…</span> <span class="t-dim">(esc to interrupt)</span></p>
+                  <p class="t-input">&gt; <span class="t-cursor"></span></p>
+                  <p class="t-dim t-mode">⏵⏵ accept edits on</p>
+                </div>
               </div>
             </div>
 
-            <div class="zoom"><span>−</span><span style="padding: 0 6px">78%</span><span>+</span></div>
+            <!-- Ink someone left on the board: the failing test circled, with a note. -->
+            <svg class="ink" width="1320" height="820" data-ink>
+              <rect class="ink-catch" width="1320" height="820"/>
+              <path style="stroke: var(--ink-red)" d="M669.5 423.9 Q680.8 426.8 685.4 428.5 Q690.0 430.2 693.4 432.2 Q696.8 434.1 698.8 436.1 Q700.9 438.2 701.3 440.3 Q701.8 442.4 700.4 444.5 Q699.1 446.6 695.8 448.6 Q692.6 450.6 687.4 452.5 Q682.2 454.3 675.3 456.0 Q668.4 457.7 660.0 459.2 Q651.7 460.6 642.2 461.9 Q632.7 463.1 622.5 464.1 Q612.2 465.1 601.6 465.9 Q590.9 466.7 580.0 467.3 Q569.1 467.9 558.1 468.3 Q547.1 468.7 536.1 468.9 Q525.1 469.1 514.1 469.1 Q503.2 469.1 492.4 468.9 Q481.7 468.7 471.4 468.2 Q461.0 467.8 451.5 467.1 Q441.9 466.3 433.4 465.3 Q424.9 464.3 417.9 462.9 Q410.9 461.6 405.6 460.0 Q400.3 458.3 396.9 456.4 Q393.6 454.6 392.1 452.5 Q390.6 450.4 391.0 448.2 Q391.3 446.0 393.2 443.8 Q395.2 441.6 398.5 439.4 Q401.8 437.2 406.3 435.2 Q410.9 433.2 416.5 431.3 Q422.1 429.5 428.8 427.9 Q435.6 426.2 443.4 424.9 Q451.2 423.5 460.1 422.3 Q469.1 421.2 479.0 420.3 Q489.0 419.3 499.9 418.6 Q510.8 417.9 522.3 417.4 Q533.7 416.8 545.5 416.5 Q557.2 416.2 568.7 416.0 Q580.3 415.9 591.3 416.0 Q602.3 416.1 612.4 416.4 Q622.6 416.8 631.7 417.4 Q640.9 418.1 648.9 419.0 Q657.0 419.9 664.0 421.2 Q671.0 422.4 676.9 423.9 Q682.8 425.5 687.6 427.3 Q692.5 429.1 696.1 431.1 L699.8 433.1"/>
+              <path style="stroke: var(--ink-red)" d="M236 582 L384 466 M370.3 469 L384 466 L377.8 478.6"/>
+              <text style="fill: var(--ink-red)" x="132" y="606">Fix before release</text>
+            </svg>
+
+            <div class="ink-dock" data-ink-dock>
+              <button class="ink-tool is-on" type="button" tabindex="-1" data-tool="pointer" title="Pointer (Esc)"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="M4.04 4.69a.5.5 0 0 1 .65-.65l16 6.5a.5.5 0 0 1-.06.95l-6.13 1.58a2 2 0 0 0-1.43 1.43l-1.58 6.13a.5.5 0 0 1-.95.06z"/></svg></button>
+              <button class="ink-tool" type="button" tabindex="-1" data-tool="pen" title="Pen (P)"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="M21.17 6.81a1 1 0 0 0-3.98-3.98L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg></button>
+              <button class="ink-tool" type="button" tabindex="-1" data-tool="arrow" title="Arrow (A)"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="M13 5h6v6"/><path d="M19 5 5 19"/></svg></button>
+              <button class="ink-tool" type="button" tabindex="-1" data-tool="text" title="Text"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>
+              <button class="ink-tool" type="button" tabindex="-1" data-tool="eraser" title="Eraser (X)"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button>
+              <i class="sep"></i>
+              <button class="ink-tool" type="button" tabindex="-1" data-ink-color title="Colour"><i class="ink-swatch" style="--c: var(--ink-red)"></i></button>
+              <button class="ink-tool" type="button" tabindex="-1" data-ink-clear title="Clear all ink"><svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
+              <div class="ink-palette" data-ink-palette hidden>
+                <button type="button" tabindex="-1" data-color="graphite" style="--c: var(--ink-graphite)" title="Graphite"></button>
+                <button class="is-on" type="button" tabindex="-1" data-color="red" style="--c: var(--ink-red)" title="Red"></button>
+                <button type="button" tabindex="-1" data-color="orange" style="--c: var(--ink-orange)" title="Orange"></button>
+                <button type="button" tabindex="-1" data-color="green" style="--c: var(--ink-green)" title="Green"></button>
+                <button type="button" tabindex="-1" data-color="blue" style="--c: var(--ink-blue)" title="Blue"></button>
+                <button type="button" tabindex="-1" data-color="purple" style="--c: var(--ink-purple)" title="Purple"></button>
+              </div>
+            </div>
+
+            <div class="zoom">
+              <span><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></span>
+              <span style="min-width: 50px">84%</span>
+              <span><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+              <i class="sep"></i>
+              <span><svg class="icon" width="13" height="13" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></span>
+            </div>
             <div class="minimap">
-              <i style="left: 12px; top: 14px; width: 26px; height: 20px; background: var(--done); opacity: 0.55"></i>
-              <i style="left: 46px; top: 12px; width: 60px; height: 30px; border: 1px solid color-mix(in srgb, #0a84ff 40%, transparent); border-radius: 4px"></i>
-              <i style="left: 50px; top: 18px; width: 24px; height: 19px; background: var(--done)"></i>
-              <i style="left: 78px; top: 18px; width: 24px; height: 19px; background: var(--working)"></i>
-              <i style="left: 116px; top: 18px; width: 24px; height: 19px; background: var(--waiting)"></i>
-              <i style="left: 60px; top: 56px; width: 24px; height: 19px; background: var(--working)"></i>
-              <i style="left: 96px; top: 56px; width: 24px; height: 19px; background: var(--working)"></i>
+              <i style="left: 11px; top: 13px; width: 37px; height: 35px; border: 1px solid rgba(120, 120, 128, 0.35); background: rgba(120, 120, 128, 0.07)"></i>
+              <i style="left: 13px; top: 20px; width: 33px; height: 24px; background: var(--done); opacity: 0.55"></i>
+              <i style="left: 51px; top: 13px; width: 71px; height: 33px; border: 1px solid color-mix(in srgb, #0a84ff 40%, transparent); border-radius: 4px"></i>
+              <i style="left: 53px; top: 18px; width: 33px; height: 24px; background: var(--done)"></i>
+              <i style="left: 88px; top: 18px; width: 33px; height: 24px; background: var(--done)"></i>
+              <i style="left: 128px; top: 18px; width: 33px; height: 24px; background: var(--waiting)"></i>
+              <i style="left: 14px; top: 54px; width: 25px; height: 19px; background: #ffe27a"></i>
+              <i style="left: 51px; top: 50px; width: 37px; height: 38px; background: #c8a2f7"></i>
+              <i style="left: 91px; top: 50px; width: 71px; height: 44px; background: var(--working)"></i>
             </div>
 
             <svg class="pointer" width="22" height="26" viewBox="0 0 22 26"><path d="M2 2v19l5-4.6 3.4 7.6 3.3-1.5-3.3-7.4H17z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
@@ -1396,17 +1667,19 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 </script>
 
 <script>
-// The hero's board works like the real one: drag cards (and the note) around and the lineage lines follow,
-// expand a card to see its session, and double-click the board (or press New Session) to start one.
+// The hero's board works like the real one: drag cards, the note and the view around and the lineage lines follow,
+// expand a card to see its session, draw on the board, flip Focus to see every project on the rail, press Fix in the
+// view, and double-click the board (or press New Session) to start a session.
 (() => {
   const frame = document.querySelector('[data-board-frame]')
   const board = document.querySelector('[data-board]')
   if (!frame || !board) return
 
   const W = 1320
-  const H = 720
-  const CARD_W = 288
-  const CARD_H = 216
+  const H = 820
+  const CARD_W = 264
+  const CARD_H = 196
+  const SVG = 'http://www.w3.org/2000/svg'
 
   // Fit the board to the window, down to a floor; below it, crop toward the busy right side of the board.
   const fit = () => {
@@ -1419,11 +1692,15 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
   new ResizeObserver(fit).observe(frame)
   fit()
 
-  const edges = [...board.querySelectorAll('[data-edge]')]
+  const edgeLayer = board.querySelector('.edges')
   const nodeById = (id) => board.querySelector(`[data-node="${id}"]`)
   const drawEdges = () => {
-    for (const path of edges) {
+    for (const path of edgeLayer.querySelectorAll('[data-edge]')) {
       const [from, to] = path.dataset.edge.split(' ').map(nodeById)
+      if (!from || !to) {
+        path.remove()
+        continue
+      }
       const sx = from.offsetLeft + from.offsetWidth / 2
       const sy = from.offsetTop + from.offsetHeight
       const tx = to.offsetLeft + to.offsetWidth / 2
@@ -1431,6 +1708,14 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
       const bend = Math.max(40, Math.abs(ty - sy) / 2)
       path.setAttribute('d', `M${sx} ${sy} C${sx} ${sy + bend} ${tx} ${ty - bend} ${tx} ${ty}`)
     }
+  }
+  // A session a view starts is tied back to it with a dashed line, like the app.
+  const link = (from, to) => {
+    const path = document.createElementNS(SVG, 'path')
+    path.setAttribute('class', 'is-view-edge')
+    path.dataset.edge = `${from} ${to}`
+    edgeLayer.append(path)
+    drawEdges()
   }
 
   const archive = board.querySelector('.archive')
@@ -1443,18 +1728,28 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
   const place = (el, x, y) => {
-    el.style.left = `${clamp(x, 0, W - el.offsetWidth)}px`
+    el.style.left = `${clamp(x, 52, W - el.offsetWidth)}px`
     el.style.top = `${clamp(y, 0, H - el.offsetHeight)}px`
   }
   const raise = (el) => {
     el.style.zIndex = ++top
     board.classList.add('is-touched')
   }
+  const toBoard = (e) => {
+    const rect = board.getBoundingClientRect()
+    const scale = rect.width / W
+    return [(e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale]
+  }
   const escape = (text) => text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
-  const icon = (paths, size) =>
-    `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`
+  const icon = (paths, size, extra = '') =>
+    `<svg class="icon${extra}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`
   const MAXIMIZE = '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/>'
   const MINIMIZE = '<path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/>'
+  const TERMINAL = '<path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/>'
+  const STOP = '<rect width="14" height="14" x="5" y="5" rx="2"/>'
+  const ARCHIVE = '<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>'
+  const WINDOW = '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/>'
+  const CHECK = '<path d="M20 6 9 17l-5-5"/>'
 
   // ------------------------------------------------------------ expanding
 
@@ -1463,7 +1758,7 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
       'beforeend',
       `<button class="card-expand" type="button" tabindex="-1" data-expand title="Expand on the board">${icon(MAXIMIZE, 13)}</button>`
     )
-  board.querySelectorAll('[data-node]:not(.sticky)').forEach(addExpandButton)
+  board.querySelectorAll('[data-node] > .card').forEach((card) => addExpandButton(card.parentElement))
 
   const statusOf = (node) => {
     const dot = node.querySelector('.card .dot').classList
@@ -1481,11 +1776,16 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
         : status === 'waiting'
           ? '<p class="t-dim">Waiting for your answer.</p>'
           : ''
+    const tool = (paths, title, attr = '') =>
+      `<button class="xtool" type="button" tabindex="-1" title="${title}"${attr}>${icon(paths, 14)}</button>`
     return `
       <div class="xhead">
         <i class="dot${status === 'done' ? '' : ` is-${status}`}"></i>
         <span class="xtitle">${escape(title)}</span>
-        <button class="xtool" type="button" tabindex="-1" data-collapse title="Collapse">${icon(MINIMIZE, 14)}</button>
+        ${icon(TERMINAL, 13, ' xlive')}
+        <span class="xtools">
+          ${tool(STOP, 'Stop')}${tool(ARCHIVE, 'Archive')}${tool(WINDOW, 'Open in a window')}${tool(MINIMIZE, 'Collapse', ' data-collapse')}
+        </span>
       </div>
       <div class="term">
         <p><span class="t-spark">✻</span> <b>Claude Code</b> <span class="t-dim">~/Code/storefront</span></p>
@@ -1500,7 +1800,9 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
   const expand = (node) => {
     node.dataset.home = `${node.offsetLeft},${node.offsetTop}`
     node.classList.add('is-expanded')
-    node.insertAdjacentHTML('beforeend', `<div class="xcard">${expandedView(node)}</div>`)
+    // A card that came expanded keeps its own terminal for next time.
+    if (node.kept) node.append(node.kept)
+    else node.insertAdjacentHTML('beforeend', `<div class="xcard">${expandedView(node)}</div>`)
     raise(node)
     place(node, node.offsetLeft, node.offsetTop)
     drawEdges()
@@ -1508,7 +1810,9 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
 
   // Collapsing puts the card back where it was, unless it was moved while expanded.
   const collapse = (node) => {
-    node.querySelector('.xcard').remove()
+    const xcard = node.querySelector('.xcard')
+    if (xcard.hasAttribute('data-keep')) node.kept = xcard
+    xcard.remove()
     node.classList.remove('is-expanded')
     const [x, y] = node.dataset.home.split(',').map(Number)
     if (node.dataset.moved) place(node, node.offsetLeft, node.offsetTop)
@@ -1546,8 +1850,8 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
     if (expanded) expanded.innerHTML = expandedView(node)
   }
 
-  const startSession = (x, y) => {
-    const idea = ideas[count++ % ideas.length]
+  const startSession = (x, y, idea = ideas[count % ideas.length]) => {
+    count++
     const node = document.createElement('div')
     node.className = 'is-new'
     node.dataset.node = `new-${count}`
@@ -1558,41 +1862,242 @@ code { font-family: var(--font-mono); font-size: 0.92em; }
         <p class="card-text">Reading the project structure.</p>
         <div class="card-foot"><span>${idea.branch}</span><span>1 prompt</span><span class="time">working</span></div>
       </div>`
-    board.querySelector('.zoom').before(node)
+    board.querySelector('.ink').before(node)
     addExpandButton(node)
     raise(node)
     place(node, x, y)
     setTimeout(() => node.classList.remove('is-new'), 400)
-    setTimeout(() => node.isConnected && setStatus(node, idea.ask ? 'waiting' : 'done', idea.ask || idea.done), 4000)
+    setTimeout(() => {
+      if (!node.isConnected) return
+      setStatus(node, idea.ask ? 'waiting' : 'done', idea.ask || idea.done)
+      idea.then?.()
+    }, 4000)
     // Keep the board tidy: the oldest of the started sessions makes way after a few.
     started.push(node)
-    if (started.length > 5) started.shift().remove()
+    if (started.length > 5) {
+      started.shift().remove()
+      drawEdges()
+    }
+    return node
   }
 
   // Double-click empty board to start a session right there.
   board.addEventListener('dblclick', (e) => {
-    if (e.target.closest('[data-node], .archive, .zoom, .minimap')) return
-    const rect = board.getBoundingClientRect()
-    const scale = rect.width / W
-    startSession((e.clientX - rect.left) / scale - CARD_W / 2, (e.clientY - rect.top) / scale - CARD_H / 2)
+    if (board.classList.contains('is-inking')) return
+    if (e.target.closest('[data-node], .archive, .rail, .ink-dock, .zoom, .minimap')) return
+    const [x, y] = toBoard(e)
+    startSession(x - CARD_W / 2, y - CARD_H / 2)
   })
 
-  // New Session finds a clear spot, or stacks near the middle when the board is full.
+  // New Session finds the clearest spot on the board: an empty one if there is one, or else the least covered.
   const freeSpot = () => {
-    const taken = [...board.querySelectorAll('[data-node], .archive, .zoom, .minimap')].map((el) => ({
+    const taken = [...board.querySelectorAll('[data-node], .archive, .rail, .ink-dock, .zoom, .minimap')].map((el) => ({
       x: el.offsetLeft - 16,
       y: el.offsetTop - 16,
       w: el.offsetWidth + 32,
       h: el.offsetHeight + 32
     }))
+    let best = null
     for (let y = 24; y <= H - CARD_H - 24; y += 24) {
-      for (let x = 24; x <= W - CARD_W - 24; x += 24) {
-        if (taken.every((r) => x + CARD_W <= r.x || x >= r.x + r.w || y + CARD_H <= r.y || y >= r.y + r.h)) return [x, y]
+      for (let x = 76; x <= W - CARD_W - 24; x += 24) {
+        const covered = taken.reduce(
+          (sum, r) =>
+            sum +
+            Math.max(0, Math.min(x + CARD_W, r.x + r.w) - Math.max(x, r.x)) *
+              Math.max(0, Math.min(y + CARD_H, r.y + r.h) - Math.max(y, r.y)),
+          0
+        )
+        if (!covered) return [x, y]
+        if (!best || covered < best.covered) best = { x, y, covered }
       }
     }
-    return [W / 2 - CARD_W / 2 + (count % 5) * 28, H / 2 - CARD_H / 2 + (count % 5) * 28]
+    return [best.x, best.y]
   }
   document.querySelector('[data-new-session]')?.addEventListener('click', () => startSession(...freeSpot()))
+
+  // ------------------------------------------------------------------ view
+
+  // Fix starts a session on the failing test; once it's done, the view runs the tests again and they all pass.
+  const tests = board.querySelector('[data-tests]')
+  const passAll = () => {
+    tests.querySelector('[data-passing]').textContent = '31'
+    tests.querySelectorAll('[data-failing], [data-fix]').forEach((el) => el.remove())
+    const row = tests.querySelector('[data-failing-row]')
+    row.classList.remove('is-failing')
+    row.querySelector('[data-mark]').innerHTML = icon(CHECK, 10).replace('class="icon"', 'class="icon" style="stroke-width: 3.5"')
+    row.querySelector('[data-count]').textContent = '4'
+    tests.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 400 })
+  }
+  tests?.querySelector('[data-fix]').addEventListener('click', (e) => {
+    e.currentTarget.disabled = true
+    const node = startSession(...freeSpot(), {
+      title: 'Fix “free shipping starts at $50”',
+      prompt: 'The test “free shipping starts at $50” in test/shipping.test.js fails. Find the cause in the code, fix it, and run all the tests.',
+      branch: 'main',
+      done: 'Orders of exactly $50 ship free now. All 31 tests pass.',
+      then: passAll
+    })
+    link('view', node.dataset.node)
+  })
+
+  // ----------------------------------------------------------------- focus
+
+  // The title bar's Focus switch: on, the rail shows only this week's projects (and one that needs you); off, all of them.
+  const rail = board.querySelector('[data-rail]')
+  document.querySelector('[data-focus-switch]')?.addEventListener('click', (e) => {
+    const on = e.currentTarget.getAttribute('aria-checked') !== 'true'
+    e.currentTarget.setAttribute('aria-checked', String(on))
+    rail.classList.toggle('is-all', !on)
+  })
+
+  // ------------------------------------------------------------------- ink
+
+  const ink = board.querySelector('[data-ink]')
+  const dock = board.querySelector('[data-ink-dock]')
+  const palette = dock.querySelector('[data-ink-palette]')
+  let tool = 'pointer'
+  let color = 'red'
+  let stroke = null
+
+  const setTool = (next) => {
+    tool = next
+    board.dataset.tool = next
+    board.classList.toggle('is-inking', next !== 'pointer')
+    if (next !== 'pointer') board.classList.add('is-touched')
+    dock.querySelectorAll('[data-tool]').forEach((button) => button.classList.toggle('is-on', button.dataset.tool === next))
+  }
+  const paint = (el) => (el.style[el.tagName === 'text' ? 'fill' : 'stroke'] = `var(--ink-${color})`)
+  const r = (n) => Math.round(n * 10) / 10
+
+  // Smoothed like the app's pen: a quadratic curve through the midpoints between the points.
+  const penPath = (points) => {
+    const [[x0, y0]] = points
+    let d = `M${r(x0)} ${r(y0)}`
+    for (let i = 1; i < points.length - 1; i++) {
+      const [x, y] = points[i]
+      const [nx, ny] = points[i + 1]
+      d += ` Q${r(x)} ${r(y)} ${r((x + nx) / 2)} ${r((y + ny) / 2)}`
+    }
+    const [lx, ly] = points[points.length - 1]
+    return `${d} L${r(lx)} ${r(ly)}`
+  }
+  // A straight shaft with an open two-line head.
+  const arrowPath = ([sx, sy], [ex, ey]) => {
+    const angle = Math.atan2(ey - sy, ex - sx)
+    const wing = (side) => `${r(ex - 14 * Math.cos(angle + side * 0.45))} ${r(ey - 14 * Math.sin(angle + side * 0.45))}`
+    return `M${r(sx)} ${r(sy)} L${r(ex)} ${r(ey)} M${wing(1)} L${r(ex)} ${r(ey)} L${wing(-1)}`
+  }
+
+  // The eraser takes any stroke or text that passes near the pointer.
+  const near = (el, x, y) => {
+    if (el.tagName === 'text') {
+      const box = el.getBBox()
+      return x > box.x - 6 && x < box.x + box.width + 6 && y > box.y - 6 && y < box.y + box.height + 6
+    }
+    const length = el.getTotalLength()
+    for (let at = 0; at <= length; at += 5) {
+      const point = el.getPointAtLength(at)
+      if (Math.hypot(point.x - x, point.y - y) < 10) return true
+    }
+    return false
+  }
+  const erase = (x, y) => ink.querySelectorAll('path, text').forEach((el) => near(el, x, y) && el.remove())
+
+  // Text goes in where you click, and lands on the board on Enter (Esc drops it).
+  const write = (x, y) => {
+    const input = document.createElement('input')
+    input.className = 'ink-input'
+    input.style.left = `${x}px`
+    input.style.top = `${y - 11}px`
+    input.style.color = `var(--ink-${color})`
+    board.append(input)
+    let finished = false
+    const done = (keep) => {
+      // Removing the input blurs it, which calls this again.
+      if (finished) return
+      finished = true
+      const text = input.value.trim()
+      input.remove()
+      if (!keep || !text) return
+      const el = document.createElementNS(SVG, 'text')
+      el.setAttribute('x', r(x))
+      el.setAttribute('y', r(y + 5))
+      el.textContent = text
+      paint(el)
+      ink.append(el)
+    }
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation()
+      if (e.key === 'Enter') done(true)
+      if (e.key === 'Escape') done(false)
+    })
+    input.addEventListener('blur', () => done(true))
+    setTimeout(() => input.focus())
+  }
+
+  ink.addEventListener('pointerdown', (e) => {
+    if (tool === 'pointer' || e.button !== 0) return
+    e.preventDefault()
+    palette.hidden = true
+    const at = toBoard(e)
+    if (tool === 'text') return write(...at)
+    ink.setPointerCapture(e.pointerId)
+    if (tool === 'eraser') {
+      stroke = { erasing: true }
+      return erase(...at)
+    }
+    const el = document.createElementNS(SVG, 'path')
+    paint(el)
+    ink.append(el)
+    stroke = { el, points: [at] }
+    el.setAttribute('d', tool === 'pen' ? penPath(stroke.points) : arrowPath(at, at))
+  })
+  ink.addEventListener('pointermove', (e) => {
+    if (!stroke) return
+    const at = toBoard(e)
+    if (stroke.erasing) return erase(...at)
+    if (tool === 'pen') {
+      stroke.points.push(at)
+      stroke.el.setAttribute('d', penPath(stroke.points))
+    } else {
+      stroke.points[1] = at
+      stroke.el.setAttribute('d', arrowPath(stroke.points[0], at))
+    }
+  })
+  const lift = () => {
+    // An arrow needs some length to point anywhere.
+    if (tool === 'arrow' && stroke?.el && (!stroke.points[1] || Math.hypot(stroke.points[1][0] - stroke.points[0][0], stroke.points[1][1] - stroke.points[0][1]) < 8)) {
+      stroke.el.remove()
+    }
+    stroke = null
+  }
+  ink.addEventListener('pointerup', lift)
+  ink.addEventListener('pointercancel', lift)
+
+  dock.addEventListener('click', (e) => {
+    const pick = e.target.closest('[data-tool]')
+    const swatch = e.target.closest('[data-color]')
+    if (pick) setTool(pick.dataset.tool)
+    if (e.target.closest('[data-ink-color]')) palette.hidden = !palette.hidden
+    if (e.target.closest('[data-ink-clear]')) ink.querySelectorAll('path, text').forEach((el) => el.remove())
+    if (swatch) {
+      color = swatch.dataset.color
+      palette.querySelectorAll('[data-color]').forEach((button) => button.classList.toggle('is-on', button === swatch))
+      dock.querySelector('.ink-swatch').style.setProperty('--c', `var(--ink-${color})`)
+      palette.hidden = true
+      if (tool === 'pointer' || tool === 'eraser') setTool('pen')
+    }
+  })
+
+  // P, A and X pick a tool and Esc puts it down, while the pointer is over the board.
+  let over = false
+  frame.addEventListener('pointerenter', () => (over = true))
+  frame.addEventListener('pointerleave', () => (over = false))
+  document.addEventListener('keydown', (e) => {
+    if (!over || e.metaKey || e.ctrlKey || e.altKey || e.target.closest?.('input, textarea, [contenteditable]')) return
+    const next = { p: 'pen', a: 'arrow', x: 'eraser', Escape: 'pointer' }[e.key]
+    if (next) setTool(next)
+  })
 
   // -------------------------------------------------------------- dragging
 

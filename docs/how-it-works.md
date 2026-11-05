@@ -81,6 +81,8 @@ Point at a note with writing on it and press ▶ in its corner (or right-click i
 
 Claude writes notes too. Ask a session to do some research and put what it found on the board, and it writes notes with its board tools (below). They go up beside its card, one under another, sized to fit what they say, and signed with the session's name: click the name to open the session. Claude can also read the notes on the board and rewrite them, but not delete them.
 
+A session can put notes on another project's board too: ask it to leave a note for the docs project, say, and it finds that project and writes there. Those notes go beside the rightmost card on that board, one under another, and they're signed with the session's name and its project. Click that to go back to the session.
+
 ## Views
 
 A view is a small live page on the board, such as a table of your last deployments, a count from your database or your open tickets, that Claude builds from what you describe and keeps up to date. Click **View** in the title bar (or right-click the board › **New view here…**), say what it should show and where the data comes from, and press **Create view**. The view appears straight away and says it's being built. Behind it is its *brain*: a Claude session of its own, in auto mode, that isn't drawn on the board. The view's title bar shows what the brain is doing: 🟠 while it works, 🔴 when it needs you. Press ⌨ in the title bar (or **Watch it work** while it's building) to open the brain's session and talk to it directly.
@@ -101,7 +103,7 @@ Any session can put up a view too: ask it for a dashboard or a table on the boar
 
 ## Board tools
 
-Every Claude session started from the app gets an MCP server named `nodus`, through `--mcp-config`, with tools for its board: `create_note`, `update_note` and `list_notes`, and `create_view`, `update_view`, `get_view` and `list_views` for views. `update_view` waits for the board to load a changed page and returns any JavaScript errors it hit, so Claude can fix them. A view's brain can leave out the view's id. Action runs get `list_sessions` and `archive_sessions` as well. They're allowed with `--allowedTools`, so they never stop to ask.
+Every Claude session started from the app gets an MCP server named `nodus`, through `--mcp-config`, with tools for its board: `create_note`, `update_note` and `list_notes`, and `create_view`, `update_view`, `get_view` and `list_views` for views. The note tools take an optional `project`, by id or name, to work on another project's board, and `list_projects` lists the projects. `create_project` adds a folder as a project, making the folder if it isn't there, when you ask a session for a new project. `update_view` waits for the board to load a changed page and returns any JavaScript errors it hit, so Claude can fix them. A view's brain can leave out the view's id. Action runs get `list_sessions` and `archive_sessions` as well. They're allowed with `--allowedTools`, so they never stop to ask.
 
 The server lives in the session host, next to the hook server, and passes each request on to the app. So a session keeps its tools when you quit and reopen the app; while the app is closed, a tool call fails and says why. Every process gets the same config, and Claude Code fills in the host's port and token, and the session's id, from the process's environment, so the token never shows up in a process listing. Sessions started outside the app don't get the tools.
 
@@ -248,7 +250,7 @@ src/
     hooks.ts      the status machine, driven by hooks the session host passes on
     summarize.ts  forked, non-persisted handoff summaries
     actions.ts    the actions rail's buttons: drafting them with Claude, and each run's extra claude options
-    boardTools.ts the board tools' MCP server, answering what the session host relays: notes and views for every session, and listing and archiving sessions for action runs
+    boardTools.ts the board tools' MCP server, answering what the session host relays: notes, views and projects for every session, and listing and archiving sessions for action runs
     notes.ts      notes sessions write: where they go on the board, and how big they are
     views.ts      views: their files, commands and schedules, their brains, and what their pages ask the board for
     viewPage.ts   the page a view's frame loads: its content security policy, theme and window.nodus
