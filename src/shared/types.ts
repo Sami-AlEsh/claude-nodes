@@ -514,8 +514,8 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 /**
  * How the mouse moves around the board. 'withKeyboard': Space-drag pans,
  * ⌘-scroll zooms, and dragging the canvas draws a selection box. 'mouseOnly':
- * dragging the canvas pans, the wheel zooms and ⇧-drag draws the box. A
- * trackpad works the same in both.
+ * dragging the canvas pans and ⇧-drag draws the box, while ⌘-scroll still
+ * zooms. A trackpad works the same in both.
  */
 export type MouseMode = 'withKeyboard' | 'mouseOnly'
 

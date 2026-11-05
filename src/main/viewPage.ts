@@ -221,7 +221,6 @@ const BRIDGE = `
     e.preventDefault();
     post({ wheel: {
       dx: e.deltaX, dy: e.deltaY, mode: e.deltaMode, x: e.clientX, y: e.clientY,
-      wx: e.wheelDeltaX, wy: e.wheelDeltaY,
       ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey
     } });
   }, { passive: false });

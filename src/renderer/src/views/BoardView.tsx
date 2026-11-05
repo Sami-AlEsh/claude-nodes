@@ -126,15 +126,7 @@ import {
 } from '@renderer/components/board/notes'
 import { SelectionBar } from '@renderer/components/board/SelectionBar'
 import { BoardControls } from '@renderer/components/board/BoardControls'
-import {
-  MAX_ZOOM,
-  MIN_ZOOM,
-  mouseControls,
-  shiftTracker,
-  wheelReader,
-  wheelZoomFactor,
-  zoomAround
-} from '@renderer/components/board/navigation'
+import { MAX_ZOOM, MIN_ZOOM, mouseControls, shiftTracker } from '@renderer/components/board/navigation'
 import { INK_SHORTCUTS, InkLayer, type InkHandle } from '@renderer/components/board/InkLayer'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
 import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
@@ -741,31 +733,6 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     stackScrollTimer.current = window.setTimeout(() => setStackScrolling(false), 160)
   }
   useEffect(() => () => window.clearTimeout(stackScrollTimer.current), [])
-
-  // Mouse only: a mouse wheel zooms around the pointer, while a trackpad's
-  // scroll still pans and a pinch zooms. React Flow makes every wheel event
-  // pan or every one zoom, so the pane (inside React Flow's renderer, which
-  // listens for the wheel) takes a mouse wheel's events first. Whatever keeps
-  // the wheel to itself does as before: a `nowheel` element, and an expanded
-  // card's terminal, which stops the event before it gets here.
-  useEffect(() => {
-    if (!mouseOnly) return
-    const pane = wrapperRef.current?.querySelector<HTMLElement>('.react-flow__pane')
-    if (!pane) return
-    const isMouse = wheelReader()
-    const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) return
-      if (e.target instanceof Element && e.target.closest('.nowheel')) return
-      const pageZoom = window.api.pageZoom()
-      if (!isMouse(e, e.timeStamp, pageZoom)) return
-      e.preventDefault()
-      e.stopPropagation()
-      const at = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
-      void rf.setViewport(zoomAround(rf.getViewport(), at, wheelZoomFactor(e, pageZoom)))
-    }
-    pane.addEventListener('wheel', onWheel, { passive: false })
-    return () => pane.removeEventListener('wheel', onWheel)
-  }, [mouseOnly, rf])
 
   // Clicking anywhere else on the board folds the results back into the stack.
   useEffect(() => {

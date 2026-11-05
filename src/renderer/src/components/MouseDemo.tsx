@@ -9,7 +9,7 @@ const STEPS: Record<MouseMode, { label: string; key?: string }[]> = {
     { label: '⌘ + wheel to zoom', key: '⌘' },
     { label: 'Drag to select' }
   ],
-  mouseOnly: [{ label: 'Drag to pan' }, { label: 'Wheel to zoom' }, { label: '⇧ + drag to select', key: '⇧' }]
+  mouseOnly: [{ label: 'Drag to pan' }, { label: '⌘ + wheel to zoom', key: '⌘' }, { label: '⇧ + drag to select', key: '⇧' }]
 }
 
 /**

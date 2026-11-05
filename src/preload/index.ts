@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, webFrame, webUtils, type IpcRendererEvent } from 'electron'
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
 import { IPC, type Api } from '@shared/api'
 
 function subscribe<A extends unknown[]>(channel: string, cb: (...args: A) => void) {
@@ -13,7 +13,6 @@ const api: Api = {
   appInfo: () => ipcRenderer.invoke(IPC.appInfo),
   takeOpenRequest: () => ipcRenderer.invoke(IPC.appTakeOpenRequest),
   pathForFile: (file) => webUtils.getPathForFile(file),
-  pageZoom: () => webFrame.getZoomFactor(),
 
   settings: {
     get: () => ipcRenderer.invoke(IPC.settingsGet),
