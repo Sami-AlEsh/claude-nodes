@@ -33,6 +33,7 @@ export function normalizeSettings(raw: unknown): AppSettings {
     pinProjectRail: s.pinProjectRail === true,
     focusFeature: s.focusFeature === true,
     focusMode: s.focusMode === true,
+    showOwnStatusLine: s.showOwnStatusLine === true,
     ...normalizeSchemes(s)
   }
 }

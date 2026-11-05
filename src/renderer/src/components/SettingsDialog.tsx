@@ -161,6 +161,27 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
           </label>
         </fieldset>
 
+        <fieldset className="settings-group">
+          <legend className="settings-label">Sessions</legend>
+          <label className="settings-row">
+            <span className="settings-row-text">
+              <span className="settings-row-title">Show my status line</span>
+              <span className="settings-row-hint">
+                Runs the status line from your Claude Code settings at the bottom of each session. Applies to sessions
+                you start or resume after changing it.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              checked={settings?.showOwnStatusLine ?? false}
+              disabled={!settings}
+              onChange={(e) => update({ showOwnStatusLine: e.target.checked })}
+            />
+          </label>
+        </fieldset>
+
         <VoiceSettings />
 
         <UpdateSettings settings={settings} update={update} />

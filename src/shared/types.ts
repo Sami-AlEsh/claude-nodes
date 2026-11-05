@@ -529,6 +529,8 @@ export interface AppSettings {
   focusFeature: boolean
   /** The title bar's Focus switch: show only the projects in focus, in the grid and the rail. */
   focusMode: boolean
+  /** Sessions show the person's own Claude Code status line too. Applies to sessions started or resumed after. */
+  showOwnStatusLine: boolean
   /** The colours while the app is dark. Light mode keeps Nodus's own, and status colours and terminals never change. */
   darkScheme: DarkScheme
 }

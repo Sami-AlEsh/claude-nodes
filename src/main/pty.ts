@@ -27,6 +27,7 @@ import {
   type HostMessage,
   type HostPaths
 } from './hostProtocol'
+import { ownStatusLineEnv } from './statusLine'
 
 const BUFFER_LIMIT = 2 * 1024 * 1024
 const FLUSH_MS = 16
@@ -368,7 +369,9 @@ function commandFor(opts: SpawnOptions): { file: string; args: string[]; env: Re
   args.push('--settings', hookSettings())
   // After `--`, so a prompt that starts with a dash isn't read as an option.
   if (opts.initialPrompt) args.push('--', opts.initialPrompt)
-  return { file: requireClaude(), args, env: spawnEnv(hookEnv(opts.sessionId)) }
+  // The person's own status line, when they asked to see it, for ours to run.
+  const env = spawnEnv({ ...hookEnv(opts.sessionId), ...ownStatusLineEnv(opts.cwd) })
+  return { file: requireClaude(), args, env }
 }
 
 async function startSession(opts: SpawnOptions) {
