@@ -4,7 +4,7 @@ import {
   MAX_ZOOM,
   MIN_ZOOM,
   ZOOM_STEP,
-  boardControls,
+  navigationProps,
   isMouseWheel,
   shiftTracker,
   wheelReader,
@@ -29,8 +29,8 @@ const wheel = (notches: number, deltaY: number, shift = false): WheelSample =>
     ? { deltaX: deltaY, deltaY: 0, deltaMode: 0, wheelDeltaX: notches * 120, wheelDeltaY: 0 }
     : { deltaX: 0, deltaY, deltaMode: 0, wheelDeltaX: 0, wheelDeltaY: notches * 120 }
 
-describe('boardControls', () => {
-  it('keeps today’s controls for two hands', () => {
+describe('navigationProps', () => {
+  it('keeps today’s controls for the trackpad', () => {
     const expected = {
       panOnScroll: true,
       zoomOnPinch: true,
@@ -40,12 +40,12 @@ describe('boardControls', () => {
       selectionKeyCode: null,
       multiSelectionKeyCode: ['Meta', 'Shift']
     }
-    expect(boardControls('twoHands', false)).toEqual(expected)
-    expect(boardControls('twoHands', true)).toEqual(expected)
+    expect(navigationProps('trackpad', false)).toEqual(expected)
+    expect(navigationProps('trackpad', true)).toEqual(expected)
   })
 
-  it('pans with a left-drag for one hand, and leaves scrolls and pinches to the trackpad', () => {
-    expect(boardControls('oneHand', false)).toEqual({
+  it('pans with a left-drag for the mouse, and leaves scrolls and pinches to the trackpad', () => {
+    expect(navigationProps('mouse', false)).toEqual({
       panOnScroll: true,
       zoomOnPinch: true,
       selectionOnDrag: false,
@@ -58,7 +58,7 @@ describe('boardControls', () => {
   })
 
   it('draws a selection box with ⇧ held, without making ⇧ a selection key that would catch cards', () => {
-    const shifted = boardControls('oneHand', true)
+    const shifted = navigationProps('mouse', true)
     expect(shifted.selectionOnDrag).toBe(true)
     expect(shifted.panOnDrag).toEqual([1])
     expect(shifted.selectionKeyCode).toBeNull()
@@ -66,8 +66,8 @@ describe('boardControls', () => {
   })
 
   it('gives React Flow the same objects each render', () => {
-    expect(boardControls('oneHand', false)).toBe(boardControls('oneHand', false))
-    expect(boardControls('twoHands', false)).toBe(boardControls('oneHand', true))
+    expect(navigationProps('mouse', false)).toBe(navigationProps('mouse', false))
+    expect(navigationProps('trackpad', false)).toBe(navigationProps('mouse', true))
   })
 })
 

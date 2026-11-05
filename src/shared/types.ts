@@ -512,12 +512,12 @@ export interface AppInfo {
 export type ThemePreference = 'system' | 'light' | 'dark'
 
 /**
- * How the mouse moves around the board. 'twoHands': scroll pans, ⌘-scroll or a
- * pinch zooms, and dragging the canvas draws a selection box. 'oneHand':
- * dragging the canvas pans, the mouse wheel zooms and ⇧-drag draws the box; a
- * trackpad's two-finger scroll and pinch work as in 'twoHands'.
+ * How you move around the board. 'trackpad': scroll pans, ⌘-scroll or a pinch
+ * zooms, and dragging the canvas draws a selection box. 'mouse': dragging the
+ * canvas pans, the mouse wheel zooms and ⇧-drag draws the box; a trackpad's
+ * two-finger scroll and pinch work as in 'trackpad'.
  */
-export type BoardControlsMode = 'twoHands' | 'oneHand'
+export type NavigationMode = 'trackpad' | 'mouse'
 
 /** Colour schemes for dark mode (schemes.ts). 'nodus' is the look of tokens.css. */
 export type DarkScheme = 'nodus' | 'graphite' | 'ink' | 'moss' | 'atom-one-dark'
@@ -525,7 +525,7 @@ export type DarkScheme = 'nodus' | 'graphite' | 'ink' | 'moss' | 'atom-one-dark'
 /** App-wide preferences, persisted with the rest of the state. */
 export interface AppSettings {
   theme: ThemePreference
-  boardControls: BoardControlsMode
+  navigation: NavigationMode
   /** Download new versions in the background and install them when the app quits. */
   autoUpdate: boolean
   /** While the app is in the background, notify when a session needs the user or finishes. */

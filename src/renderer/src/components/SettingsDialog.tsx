@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
-import type { AppSettings, BoardControlsMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
+import type { AppSettings, NavigationMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import { useApp } from '@renderer/store'
 import { Modal } from './Modal'
@@ -14,17 +14,17 @@ const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'dark', label: 'Dark' }
 ]
 
-/** Settings › Board › Controls, each with what it does under the choices. */
-const BOARD_CONTROLS: { value: BoardControlsMode; label: string; hint: string }[] = [
+/** Settings › Board › Navigation, each with what it does under the choices. */
+const NAVIGATION_MODES: { value: NavigationMode; label: string; hint: string }[] = [
   {
-    value: 'twoHands',
-    label: 'Two hands',
+    value: 'trackpad',
+    label: 'Trackpad',
     hint: 'Scroll or Space-drag to pan, pinch or ⌘-scroll to zoom, and drag across the board to select.'
   },
   {
-    value: 'oneHand',
-    label: 'One hand',
-    hint: 'Drag the board to pan, turn the mouse wheel to zoom, and ⇧-drag to select. On a trackpad, two fingers still pan and a pinch zooms.'
+    value: 'mouse',
+    label: 'Mouse',
+    hint: 'Drag the board to pan, turn the mouse wheel to zoom, and ⇧-drag to select. Trackpad gestures still work.'
   }
 ]
 
@@ -126,28 +126,28 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
         <fieldset className="settings-group">
           <legend className="settings-label">Board</legend>
           <div className="settings-row-text">
-            <span className="settings-row-title" id="board-controls-title">
-              Controls
+            <span className="settings-row-title" id="board-navigation-title">
+              Navigation
             </span>
-            <span className="settings-row-hint">How the mouse moves around the board.</span>
+            <span className="settings-row-hint">How you move around the board.</span>
           </div>
-          <div className="settings-choices" role="radiogroup" aria-labelledby="board-controls-title">
-            {BOARD_CONTROLS.map((c) => (
+          <div className="settings-choices" role="radiogroup" aria-labelledby="board-navigation-title">
+            {NAVIGATION_MODES.map((c) => (
               <label key={c.value} className="settings-choice">
                 <input
                   type="radio"
-                  name="boardControls"
+                  name="navigation"
                   className="settings-choice-input"
-                  checked={(settings?.boardControls ?? 'twoHands') === c.value}
+                  checked={(settings?.navigation ?? 'trackpad') === c.value}
                   disabled={!settings}
-                  onChange={() => update({ boardControls: c.value })}
+                  onChange={() => update({ navigation: c.value })}
                 />
                 <span className="settings-choice-name">{c.label}</span>
               </label>
             ))}
           </div>
           <p className="settings-hint settings-choice-hint">
-            {BOARD_CONTROLS.find((c) => c.value === (settings?.boardControls ?? 'twoHands'))?.hint}
+            {NAVIGATION_MODES.find((c) => c.value === (settings?.navigation ?? 'trackpad'))?.hint}
           </p>
         </fieldset>
 

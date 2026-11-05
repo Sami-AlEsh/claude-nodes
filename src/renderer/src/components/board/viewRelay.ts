@@ -91,7 +91,7 @@ const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : 0
 
 /**
  * A scroll the page had no use for, played on its frame as if the frame
- * weren't there: it pans the board, and a pinch zooms it (in One hand mode a
+ * weren't there: it pans the board, and a pinch zooms it (in Mouse mode a
  * mouse wheel zooms it too). The board can't tell whether the pointer is
  * really over a frame of another origin, so a page could move the board on
  * its own; that's all it could do with this.

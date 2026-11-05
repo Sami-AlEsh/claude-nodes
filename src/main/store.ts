@@ -21,14 +21,14 @@ import { normalizeSchemes } from '@shared/schemes'
 const DEFAULT_ARCHIVE_W = 2 * 40 + 6 * 288 + 5 * 24
 
 const THEMES: AppSettings['theme'][] = ['system', 'light', 'dark']
-const BOARD_CONTROLS: AppSettings['boardControls'][] = ['twoHands', 'oneHand']
+const NAVIGATION: AppSettings['navigation'][] = ['trackpad', 'mouse']
 
 /** Fills in defaults and drops values this version doesn't understand. */
 export function normalizeSettings(raw: unknown): AppSettings {
   const s = (raw && typeof raw === 'object' ? raw : {}) as Partial<AppSettings>
   return {
     theme: s.theme && THEMES.includes(s.theme) ? s.theme : 'system',
-    boardControls: s.boardControls && BOARD_CONTROLS.includes(s.boardControls) ? s.boardControls : 'twoHands',
+    navigation: s.navigation && NAVIGATION.includes(s.navigation) ? s.navigation : 'trackpad',
     autoUpdate: s.autoUpdate !== false,
     notify: s.notify !== false,
     dockBadge: s.dockBadge !== false,
