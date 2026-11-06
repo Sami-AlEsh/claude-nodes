@@ -47,6 +47,26 @@ export function closeTab(ws: WorkspaceTabs, sessionId: string): WorkspaceTabs {
   return closeTabs(ws, [sessionId])
 }
 
+/**
+ * The tabs a fresh read of the board closes: those of sessions it shows in the
+ * archive, or doesn't have. A read asked for before a tab opened can't speak
+ * for it, since the session may be newer than the read, or back from the
+ * archive since, so its tab stays. `openedAt` is how many reads had been asked
+ * for when each tab opened, and `read` this read's number in that count.
+ */
+export function closedByRead(
+  tabs: string[],
+  onBoard: (sessionId: string) => { archived?: boolean } | undefined,
+  openedAt: (sessionId: string) => number,
+  read: number
+): string[] {
+  return tabs.filter((id) => {
+    if (openedAt(id) >= read) return false
+    const card = onBoard(id)
+    return !card || Boolean(card.archived)
+  })
+}
+
 /** The tab `delta` places from the one showing, wrapping around the strip (⌃Tab and ⌃⇧Tab). */
 export function cycleTab(ws: WorkspaceTabs, delta: number): string | null {
   if (ws.tabs.length === 0) return null

@@ -7,6 +7,7 @@ import {
   clampSplit,
   closeTab,
   closeTabs,
+  closedByRead,
   cycleTab,
   normalizeWorkspace,
   openTab,
@@ -81,6 +82,24 @@ describe('moving between tabs', () => {
     expect(tabAt(three, 9)).toBe('c')
     expect(tabAt(three, 0)).toBeNull()
     expect(tabAt(NO_TABS, 9)).toBeNull()
+  })
+})
+
+describe('a fresh read of the board', () => {
+  const read = (cards: Record<string, { archived?: boolean }>, openedAt: Record<string, number>, n: number, tabs: string[]) =>
+    closedByRead(tabs, (id) => cards[id], (id) => openedAt[id] ?? 0, n)
+
+  it('closes the tabs of sessions it shows in the archive or no longer has', () => {
+    expect(read({ a: {}, b: { archived: true } }, {}, 3, ['a', 'b', 'c'])).toEqual(['b', 'c'])
+  })
+
+  it('leaves a tab opened after the read was asked for, though the read shows its session archived or missing', () => {
+    // Brought back from the archive, or just made, while an older read was on its way.
+    expect(read({ b: { archived: true } }, { b: 3, c: 4 }, 3, ['b', 'c'])).toEqual([])
+  })
+
+  it('closes a tab opened before the read was asked for', () => {
+    expect(read({ b: { archived: true } }, { b: 2, c: 2 }, 3, ['b', 'c'])).toEqual(['b', 'c'])
   })
 })
 

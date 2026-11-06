@@ -38,8 +38,9 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
   const shell = kind === 'terminal'
   const projectId = useApp((s) => s.board?.project.id ?? '')
   const openInWorkspace = useApp((s) => s.openInWorkspace)
-  // A terminal shows in one place at a time; the workspace has it while it's the tab showing there.
-  const inWorkspace = useApp((s) => s.workspaceOpen && s.workspace.active === id)
+  // A terminal shows in one place at a time. While the workspace is up the board is hidden, so
+  // its cards leave their terminals parked, for the workspace's tabs to take as they switch.
+  const covered = useApp((s) => s.workspaceOpen)
   const { expand, archive, stop: stopSession } = useBoardActions()
 
   // A card that comes back expanded (after a restart, say) waits to be asked
@@ -51,7 +52,7 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
   // Labels the loading state by how it started, so it doesn't flip when the session goes live.
   const startedLive = useRef(card.live)
   const [wakes, setWakes] = useState(0)
-  const enabled = started && !inWorkspace && Boolean(projectId)
+  const enabled = started && !covered && Boolean(projectId)
   // Asked to show its session just now, the card starts it if it has ended. Back from the
   // workspace, it shows what an ended process left, with Resume, rather than starting it again.
   const { containerRef, phase, error, reattach } = useAttachedTerminal(id, projectId, kind, {

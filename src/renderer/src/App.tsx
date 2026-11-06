@@ -57,7 +57,8 @@ export function App() {
       if (command === 'settings') useApp.getState().openSettings()
       if (command !== 'close') return
       const s = useApp.getState()
-      if (s.settingsOpen) s.closeSettings()
+      if (s.cancelPaneDialog) s.cancelPaneDialog()
+      else if (s.settingsOpen) s.closeSettings()
       else if (s.agentView) s.closeAgents()
       else if (s.previewSessionId) s.closePreview()
       else if (s.diffOpen) s.closeDiff()

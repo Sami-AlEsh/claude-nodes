@@ -68,6 +68,8 @@ interface AppState {
   workspaceOpen: boolean
   /** Counts openInWorkspace calls, so a session opened again while it shows can start (see wasOpened). */
   opens: number
+  /** Cancels the dialog the workspace's pane has open (its Stop confirmation), so ⌘W closes it first; null with none. */
+  cancelPaneDialog: (() => void) | null
   /** Archived session whose read-only transcript preview is open. */
   previewSessionId: string | null
   /** What the preview was opened from a search for: it scrolls to the match and marks the words. */
@@ -173,6 +175,7 @@ export const useApp = create<AppState>((set, get) => ({
   workspace: tabs.NO_TABS,
   workspaceOpen: false,
   opens: 0,
+  cancelPaneDialog: null,
   previewSessionId: null,
   previewFind: null,
   agentView: null,
@@ -184,6 +187,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   navigate(route) {
     opened = null
+    openedAtLoad.clear()
     set({
       route,
       board: null,
@@ -223,13 +227,9 @@ export const useApp = create<AppState>((set, get) => ({
         } else {
           set({ board })
           // A session archived or taken off the board from outside the renderer (archive_self, a
-          // finished run) closes its tab. One missing from a board read before its tab opened may
-          // just be newer than that read.
+          // finished run) closes its tab, unless this read was asked for before the tab opened.
           const cards = new Map(board.cards.map((c) => [c.sessionId, c]))
-          const gone = get().workspace.tabs.filter((id) => {
-            const card = cards.get(id)
-            return card ? card.archived : (openedAtLoad.get(id) ?? 0) < load
-          })
+          const gone = tabs.closedByRead(get().workspace.tabs, (id) => cards.get(id), (id) => openedAtLoad.get(id) ?? 0, load)
           if (gone.length > 0) setTabs(tabs.closeTabs(get().workspace, gone))
         }
       }
@@ -571,6 +571,7 @@ const openedAtLoad = new Map<string, number>()
  */
 function setTabs(next: WorkspaceTabs, open = useApp.getState().workspaceOpen) {
   const { workspace, route } = useApp.getState()
+  for (const id of workspace.tabs) if (!next.tabs.includes(id)) openedAtLoad.delete(id)
   useApp.setState({ workspace: next, workspaceOpen: open && next.active !== null })
   const projectId = projectIdOf(route)
   if (projectId && JSON.stringify(next) !== JSON.stringify(workspace)) {

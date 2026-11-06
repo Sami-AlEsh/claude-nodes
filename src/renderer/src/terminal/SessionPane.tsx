@@ -153,6 +153,16 @@ function PaneHeader({
     return () => window.clearTimeout(timer)
   }, [copied])
 
+  // While the Stop confirmation is up, ⌘W (and the workspace's tab keys) are its, not the tab's.
+  useEffect(() => {
+    if (!confirm) return
+    const cancel = () => confirm.resolve(false)
+    useApp.setState({ cancelPaneDialog: cancel })
+    return () => {
+      if (useApp.getState().cancelPaneDialog === cancel) useApp.setState({ cancelPaneDialog: null })
+    }
+  }, [confirm])
+
   const copyId = () => {
     navigator.clipboard.writeText(sessionId).then(() => setCopied(true), () => {})
   }

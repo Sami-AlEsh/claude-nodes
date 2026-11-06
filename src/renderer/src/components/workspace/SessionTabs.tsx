@@ -57,10 +57,19 @@ function SessionTab({ sessionId, active }: { sessionId: string; active: boolean 
     if (active) registry.focus(sessionId)
   }
 
+  // The tab is a button, straight in the tablist. Its × is part of it, hidden from assistive
+  // tech (which closes a tab with ⌘W); a click on the × closes the tab without showing it.
   return (
-    <div
+    <button
+      role="tab"
+      id={tabId(sessionId)}
       className={clsx('ws-tab', active && 'is-active')}
+      aria-selected={active}
+      aria-controls={PANE_ID}
+      tabIndex={active ? 0 : -1}
       title={status ? `${title} · ${status}` : title}
+      onMouseDown={keepFocus}
+      onClick={show}
       // A middle click closes a tab, as in a browser.
       onAuxClick={(e) => {
         if (e.button !== 1) return
@@ -68,39 +77,29 @@ function SessionTab({ sessionId, active }: { sessionId: string; active: boolean 
         closeTab(sessionId)
       }}
     >
-      <button
-        role="tab"
-        id={tabId(sessionId)}
-        className="ws-tab-main"
-        aria-selected={active}
-        aria-controls={PANE_ID}
-        tabIndex={active ? 0 : -1}
-        onMouseDown={keepFocus}
-        onClick={show}
-      >
-        {shell ? (
-          <SquareTerminal size={13} strokeWidth={2} className="term-shell-icon" data-live={card?.live} />
-        ) : (
-          <span className="status-dot" data-status={card?.status ?? 'done'} data-stopped={!card?.live} />
-        )}
-        {card?.viewOf && <LayoutDashboard size={12} strokeWidth={2} className="ws-tab-kind" aria-label="View’s brain" />}
-        {card?.runOf && (
-          <span className="ws-tab-kind" aria-label="Action run">
-            <ActionIcon name={runIcon ?? ''} size={12} />
-          </span>
-        )}
-        <span className="ws-tab-title">{title}</span>
-      </button>
-      <button
+      {shell ? (
+        <SquareTerminal size={13} strokeWidth={2} className="term-shell-icon" data-live={card?.live} />
+      ) : (
+        <span className="status-dot" data-status={card?.status ?? 'done'} data-stopped={!card?.live} />
+      )}
+      {card?.viewOf && <LayoutDashboard size={12} strokeWidth={2} className="ws-tab-kind" aria-label="View’s brain" />}
+      {card?.runOf && (
+        <span className="ws-tab-kind" aria-label="Action run">
+          <ActionIcon name={runIcon ?? ''} size={12} />
+        </span>
+      )}
+      <span className="ws-tab-title">{title}</span>
+      <span
         className="ws-tab-close"
-        tabIndex={-1}
-        onMouseDown={keepFocus}
-        onClick={() => closeTab(sessionId)}
+        aria-hidden="true"
         title={shell ? 'Close the tab (⌘W). The shell keeps running.' : 'Close the tab (⌘W). The session keeps running.'}
-        aria-label={`Close ${title}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          closeTab(sessionId)
+        }}
       >
         <X size={12} strokeWidth={2.2} />
-      </button>
-    </div>
+      </span>
+    </button>
   )
 }
