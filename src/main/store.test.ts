@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { normalizeJiraAccount, normalizeSettings } from './store'
+import { normalizeSettings } from './store'
 
 vi.mock('electron', () => ({ app: {} }))
 
@@ -40,19 +40,5 @@ describe('the project panel’s settings', () => {
       panelWidth: 480
     })
     expect(normalizeSettings({ panelWidth: 10 }).panelWidth).toBe(280)
-  })
-})
-
-describe('normalizeJiraAccount', () => {
-  it('keeps an account with its site, email and sealed token', () => {
-    expect(
-      normalizeJiraAccount({ site: 'https://team.atlassian.net', email: 'a@b.c', token: 'c2VhbGVk', accountId: 'acc-1', extra: 1 })
-    ).toEqual({ site: 'https://team.atlassian.net', email: 'a@b.c', token: 'c2VhbGVk', accountId: 'acc-1', displayName: undefined })
-  })
-
-  it('drops one missing any of them', () => {
-    expect(normalizeJiraAccount(undefined)).toBeUndefined()
-    expect(normalizeJiraAccount({ site: 'https://team.atlassian.net', email: 'a@b.c' })).toBeUndefined()
-    expect(normalizeJiraAccount({ site: '', email: 'a@b.c', token: 'x' })).toBeUndefined()
   })
 })

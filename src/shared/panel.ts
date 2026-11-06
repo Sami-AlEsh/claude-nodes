@@ -1,6 +1,6 @@
 // The project panel's settings, shared by the main process (which saves them)
 // and the renderer (which drags the width).
-import type { AppSettings, PullRequestRow } from './types'
+import type { AppSettings } from './types'
 
 export const PANEL_MIN_W = 280
 export const PANEL_MAX_W = 640
@@ -29,15 +29,4 @@ export function fitPanelWidth(width: number, windowWidth: number, leftW = 0): nu
 export function normalizePanel(s: Partial<AppSettings>): Pick<AppSettings, 'panelOpen' | 'panelWidth'> {
   const width = typeof s.panelWidth === 'number' && Number.isFinite(s.panelWidth) ? s.panelWidth : PANEL_DEFAULT_W
   return { panelOpen: s.panelOpen === true, panelWidth: clampPanelWidth(width) }
-}
-
-/**
- * The open pull request whose branch names a Jira issue, as in NDS-42-fix or
- * feature/nds-42. The key has to stand on its own: NDS-4 doesn't match a
- * branch for NDS-42, and neither does XNDS-42.
- */
-export function prForIssue(key: string, prs: PullRequestRow[]): PullRequestRow | undefined {
-  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const pattern = new RegExp(`(^|[^A-Za-z0-9])${escaped}(?![0-9])`, 'i')
-  return prs.find((pr) => pr.state !== 'merged' && pattern.test(pr.headRef))
 }

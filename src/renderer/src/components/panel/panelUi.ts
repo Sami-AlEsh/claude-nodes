@@ -5,26 +5,17 @@ import type {
   PanelProblem,
   PullRequestChecks,
   PullRequestRow,
-  PullRequestsResult,
-  TicketRow,
-  TicketsResult
+  PullRequestsResult
 } from '@shared/types'
 
 export type PanelTab = 'prs' | 'tickets' | 'changes'
 export type PrFilter = 'all' | 'mine' | 'review' | 'failing'
-export type TicketFilter = 'all' | 'mine' | 'sprint'
 
 export const PR_FILTERS: { id: PrFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'mine', label: 'Mine' },
   { id: 'review', label: 'Needs my review' },
   { id: 'failing', label: 'Failing' }
-]
-
-export const TICKET_FILTERS: { id: TicketFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'mine', label: 'Mine' },
-  { id: 'sprint', label: 'This sprint' }
 ]
 
 export interface Group<T> {
@@ -62,7 +53,7 @@ export function pullRequestCount(result: PullRequestsResult | null | undefined):
   return result.rows.filter((r) => r.state !== 'merged').length
 }
 
-export type Tone = 'passed' | 'failed' | 'pending' | 'neutral' | 'accent' | 'review' | 'merged'
+export type Tone = 'passed' | 'failed' | 'pending' | 'neutral' | 'merged'
 
 /** A PR's checks as its tag says them: all passed, how many failed, or how many are still running. */
 export function checksLabel(checks: PullRequestChecks): { text: string; tone: Tone } {
@@ -79,62 +70,6 @@ export function reviewLabel(review: NonNullable<PullRequestRow['review']>): { te
   // Branch protection wants a review, but nobody is asked yet.
   if (review === 'review-required') return { text: 'needs review', tone: 'neutral' }
   return { text: 'review requested', tone: 'pending' }
-}
-
-export function filterTickets(rows: TicketRow[], filter: TicketFilter): TicketRow[] {
-  if (filter === 'mine') return rows.filter((r) => r.mine)
-  if (filter === 'sprint') return rows.filter((r) => r.inActiveSprint)
-  return rows
-}
-
-/**
- * Work in flight first, one group per status (In Progress, In Review…), then
- * what's to do, by status too, then everything done this week in one group.
- * Statuses in a category go alphabetically, so groups stay put between refreshes.
- */
-export function groupTickets(rows: TicketRow[]): Group<TicketRow>[] {
-  const byStatus = (category: TicketRow['category']) => {
-    const names = [...new Set(rows.filter((r) => r.category === category).map((r) => r.status))]
-    return names
-      .sort((a, b) => a.localeCompare(b))
-      .map((name) => ({
-        id: `${category}:${name}`,
-        title: name,
-        rows: rows.filter((r) => r.category === category && r.status === name)
-      }))
-  }
-  const done = rows.filter((r) => r.category === 'done')
-  return [
-    ...byStatus('in-progress'),
-    ...byStatus('todo'),
-    ...(done.length ? [{ id: 'done', title: 'Done this week', rows: done }] : [])
-  ]
-}
-
-/** The Tickets segment's count: those not done yet. Undefined until there's a list. */
-export function ticketCount(result: TicketsResult | null | undefined): number | undefined {
-  if (!result || result.problem) return undefined
-  return result.rows.filter((r) => r.category !== 'done').length
-}
-
-/** A status tag's colour: grey to do, blue in progress, purple in review, green done. */
-export function statusTone(row: TicketRow): Tone {
-  if (row.category === 'done') return 'passed'
-  if (row.category === 'todo') return 'neutral'
-  return /review|qa|test/i.test(row.status) ? 'review' : 'accent'
-}
-
-export type PriorityLevel = 'highest' | 'high' | 'medium' | 'low' | 'lowest'
-
-/** Jira's five built-in priorities by name; a custom one has no arrow. */
-export function priorityLevel(name: string | undefined): PriorityLevel | undefined {
-  const n = name?.trim().toLowerCase()
-  if (n === 'highest' || n === 'blocker' || n === 'critical') return 'highest'
-  if (n === 'high' || n === 'major') return 'high'
-  if (n === 'medium') return 'medium'
-  if (n === 'low' || n === 'minor') return 'low'
-  if (n === 'lowest' || n === 'trivial') return 'lowest'
-  return undefined
 }
 
 /** Two letters for an avatar: Sami AlEsh → SA, sami-alesh → SA, dependabot → DE. */
@@ -195,21 +130,6 @@ export function problemCopy(problem: PanelProblem, what = 'pull requests'): Prob
         title: `Couldn’t reach ${problem.host}`,
         body: 'The GitHub CLI couldn’t connect. Check your connection, then refresh.'
       }
-    case 'jira-no-account':
-      return {
-        title: 'Connect Jira',
-        body: 'Sign in to Jira Cloud in Settings › Integrations, then link this folder to one of its projects.'
-      }
-    case 'jira-not-linked':
-      return {
-        title: 'Not linked to Jira',
-        body: 'Pick the Jira project whose tickets belong to this folder, and they’ll show here with their statuses.'
-      }
-    case 'jira-auth':
-      return {
-        title: 'Sign in to Jira again',
-        body: `${hostOf(problem.site)} turned down the saved API token. It may have expired or been revoked.`
-      }
     case 'error':
       return { title: 'Couldn’t load this list', body: problem.message }
   }
@@ -227,12 +147,4 @@ export function codeSpans(text: string): { text: string; code: boolean }[] {
 export function errorText(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err)
   return message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
-}
-
-function hostOf(site: string): string {
-  try {
-    return new URL(site).host
-  } catch {
-    return site
-  }
 }

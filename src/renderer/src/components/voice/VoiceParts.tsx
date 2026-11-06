@@ -44,7 +44,7 @@ export function VoiceNotice({ voice }: { voice: Voice }) {
       <AlertCircle size={14} className="voice-notice-icon" />
       <span className="voice-notice-text">{notice.message}</span>
       {notice.settings && (
-        <button className="btn voice-notice-action" onClick={() => openSettings()}>
+        <button className="btn voice-notice-action" onClick={openSettings}>
           <Settings size={12} />
           Settings
         </button>

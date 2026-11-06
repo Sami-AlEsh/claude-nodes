@@ -1,20 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import type { PanelProblem, PullRequestRow, TicketRow } from '@shared/types'
+import type { PanelProblem, PullRequestRow } from '@shared/types'
 import {
   checksLabel,
   codeSpans,
   errorText,
   filterPullRequests,
-  filterTickets,
   groupPullRequests,
-  groupTickets,
   initials,
-  priorityLevel,
   problemCopy,
   pullRequestCount,
-  reviewLabel,
-  statusTone,
-  ticketCount
+  reviewLabel
 } from './panelUi'
 
 const pr = (number: number, patch: Partial<PullRequestRow> = {}): PullRequestRow => ({
@@ -28,18 +23,6 @@ const pr = (number: number, patch: Partial<PullRequestRow> = {}): PullRequestRow
   mine: false,
   needsMyReview: false,
   comments: 0,
-  updatedAt: 0,
-  ...patch
-})
-
-const ticket = (key: string, status: string, category: TicketRow['category'], patch: Partial<TicketRow> = {}): TicketRow => ({
-  key,
-  summary: key,
-  url: '',
-  status,
-  category,
-  mine: false,
-  inActiveSprint: false,
   updatedAt: 0,
   ...patch
 })
@@ -88,55 +71,6 @@ describe('pull requests', () => {
   })
 })
 
-describe('tickets', () => {
-  const rows = [
-    ticket('NDS-45', 'To Do', 'todo'),
-    ticket('NDS-43', 'In Progress', 'in-progress', { mine: true, inActiveSprint: true }),
-    ticket('NDS-39', 'In Review', 'in-progress', { inActiveSprint: true }),
-    ticket('NDS-40', 'Backlog', 'todo', { mine: true }),
-    ticket('NDS-31', 'Done', 'done'),
-    ticket('NDS-30', 'Won’t Do', 'done'),
-    ticket('NDS-42', 'In Progress', 'in-progress')
-  ]
-
-  it('groups work in flight by status, then what’s to do, then the week’s done', () => {
-    expect(groupTickets(rows).map((g) => [g.title, g.rows.map((r) => r.key)])).toEqual([
-      ['In Progress', ['NDS-43', 'NDS-42']],
-      ['In Review', ['NDS-39']],
-      ['Backlog', ['NDS-40']],
-      ['To Do', ['NDS-45']],
-      ['Done this week', ['NDS-31', 'NDS-30']]
-    ])
-  })
-
-  it('filters to mine and this sprint', () => {
-    expect(filterTickets(rows, 'mine').map((r) => r.key)).toEqual(['NDS-43', 'NDS-40'])
-    expect(filterTickets(rows, 'sprint').map((r) => r.key)).toEqual(['NDS-43', 'NDS-39'])
-  })
-
-  it('counts those not done on the segment', () => {
-    expect(ticketCount({ rows, sprints: true, fetchedAt: 0 })).toBe(5)
-    expect(ticketCount({ rows: [], sprints: false, problem: { kind: 'jira-not-linked' }, fetchedAt: 0 })).toBeUndefined()
-  })
-
-  it('colours statuses by category, review ones purple', () => {
-    expect(statusTone(rows[0])).toBe('neutral')
-    expect(statusTone(rows[1])).toBe('accent')
-    expect(statusTone(rows[2])).toBe('review')
-    expect(statusTone(rows[4])).toBe('passed')
-  })
-
-  it('knows Jira’s priorities, and has no arrow for a custom one', () => {
-    expect(priorityLevel('Highest')).toBe('highest')
-    expect(priorityLevel('high')).toBe('high')
-    expect(priorityLevel('Medium')).toBe('medium')
-    expect(priorityLevel('Low')).toBe('low')
-    expect(priorityLevel('Lowest')).toBe('lowest')
-    expect(priorityLevel('P2 – Urgent-ish')).toBeUndefined()
-    expect(priorityLevel(undefined)).toBeUndefined()
-  })
-})
-
 describe('labels', () => {
   it('makes two-letter avatars', () => {
     expect(initials('Sami AlEsh')).toBe('SA')
@@ -153,9 +87,6 @@ describe('labels', () => {
       { kind: 'gh-missing' },
       { kind: 'gh-logged-out', host: 'github.com' },
       { kind: 'unreachable', host: 'github.com' },
-      { kind: 'jira-no-account' },
-      { kind: 'jira-not-linked' },
-      { kind: 'jira-auth', site: 'https://team.atlassian.net' },
       { kind: 'error', message: 'Boom' }
     ]
     for (const p of problems) {
@@ -169,7 +100,6 @@ describe('labels', () => {
     expect(problemCopy({ kind: 'gh-logged-out', host: 'ghe.example.com' }).command).toBe(
       'gh auth login --hostname ghe.example.com'
     )
-    expect(problemCopy({ kind: 'jira-auth', site: 'https://team.atlassian.net' }).body).toContain('team.atlassian.net')
     expect(problemCopy({ kind: 'no-repo' }, 'changes').body).toContain('no changes to show')
     const unreachable = problemCopy({ kind: 'unreachable', host: 'github.com' })
     expect(unreachable.title).toBe('Couldn’t reach github.com')
@@ -185,8 +115,6 @@ describe('labels', () => {
   })
 
   it('takes off the wrapping errors from the main process come in', () => {
-    expect(errorText(new Error("Error invoking remote method 'jira:projects': Error: Couldn’t reach team.atlassian.net."))).toBe(
-      'Couldn’t reach team.atlassian.net.'
-    )
+    expect(errorText(new Error("Error invoking remote method 'panel:git-init': Error: git init failed"))).toBe('git init failed')
   })
 })

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { Check, X } from 'lucide-react'
 import clsx from 'clsx'
-import type { AppSettings, JiraAccountInfo, MouseMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
+import type { AppSettings, MouseMode, ThemePreference, UpdateStatus, VoiceKeySource } from '@shared/types'
 import { DARK_SCHEMES, schemeColors, schemeTile, type Mode, type SchemeTile } from '@shared/schemes'
 import {
   DEFAULT_TERMINAL_FONT,
@@ -12,8 +12,6 @@ import {
 } from '@shared/terminalFont'
 import { useApp } from '@renderer/store'
 import { installedFonts } from '@renderer/terminal/font'
-import { forgetTickets, refreshTickets } from './panel/panelData'
-import { errorText } from './panel/panelUi'
 import { Modal } from './Modal'
 import { MouseDemo } from './MouseDemo'
 import { useUpdateStatus } from './UpdateButton'
@@ -66,12 +64,6 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
     const previous = document.activeElement as HTMLElement | null
     panelRef.current?.focus()
     return () => previous?.focus()
-  }, [])
-
-  // Opened for one section (the project panel's Connect Jira), scroll to it.
-  useEffect(() => {
-    const section = useApp.getState().settingsSection
-    if (section) document.getElementById(`settings-${section}`)?.scrollIntoView({ block: 'start' })
   }, [])
 
   return (
@@ -248,8 +240,6 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
 
         <VoiceSettings />
 
-        <IntegrationSettings />
-
         <UpdateSettings settings={settings} update={update} />
       </div>
     </div>
@@ -335,169 +325,6 @@ function VoiceSettings() {
       </p>
       <p className="settings-hint">Recordings are sent to xAI to be turned into text.</p>
       {error && <p className="settings-error">{error}</p>}
-    </fieldset>
-  )
-}
-
-const JIRA_TOKENS_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
-
-/**
- * The accounts behind the project panel: Jira Cloud for its Tickets tab
- * (the token never comes back from the main process), and a word on the
- * GitHub CLI, which the PRs tab uses as it's signed in.
- */
-function IntegrationSettings() {
-  /** undefined while loading. */
-  const [account, setAccount] = useState<JiraAccountInfo | null | undefined>(undefined)
-  const [site, setSite] = useState('')
-  const [email, setEmail] = useState('')
-  const [token, setToken] = useState('')
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    window.api.jira.account().then((a) => {
-      if (cancelled) return
-      setAccount(a)
-      if (a) {
-        setSite(a.site)
-        setEmail(a.email)
-      }
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  // The open board's tickets come from the account: read them again for the new one.
-  const changed = (next: JiraAccountInfo | null) => {
-    setAccount(next)
-    forgetTickets()
-    const { route } = useApp.getState()
-    if (route.view === 'board') void refreshTickets(route.projectId)
-  }
-
-  const signIn = async () => {
-    setSaving(true)
-    setError(null)
-    try {
-      changed(await window.api.jira.setAccount({ site, email, token }))
-      setToken('')
-      setEditing(false)
-    } catch (err) {
-      setError(errorText(err))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const signOut = async () => {
-    setError(null)
-    try {
-      changed(await window.api.jira.setAccount(null))
-      setToken('')
-    } catch (err) {
-      setError(errorText(err))
-    }
-  }
-
-  const showForm = account === null || editing
-  return (
-    <fieldset className="settings-group" id="settings-integrations">
-      <legend className="settings-label">Integrations</legend>
-      <div className="settings-row-text">
-        <span className="settings-row-title">Jira Cloud</span>
-        <span className="settings-row-hint">The project panel’s Tickets tab. Link a folder to a Jira project from there.</span>
-      </div>
-      {account && !editing && (
-        <div className="settings-row settings-account">
-          <span className="settings-row-text">
-            <span className="settings-row-title">{account.displayName ?? account.email}</span>
-            <span className="settings-row-hint">
-              {account.email} on {account.site.replace(/^https?:\/\//, '')}
-            </span>
-          </span>
-          <span className="settings-account-actions">
-            <button type="button" className="btn" onClick={() => setEditing(true)}>
-              Change…
-            </button>
-            <button type="button" className="btn" onClick={() => void signOut()}>
-              Sign Out
-            </button>
-          </span>
-        </div>
-      )}
-      {showForm && (
-        <form
-          className="settings-form"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (site.trim() && email.trim() && token.trim()) void signIn()
-          }}
-        >
-          <input
-            className="settings-input"
-            placeholder="your-team.atlassian.net"
-            aria-label="Jira site"
-            value={site}
-            onChange={(e) => setSite(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-            disabled={account === undefined}
-          />
-          <input
-            className="settings-input"
-            type="email"
-            placeholder="Email you sign in to Jira with"
-            aria-label="Jira email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-            disabled={account === undefined}
-          />
-          <div className="settings-key">
-            <input
-              type="password"
-              className="settings-input"
-              placeholder={account ? 'A new API token' : 'API token'}
-              aria-label="Jira API token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              disabled={account === undefined}
-            />
-            <button type="submit" className="btn" disabled={saving || !site.trim() || !email.trim() || !token.trim()}>
-              {saving ? 'Signing In…' : 'Sign In'}
-            </button>
-            {editing && (
-              <button type="button" className="btn" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      )}
-      {showForm && (
-        <p className="settings-hint">
-          Create an API token at{' '}
-          <a href={JIRA_TOKENS_URL} target="_blank" rel="noreferrer">
-            id.atlassian.com
-          </a>
-          . It’s saved in your Keychain, and Nodus only reads from Jira.
-        </p>
-      )}
-      {error && <p className="settings-error">{error}</p>}
-      <div className="settings-row-text settings-integration">
-        <span className="settings-row-title">GitHub</span>
-        <span className="settings-row-hint">
-          The PRs tab uses the GitHub CLI as it’s signed in, so there’s nothing to set up here. Run{' '}
-          <code className="settings-code">gh auth login</code> in a terminal if it isn’t.
-        </span>
-      </div>
     </fieldset>
   )
 }
