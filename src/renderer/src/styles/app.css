@@ -20,3 +20,12 @@
 .board-area.beside-panel {
   right: var(--panel-offset);
 }
+/*
+ * Under the session workspace. Not display: none, so React Flow keeps its
+ * measurements. React Flow marks its measured cards visible, so they stay
+ * drawn, under the workspace, which covers them; inert keeps them from the
+ * pointer and the keyboard.
+ */
+.board-area.is-covered {
+  visibility: hidden;
+}

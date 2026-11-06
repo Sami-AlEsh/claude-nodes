@@ -37,9 +37,9 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
   const kind = card.kind ?? 'claude'
   const shell = kind === 'terminal'
   const projectId = useApp((s) => s.board?.project.id ?? '')
-  const openTerminal = useApp((s) => s.openTerminal)
-  // A terminal shows in one place at a time; the modal has it while it's open.
-  const inModal = useApp((s) => s.terminalSessionId === id)
+  const openInWorkspace = useApp((s) => s.openInWorkspace)
+  // A terminal shows in one place at a time; the workspace has it while it's the tab showing there.
+  const inWorkspace = useApp((s) => s.workspaceOpen && s.workspace.active === id)
   const { expand, archive, stop: stopSession } = useBoardActions()
 
   // A card that comes back expanded (after a restart, say) waits to be asked
@@ -51,10 +51,13 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
   // Labels the loading state by how it started, so it doesn't flip when the session goes live.
   const startedLive = useRef(card.live)
   const [wakes, setWakes] = useState(0)
-  const enabled = started && !inModal && Boolean(projectId)
+  const enabled = started && !inWorkspace && Boolean(projectId)
+  // Asked to show its session just now, the card starts it if it has ended. Back from the
+  // workspace, it shows what an ended process left, with Resume, rather than starting it again.
   const { containerRef, phase, error, reattach } = useAttachedTerminal(id, projectId, kind, {
     enabled,
-    focus: false
+    focus: false,
+    resume: card.live || performance.now() - wokeAt.current < FOCUS_WINDOW_MS
   })
   const bodyRef = useRef<HTMLDivElement>(null)
   const enabledRef = useRef(enabled)
@@ -69,7 +72,7 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
     setWakes((n) => n + 1)
   }
 
-  // Started from elsewhere (the modal, say): show it here too, and keep showing it once it exits.
+  // Started from elsewhere (the workspace, say): show it here too, and keep showing it once it exits.
   useEffect(() => {
     if (card.live) setStarted(true)
   }, [card.live])
@@ -142,9 +145,9 @@ export function ExpandedCard({ card, heading, tools }: { card: SessionCard; head
           )}
           <button
             className="card-tool"
-            onClick={() => openTerminal(id)}
-            title="Open in a window"
-            aria-label="Open in a window"
+            onClick={() => openInWorkspace(id)}
+            title="Open in the workspace"
+            aria-label="Open in the workspace"
           >
             <AppWindowMac size={14} strokeWidth={2} />
           </button>

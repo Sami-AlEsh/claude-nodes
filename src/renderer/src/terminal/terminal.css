@@ -1,65 +1,30 @@
-/* ───────────── Terminal modal ───────────── */
+/* ───────────── Session pane: the workspace's terminal ───────────── */
 
-.term-modal {
-  width: min(1400px, 92vw);
-  height: 88vh;
-}
-
+/* Slim: the tab above has the session's title and status; this has its details and what to do with it. */
 .term-header {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex: none;
-  height: 48px;
-  padding: 0 10px 0 16px;
-  background: var(--bg-elevated);
+  height: 36px;
+  padding: 0 6px 0 14px;
+  background: var(--bg-window);
   border-bottom: 0.5px solid var(--separator);
 }
 
-.term-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-}
-
-.term-status-label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.term-status-label[data-status='working'] {
-  color: var(--status-working);
-}
-.term-status-label[data-status='waiting'] {
-  color: var(--status-waiting);
-}
-
-.term-heading {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  flex: 1;
-}
-
-.term-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.term-sub {
+.term-meta {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 1px;
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.term-meta svg {
+  flex: none;
 }
 
 .term-branch {
@@ -109,7 +74,7 @@
 }
 .term-id:hover {
   background: var(--bg-hover);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .term-actions {

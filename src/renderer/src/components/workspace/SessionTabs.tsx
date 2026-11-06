@@ -1,0 +1,106 @@
+import { useEffect, type MouseEvent } from 'react'
+import clsx from 'clsx'
+import { LayoutDashboard, Plus, SquareTerminal, X } from 'lucide-react'
+import { ActionIcon } from '@renderer/components/actions/ActionIcon'
+import { newSession } from '@renderer/components/board/boardCommands'
+import * as registry from '@renderer/terminal/registry'
+import { statusLabel } from '@renderer/terminal/SessionPane'
+import { cardTitle, isTerminal, useApp, useCard } from '@renderer/store'
+
+export const tabId = (sessionId: string) => `ws-tab-${sessionId}`
+export const PANE_ID = 'ws-pane'
+
+// Pressing a tab or its × leaves the keyboard where it was, in the terminal.
+const keepFocus = (e: MouseEvent) => e.preventDefault()
+
+/**
+ * The sessions opened in the workspace, a tab each, and a + for a new one.
+ * Each tab has its session's status dot (a shell's icon), its title and a ×.
+ */
+export function SessionTabs() {
+  const workspace = useApp((s) => s.workspace)
+
+  // The tab showing stays in view as tabs open and switch.
+  useEffect(() => {
+    if (workspace.active) document.getElementById(tabId(workspace.active))?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [workspace.active])
+
+  return (
+    <div className="ws-tabs">
+      <div className="ws-tablist" role="tablist" aria-label="Open sessions">
+        {workspace.tabs.map((id) => (
+          <SessionTab key={id} sessionId={id} active={id === workspace.active} />
+        ))}
+      </div>
+      <button className="ws-tab-new" onMouseDown={keepFocus} onClick={newSession} title="New session (⌘N)" aria-label="New session">
+        <Plus size={15} strokeWidth={2} />
+      </button>
+    </div>
+  )
+}
+
+function SessionTab({ sessionId, active }: { sessionId: string; active: boolean }) {
+  const card = useCard(sessionId)
+  const activateTab = useApp((s) => s.activateTab)
+  const closeTab = useApp((s) => s.closeTab)
+  // A run shows its action's icon, as its button in the actions rail does.
+  const runIcon = useApp((s) =>
+    card?.runOf ? [...(s.board?.project.actions ?? []), ...s.globalActions].find((a) => a.id === card.runOf)?.icon : undefined
+  )
+  const shell = isTerminal(card)
+  const title = cardTitle(card)
+  const status = statusLabel(card)
+
+  const show = () => {
+    activateTab(sessionId)
+    // Switching focuses the new tab's terminal as it attaches; this one is already there.
+    if (active) registry.focus(sessionId)
+  }
+
+  return (
+    <div
+      className={clsx('ws-tab', active && 'is-active')}
+      title={status ? `${title} · ${status}` : title}
+      // A middle click closes a tab, as in a browser.
+      onAuxClick={(e) => {
+        if (e.button !== 1) return
+        e.preventDefault()
+        closeTab(sessionId)
+      }}
+    >
+      <button
+        role="tab"
+        id={tabId(sessionId)}
+        className="ws-tab-main"
+        aria-selected={active}
+        aria-controls={PANE_ID}
+        tabIndex={active ? 0 : -1}
+        onMouseDown={keepFocus}
+        onClick={show}
+      >
+        {shell ? (
+          <SquareTerminal size={13} strokeWidth={2} className="term-shell-icon" data-live={card?.live} />
+        ) : (
+          <span className="status-dot" data-status={card?.status ?? 'done'} data-stopped={!card?.live} />
+        )}
+        {card?.viewOf && <LayoutDashboard size={12} strokeWidth={2} className="ws-tab-kind" aria-label="View’s brain" />}
+        {card?.runOf && (
+          <span className="ws-tab-kind" aria-label="Action run">
+            <ActionIcon name={runIcon ?? ''} size={12} />
+          </span>
+        )}
+        <span className="ws-tab-title">{title}</span>
+      </button>
+      <button
+        className="ws-tab-close"
+        tabIndex={-1}
+        onMouseDown={keepFocus}
+        onClick={() => closeTab(sessionId)}
+        title={shell ? 'Close the tab (⌘W). The shell keeps running.' : 'Close the tab (⌘W). The session keeps running.'}
+        aria-label={`Close ${title}`}
+      >
+        <X size={12} strokeWidth={2.2} />
+      </button>
+    </div>
+  )
+}

@@ -50,6 +50,7 @@ import {
   BoxSelect,
   Ungroup
 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import type {
   BoardNote,
@@ -166,6 +167,7 @@ import {
   type Size
 } from '@renderer/components/board/layout'
 import { wakeCardTerminal } from '@renderer/components/board/ExpandedCard'
+import { provideBoardCommands } from '@renderer/components/board/boardCommands'
 import { dispose as disposeTerminal, focus as focusTerminal } from '@renderer/terminal/registry'
 import { ActionRail } from '@renderer/components/actions/ActionRail'
 import { Sidekick, type SidekickHandle, type Submission } from '@renderer/components/sidekick/Sidekick'
@@ -514,7 +516,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   const saveNote = useApp((s) => s.saveNote)
   const removeNotes = useApp((s) => s.removeNotes)
   const setSelection = useApp((s) => s.setSelection)
-  const openTerminal = useApp((s) => s.openTerminal)
+  const openInWorkspace = useApp((s) => s.openInWorkspace)
   const openPreview = useApp((s) => s.openPreview)
   const openAgents = useApp((s) => s.openAgents)
   const selection = useApp((s) => s.selection)
@@ -910,11 +912,13 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       const card = cardsRef.current.find((c) => c.sessionId === sessionId)
       if (!card) return
       if (card.archived) openPreview(sessionId)
-      // An expanded card shows its session right there.
-      else if (isExpanded(card)) wakeCardTerminal(sessionId)
-      else openTerminal(sessionId)
+      // An expanded card shows its session right there, on the board.
+      else if (isExpanded(card)) {
+        useApp.getState().leaveWorkspace()
+        wakeCardTerminal(sessionId)
+      } else openInWorkspace(sessionId)
     },
-    [openPreview, openTerminal]
+    [openPreview, openInWorkspace]
   )
 
   const expandCards = useCallback(
@@ -923,7 +927,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
         (c) => ids.includes(c.sessionId) && !c.archived && isExpanded(c) !== expanded
       )
       if (targets.length === 0) return
-      // Expanding shows the session there, as opening it would in the modal.
+      // Expanding shows the session there, as opening it would in the workspace.
       if (expanded) for (const c of targets) wakeCardTerminal(c.sessionId)
       patchCards(targets.map((c) => ({ sessionId: c.sessionId, expanded })))
       if (expanded && targets.length === 1) {
@@ -934,17 +938,19 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     [patchCards, ensureVisible]
   )
 
-  // Closing a session's window leaves its card expanded on the board, showing the terminal there.
-  const inModal = useApp((s) => s.terminalSessionId)
-  const lastInModal = useRef(inModal)
+  // Leaving the workspace leaves the session it was showing expanded on the board, showing the
+  // terminal there. Switching tabs inside the workspace leaves the board as it is.
+  const covered = useApp((s) => s.workspaceOpen)
+  const shown = useApp((s) => (s.workspaceOpen ? s.workspace.active : null))
+  const lastShown = useRef(shown)
   useEffect(() => {
-    const closed = lastInModal.current
-    lastInModal.current = inModal
-    const card = closed && closed !== inModal ? cardsRef.current.find((c) => c.sessionId === closed) : undefined
+    const left = lastShown.current
+    lastShown.current = shown
+    const card = left && !shown ? cardsRef.current.find((c) => c.sessionId === left) : undefined
     if (!card || card.archived || isExpanded(card)) return
     patchCards([{ sessionId: card.sessionId, expanded: true }])
     ensureVisible(card, cardSize({ ...card, expanded: true }))
-  }, [inModal, patchCards, ensureVisible])
+  }, [shown, patchCards, ensureVisible])
 
   const createSession = useCallback(
     async (at?: Point, kind: SessionKind = 'claude', sectionId?: string) => {
@@ -963,13 +969,13 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
         upsertCard(card)
         if (joins) patchCards([{ sessionId: card.sessionId, sectionId: joins }])
         ensureVisible(pos, size)
-        openTerminal(card.sessionId)
+        openInWorkspace(card.sessionId)
       } catch (err) {
         const what = kind === 'terminal' ? 'a terminal' : 'a session'
         showToast(`Couldn't start ${what}: ${err instanceof Error ? err.message : String(err)}`)
       }
     },
-    [projectId, upsertCard, patchCards, openTerminal, ensureVisible, showToast]
+    [projectId, upsertCard, patchCards, openInWorkspace, ensureVisible, showToast]
   )
 
   const createTerminal = useCallback((at?: Point) => createSession(at, 'terminal'), [createSession])
@@ -1169,13 +1175,13 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       window.api.on.runFinished((run) => {
         if (run.projectId !== projectId) return
         disposeTerminal(run.sessionId)
-        if (useApp.getState().terminalSessionId === run.sessionId) useApp.getState().closeTerminal()
+        useApp.getState().closeTab(run.sessionId)
         showToast(run.message ? `${run.actionName}: ${truncate(run.message, 180)}` : `${run.actionName} finished`)
       }),
     [projectId, showToast]
   )
 
-  // A card a notification asked to open, brought on screen. A run opens in a window, as from its button.
+  // A card a notification asked to open, brought on screen. A run opens in the workspace, as from its button.
   const openRequest = useApp((s) => s.openRequest)
   useEffect(() => {
     if (openRequest?.projectId !== projectId || !openRequest.sessionId) return
@@ -1186,9 +1192,9 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       ensureVisible(card, cardSize(card))
       openCard(sessionId)
     } else if (useApp.getState().board?.cards.some((c) => c.sessionId === sessionId && c.runOf)) {
-      openTerminal(sessionId)
+      openInWorkspace(sessionId)
     }
-  }, [openRequest, projectId, ensureVisible, openCard, openTerminal])
+  }, [openRequest, projectId, ensureVisible, openCard, openInWorkspace])
 
   // ---- notes -----------------------------------------------------------------
 
@@ -1324,14 +1330,14 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     [projectId, upsertView, ensureVisible, viewportCentre]
   )
 
-  /** Opens a view's brain in its window, starting one if it has none. */
+  /** Opens a view's brain in the workspace, starting one if it has none. */
   const openViewSession = useCallback(
     (viewId: string) => {
-      window.api.views.brain(projectId, viewId).then(openTerminal, (err) =>
+      window.api.views.brain(projectId, viewId).then(openInWorkspace, (err) =>
         showToast(`Couldn't open its session: ${err instanceof Error ? err.message : String(err)}`)
       )
     },
-    [projectId, openTerminal, showToast]
+    [projectId, openInWorkspace, showToast]
   )
 
   /** Deletes views, asking first: each takes its page, its data and its brain with it. */
@@ -1528,9 +1534,9 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       setMergeFocus(undefined)
       clearSelection()
       ensureVisible(pos, size)
-      openTerminal(card.sessionId)
+      openInWorkspace(card.sessionId)
     },
-    [merge, projectId, upsertCard, clearSelection, ensureVisible, openTerminal]
+    [merge, projectId, upsertCard, clearSelection, ensureVisible, openInWorkspace]
   )
 
   // ---- the sidekick bar ------------------------------------------------------
@@ -2174,21 +2180,21 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     [groupCards, leaveSection]
   )
 
-  /** A card menu's first items: open it in the modal, and expand or collapse it on the board. */
+  /** A card menu's first items: open it in the workspace, and expand or collapse it on the board. */
   const cardOpenItems = useCallback(
     (card: SessionCard): MenuItem[] => {
       const id = card.sessionId
       return isExpanded(card)
         ? [
-            { label: 'Open in a window', icon: <AppWindowMac />, onSelect: () => openTerminal(id) },
+            { label: 'Open in the workspace', icon: <AppWindowMac />, onSelect: () => openInWorkspace(id) },
             { label: 'Collapse', icon: <Minimize2 />, hint: 'E', onSelect: () => expandCards([id], false) }
           ]
         : [
-            { label: 'Open', icon: <SquareTerminal />, hint: '↩', onSelect: () => openTerminal(id) },
+            { label: 'Open', icon: <SquareTerminal />, hint: '↩', onSelect: () => openInWorkspace(id) },
             { label: 'Expand on board', icon: <Maximize2 />, hint: 'E', onSelect: () => expandCards([id], true) }
           ]
     },
-    [openTerminal, expandCards]
+    [openInWorkspace, expandCards]
   )
 
   const terminalMenu = useCallback(
@@ -2411,14 +2417,15 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       if (e.key.toLowerCase() === 'k' && e.metaKey && !e.shiftKey && !e.altKey && !e.ctrlKey) {
         // A focused terminal keeps ⌘K for clearing itself.
         if (e.defaultPrevented || target?.closest('.xterm')) return
-        if (s.terminalSessionId || s.agentView || s.diffOpen || overlayOpenRef.current) return
+        if (s.workspaceOpen || s.agentView || s.diffOpen || overlayOpenRef.current) return
         e.preventDefault()
         // From a transcript a search opened, back to the results.
         if (s.previewSessionId) s.closePreview()
         setSearchOpen(true)
         return
       }
-      if (s.terminalSessionId || s.previewSessionId || s.agentView || s.diffOpen || overlayOpenRef.current) return
+      // The board is hidden under the workspace, and its keys go with it.
+      if (s.workspaceOpen || s.previewSessionId || s.agentView || s.diffOpen || overlayOpenRef.current) return
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
       const ink = inkRef.current
       if (e.key.toLowerCase() === 'z' && e.metaKey && !e.altKey && !e.ctrlKey) {
@@ -2492,15 +2499,18 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
       if (command === 'new-session') latest.current.createSession()
       else if (command === 'new-terminal') latest.current.createTerminal()
       else if (command === 'search') {
-        // Chosen from the menu, it opens over whatever session is open.
-        s.closeTerminal()
+        // Chosen from the menu, it opens on the board, from the workspace too.
+        s.leaveWorkspace()
         s.closePreview()
         setSearchOpen(true)
       }
     })
+    // The workspace's + makes a session as New Session does.
+    const offCommands = provideBoardCommands({ newSession: () => latest.current.createSession() })
     return () => {
       window.removeEventListener('keydown', onKey)
       offMenu()
+      offCommands()
       window.clearTimeout(titleClickTimer.current)
     }
   }, [])
@@ -2649,6 +2659,16 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
 
                   <ActionRail onRun={runAction} onOverlayChange={setDockOverlay} />
 
+                  {/* Under the workspace the board is hidden, so its notices show over the workspace instead. */}
+                  {toast &&
+                    covered &&
+                    createPortal(
+                      <div className="board-toast is-over-workspace" role="status">
+                        {toast}
+                      </div>,
+                      wrapperRef.current?.closest('.app-main') ?? document.body
+                    )}
+
                   <Sidekick
                     ref={sidekickRef}
                     projectId={projectId}
@@ -2657,7 +2677,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                     onSubmit={submitFromBar}
                     above={
                       <>
-                        {toast && (
+                        {toast && !covered && (
                           <div className="board-toast" role="status">
                             {toast}
                           </div>

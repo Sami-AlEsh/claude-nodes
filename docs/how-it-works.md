@@ -27,9 +27,19 @@ flowchart LR
 
 Sessions are ordinary Claude Code sessions. New cards run `claude --session-id <uuid>`, and resuming runs `claude --resume <id>`, so you can continue the same session from any terminal later. Your own settings, hooks and MCP servers still apply.
 
-Your status line is the exception. Claude Code runs one status line, and Nodus uses its own to read each session's model, context and cost for the session window's header, so yours doesn't show by default. Turn on **Show my status line** in Settings to see it at the bottom of each session as well. Nodus then runs the status line Claude Code would pick (`.claude/settings.local.json` at the repository's root, or the main checkout's for a worktree, then the project's `.claude/settings.json`, then your `~/.claude/settings.json`) on the same information, and the header keeps working. It applies to sessions you start or resume after turning it on.
+Your status line is the exception. Claude Code runs one status line, and Nodus uses its own to read each session's model, context and cost for the header above its terminal, so yours doesn't show by default. Turn on **Show my status line** in Settings to see it at the bottom of each session as well. Nodus then runs the status line Claude Code would pick (`.claude/settings.local.json` at the repository's root, or the main checkout's for a worktree, then the project's `.claude/settings.json`, then your `~/.claude/settings.json`) on the same information, and the header keeps working. It applies to sessions you start or resume after turning it on.
 
 Terminals are drawn in **JetBrains Mono at 14 px**, which ships with Nodus along with the Nerd Font symbols that shell prompts use (powerline arrows, the git branch sign), so a prompt such as agnoster's looks right with no setup. **Settings › Terminal** picks another monospace font from your Mac, and a size from 9 to 24 px; the change reaches every open terminal at once.
+
+## The workspace
+
+Opening a session (click its card, select it and press Enter, click a notification, or press ⤢ on an expanded card) opens the workspace in the board's place. Along the top is a tab for each session you've opened in it, with its status dot (a shell's icon), its title and a ×, and **+** starts a new session in a tab of its own. The tab showing has its terminal in the middle, under a slim header: the branch, the session's id (click to copy it), the model, context, time and cost, then the mic, **Stop** (**Resume** once it has stopped), **Archive** (**Remove** for a terminal) and ⤡ to go back to the board. The project panel is on the right. Nothing is blurred or covered: the board is still there underneath, as you left it. Terminal cards, views' brains (⌨) and action runs open in tabs too.
+
+Switching tabs leaves the other sessions running, and each terminal keeps its screen. Opening a session starts it if it isn't running, as it always has. Switching to its tab shows it as it is, so a stopped session waits for **Resume** and an exited shell for **Restart**. Closing a tab (its ×, a middle click or ⌘W) only takes it off the strip, and the session keeps running. Closing the last one goes back to the board. Archiving a tab's session, or removing a terminal, closes its tab and shows the next one. ⌃Tab and ⌃⇧Tab move between the tabs, and ⌘1 to ⌘8 jump to one (⌘9 to the last), from inside a terminal too, so a shell never gets ⌃Tab. Esc still goes to Claude.
+
+⤡, or the title bar's back arrow, goes back to the board and keeps the tabs for next time. The session that was showing waits there expanded on its card. Each project has its own tabs, saved with its board, so they're still there after a relaunch, less any session that has gone to the archive or left the board. Opening a project shows its board first, and opening any session brings the workspace back with its tabs.
+
+The panel is the board's own, in a column beside the terminal. Drag the divider between them to resize it, from 280 px up to 640 px or half the space, whichever is less. Double-click the divider for the default width, or focus it and use the arrow keys. The panel's › hides it, leaving its arrow in a strip at the edge to bring it back. Whether it's open, and how wide, are the panel's settings, so the board's panel follows.
 
 ## Sessions keep running after you quit
 
@@ -39,15 +49,15 @@ The title bar says how many Claude sessions Nodus is running, in every project. 
 
 The host starts with the first session you open, and runs Nodus's own binary as plain Node, so it has no Dock icon. It also receives the sessions' hooks, and keeps them along with the keypresses that move status (Esc, Ctrl+C, Enter and number keys), so a relaunched app can work out each session's status. The host exits by itself once no sessions are left and the app isn't open. **Quit and Stop Sessions** (⌥⌘Q) stops every session along with the app.
 
-A running session keeps its `claude` process and the MCP servers it started, so each one holds on to memory while it sits idle. Only a running session's dot has a colour: once its process has stopped, the card shows a grey ring. To let one go without quitting, press **Stop** in its window or in its expanded card's title bar, or right-click it and choose **Stop session** (with several selected, **Stop 3 sessions**). The process ends and the card stays where it is. Opening it resumes the session. A session in the middle of a turn asks first, since stopping cuts that turn off.
+A running session keeps its `claude` process and the MCP servers it started, so each one holds on to memory while it sits idle. Only a running session's dot has a colour: once its process has stopped, the card shows a grey ring. To let one go without quitting, press **Stop** in the workspace or in its expanded card's title bar, or right-click it and choose **Stop session** (with several selected, **Stop 3 sessions**). The process ends and the card stays where it is. Opening it resumes the session. A session in the middle of a turn asks first, since stopping cuts that turn off.
 
 ## Terminal cards
 
-Terminal cards run `$SHELL -l` in the repo folder with your login-shell environment. They get no hooks and have no transcript, so they have no status dot. A terminal whose shell has exited starts a fresh shell when you reopen it.
+Terminal cards run `$SHELL -l` in the repo folder with your login-shell environment. They get no hooks and have no transcript, so they have no status dot. A terminal whose shell has exited starts a fresh shell when you reopen it. Switching to its tab in the workspace shows how it ended, with **Restart**.
 
 ## Expanded cards
 
-A card can expand in place to show its terminal on the board, so you can watch several sessions at once. It's the same terminal as the modal's, so moving between the two keeps the screen. Drag a card's edges or corners to resize it. The board saves each card's size and whether it's expanded. After a restart, an expanded card whose session is still running shows its terminal right away. One whose session has stopped waits for you to click **Resume session** or **Start shell** before it starts anything.
+A card can expand in place to show its terminal on the board, so you can watch several sessions at once. It's the same terminal as the workspace's, so moving between the two keeps the screen. Drag a card's edges or corners to resize it. The board saves each card's size and whether it's expanded. After a restart, an expanded card whose session is still running shows its terminal right away. One whose session has stopped waits for you to click **Resume session** or **Start shell** before it starts anything.
 
 ## Status
 
@@ -77,7 +87,7 @@ Each board has a pad of sticky notes under the archive, and it moves with the ar
 
 Notes sit on top of cards. They don't join sections or the archive: a note dropped on the archive or the pad goes back where it was.
 
-Point at a note with writing on it and press ▶ in its corner (or right-click it and choose **Start session**) to start a Claude session with the note's text as its first prompt, and nothing added. The card takes the note's place and gets to work there, without opening its window. The note then rides on the card as a sticker, a reminder of what was asked: point at it to read all of it, and press its × to delete it. That doesn't ask first, since the text lives on as the session's first prompt. An archived card keeps its sticker out of sight until it's restored. A card removed from the board drops its note back onto the board where the card was.
+Point at a note with writing on it and press ▶ in its corner (or right-click it and choose **Start session**) to start a Claude session with the note's text as its first prompt, and nothing added. The card takes the note's place and gets to work there, without opening the workspace. The note then rides on the card as a sticker, a reminder of what was asked: point at it to read all of it, and press its × to delete it. That doesn't ask first, since the text lives on as the session's first prompt. An archived card keeps its sticker out of sight until it's restored. A card removed from the board drops its note back onto the board where the card was.
 
 Claude writes notes too. Ask a session to do some research and put what it found on the board, and it writes notes with its board tools (below). They go up beside its card, one under another, sized to fit what they say, and signed with the session's name: click the name to open the session. Claude can also read the notes on the board and rewrite them, but not delete them.
 
@@ -115,7 +125,7 @@ Type **/** to make something else: `/view` puts up a view and `/note` a note. Th
 
 What's selected changes where it goes. With one session selected, the bar shows its name as a token, and Return sends what you typed into that session, as if typed at its prompt. A session that isn't running resumes with it, and while Claude is working it's queued. A session that's waiting on a question isn't sent anything, because Return would answer the question: its card opens for you to answer it first. The token's × starts a new session instead. With more than that selected (sessions, notes or views), the new session starts with them as context: each session's title, branch, last reply and the path of its transcript, each note's text and each view's description, ahead of your prompt. It's named for what you asked, and it starts below the sessions it read, with a line from each. The selection's own actions sit just above the bar.
 
-The mic beside the bar records a prompt (so does **V**): it turns red and swells with your voice, and the bar shows a clock and a level meter. Click it again (or press **V**) to stop, or press Esc to throw the recording away. A click shorter than about half a second is ignored, and a recording stops by itself after five minutes. The recording goes to xAI's speech to text (`grok-voice-transcribe-2.0`), and what you said lands in the bar for review, after anything already typed there. Speak again to add more, then press Return as for anything typed. An open session has its own mic in its title bar, in its window and on its expanded card. What you say there is typed at that session's prompt, not sent, ending with a space so you can keep talking.
+The mic beside the bar records a prompt (so does **V**): it turns red and swells with your voice, and the bar shows a clock and a level meter. Click it again (or press **V**) to stop, or press Esc to throw the recording away. A click shorter than about half a second is ignored, and a recording stops by itself after five minutes. The recording goes to xAI's speech to text (`grok-voice-transcribe-2.0`), and what you said lands in the bar for review, after anything already typed there. Speak again to add more, then press Return as for anything typed. An open session has its own mic, in its header in the workspace and in its expanded card's title bar. What you say there is typed at that session's prompt, not sent, ending with a space so you can keep talking.
 
 Each recording goes with up to 100 hint words, so code names come back spelled as in the repo: the project's name, its branch and the names of the files it has changed. If xAI can't transcribe a recording, it's kept, and **Retry** sends it again.
 
@@ -149,7 +159,7 @@ When the run's turn ends, the session goes, its transcript is hidden like a remo
 
 ## Project panel
 
-The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it's a narrow strip on the window's right edge with an arrow: click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. Open, there's no strip: the **›** button in the panel's header folds it back. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. The actions rail slides in at the board's edge, beside the strip or the open panel.
+The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it's a narrow strip on the window's right edge with an arrow: click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. Open, there's no strip: the **›** button in the panel's header folds it back. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. The actions rail slides in at the board's edge, beside the strip or the open panel. In the workspace the panel is the right column instead, beside the terminal (see [The workspace](#the-workspace)).
 
 It shows the project whose board is open, in three segments, each with its count:
 
@@ -187,7 +197,7 @@ The schemes are herdr-app's, with the colours around the cards derived from each
 
 ## Your data
 
-Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme, dark colour scheme, mouse, terminal font and size, whether the project panel is open and its width, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. The Jira account for the project panel lives there too: the site, your email and the API token, encrypted with the Keychain, and each project's link to its Jira project. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
+Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles, lineage and the workspace's tabs) and its settings (theme, dark colour scheme, mouse, terminal font and size, whether the project panel is open and its width, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. The Jira account for the project panel lives there too: the site, your email and the API token, encrypted with the Keychain, and each project's link to its Jira project. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
 The session host keeps its socket and log in the `host` folder next to it. Only your user can open the folder, which matters because anything that can connect to the socket can start processes as you.
 
 ## Shortcuts
@@ -198,19 +208,19 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Show only the projects in focus, or all (once focus is on in Settings) | ⌘⇧F · the title bar's Focus switch |
 | | Settings (theme and dark colours, the mouse, the terminal's font and size, the Jira account) | ⌘, |
 | | Quit and stop every session | ⌥⌘Q |
-| | Close the modal, or go back to projects | ⌘W |
+| | Close a dialog, then the workspace's tab (the last one goes back to the board), then go back to projects | ⌘W |
 | Projects | Open the selected project | Double-click · ⌘O · ⌘↓ |
 | | Rename · remove | Enter · ⌘⌫ |
 | | Color, Reveal in Finder, Add to Focus (once focus is on in Settings) | Right-click |
 | Board | New session | N · ⌘N · double-click empty canvas |
 | | New terminal in the project folder | T · ⌘T |
-| | Open a card | Click · Enter |
+| | Open a card in the workspace | Click · Enter |
 | | Expand a card on the board, or collapse it | E · the card's ⤢ button |
 | | Resize an expanded card | Drag its edges or corners |
 | | Select | Drag on empty canvas (⇧-drag with Mouse only) · ⇧-click · ⌘-click · ⌘A (all active) |
 | | Group the selection into a section | ⌘G |
 | | Archive the selection | ⌫ |
-| | Stop a session, keeping its card | **Stop** in its window or title bar · right-click › Stop session |
+| | Stop a session, keeping its card | **Stop** in the workspace or its card's title bar · right-click › Stop session |
 | | Search the archive | Hover the stack and type · Esc |
 | | Rename a card | Double-click its title |
 | | New note | Drag one off the pad under the archive · click the pad · right-click › New note here |
@@ -221,7 +231,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Send a prompt into a session | Select its card, then type in the bar · Return |
 | | Start a session with the selection as context | Select several, then type in the bar · Return |
 | | Speak a prompt · stop | V · the mic beside the bar |
-| | Speak into an open session, typed in but not sent | The mic in its title bar |
+| | Speak into an open session, typed in but not sent | The mic in its header or title bar |
 | | Delete the selected notes | ⌫ |
 | | New view | **View** in the title bar · right-click › New view here… |
 | | Use a view's page | Click it, then use it · double-click it to open it large |
@@ -231,11 +241,18 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Open the project panel, or fold it to its strip | The arrow in the strip on the window's right edge · the panel's › button |
 | | Resize the project panel | Drag its left edge · double-click the edge for the default width |
 | | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also drag on empty canvas) · pinch or ⌘-scroll |
+| Workspace | Next tab · previous tab | ⌃Tab · ⌃⇧Tab |
+| | Jump to a tab | ⌘1 to ⌘8 · ⌘9 for the last |
+| | Close a tab, keeping its session running | ⌘W · its × · middle-click |
+| | New session in a tab | **+** after the tabs · ⌘N |
+| | Back to the board, keeping the tabs | ⤡ in the header · the title bar's back arrow |
+| | Resize the project panel | Drag the divider · double-click it for the default width · arrow keys on it |
+| | Hide the project panel, or show it | Its › · the arrow in the strip at the edge |
 | Terminal | Newline in Claude's prompt | ⇧Enter |
 | | Clear · copy · select all | ⌘K · ⌘C · ⌘A |
 | New session from context | Start | ⌘Enter |
 
-In the terminal, Esc goes to Claude (it interrupts a turn), so it never closes the modal. ⌘W never closes the window.
+In the terminal, Esc goes to Claude (it interrupts a turn), so it never leaves the workspace. ⌘W never closes the window.
 
 **Settings › Board › Mouse** picks how the mouse gets around the board. **Keyboard + mouse** is the default: Space-drag pans, ⌘-scroll zooms, and dragging draws a selection box. **Mouse only** frees the other hand: drag on empty canvas (or inside a section) to pan, and hold ⇧ to drag a selection box. ⌘-scroll or a pinch zooms in both, scrolling pans in both, ⇧-click and ⌘-click still add a card to the selection, and dragging a card still moves it. The trackpad works the same either way. The change applies straight away.
 
@@ -248,7 +265,7 @@ In the terminal, Esc goes to Claude (it interrupts a turn), so it never closes t
 - If you update the app while sessions are running, and the update changed how the app talks to the session host, the new version asks to stop those sessions before it continues.
 - A session host started by a version without board tools keeps running sessions after an update, but sessions started on it don't get the tools. They do once every session has stopped and a new host starts.
 - The project panel's Tickets tab works with Jira Cloud only, not Jira Data Center or Server, and shows at most 100 tickets. Its PRs tab needs the GitHub CLI (`gh`), signed in.
-- The session window covers the board, the project panel included.
+- The workspace's tabs can't be dragged into another order yet.
 - Built and tested on macOS only.
 
 ## Project layout
@@ -259,6 +276,7 @@ src/
                 geometry.ts: board sizes and the free-spot search, which the main process uses to place notes and views
                 schemes.ts: the colour schemes, as the board's CSS variables and views' --nodus-* ones
                 panel.ts: the project panel's width limits, and matching a ticket to the PR whose branch names it
+                workspace.ts: the workspace's tabs (opening, closing, moving between them, dropping gone sessions) and the divider's limits
   preload/      contextBridge implementation of the contract
   main/         Electron main process
     env.ts        login-shell environment and claude binary lookup
@@ -281,8 +299,8 @@ src/
     store.ts      state.json in the app's userData directory
   renderer/src/
     views/        ProjectsView (folders) and BoardView (canvas)
-    components/   title bar, folder icon, board cards, agent decks, sections, archive stack, notes and their pad, views and the relay to their frames, merge dialog, lineage edges, the prompt bar and its mic, the project panel
-    terminal/     xterm.js registry, TerminalModal, TranscriptPreview, AgentViewer
+    components/   title bar, folder icon, board cards, agent decks, sections, archive stack, notes and their pad, views and the relay to their frames, merge dialog, lineage edges, the prompt bar and its mic, the project panel, the session workspace and its tabs
+    terminal/     xterm.js registry, SessionPane (the workspace's terminal), TranscriptPreview, AgentViewer
 ```
 
 Terminals use JetBrains Mono (SIL Open Font License 1.1) and Symbols Nerd Font Mono (Nerd Fonts v3.5.1), shipped with the app with their licences in its `fonts` folder.

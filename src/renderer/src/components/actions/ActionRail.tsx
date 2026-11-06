@@ -52,7 +52,7 @@ export function ActionRail({
   const project = useApp((s) => s.board?.project)
   const globalActions = useApp((s) => s.globalActions)
   const cards = useApp((s) => s.board?.cards)
-  const openTerminal = useApp((s) => s.openTerminal)
+  const openInWorkspace = useApp((s) => s.openInWorkspace)
   // The project's own first, then the global ones, each block closed by a divider.
   const blocks = useMemo(
     () => [project?.actions ?? [], globalActions].filter((b) => b.length > 0),
@@ -126,7 +126,7 @@ export function ActionRail({
     const run = runs.get(action.id)
     if (run) {
       close()
-      openTerminal(run.sessionId)
+      openInWorkspace(run.sessionId)
     } else {
       onRun(action)
     }
@@ -251,7 +251,7 @@ export function ActionRail({
           onPointerLeave={hide}
           onOpen={(sessionId) => {
             close()
-            openTerminal(sessionId)
+            openInWorkspace(sessionId)
           }}
         />
       )}

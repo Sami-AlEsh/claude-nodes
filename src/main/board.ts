@@ -4,6 +4,7 @@ import { isEmptySession } from '@shared/sessions'
 import type { BoardNode, BoardSnapshot, Project, ProjectStats, Rect, RunningCounts, SessionCard } from '@shared/types'
 import { attachAgents } from './agents'
 import { readSession, scanRepo, transcriptDir, transcriptPath, type DiscoveredSession } from './discovery'
+import { normalizeWorkspace } from '@shared/workspace'
 import { forgetStatus, getStatus, getUsage } from './hooks'
 import { isLive, kill } from './pty'
 import { getBoard, save, type BoardState } from './store'
@@ -150,6 +151,9 @@ export function loadBoard(project: Project): BoardSnapshot {
   for (const note of Object.values(board.notes!)) {
     if (note.sessionId && !board.nodes[note.sessionId]) delete note.sessionId
   }
+  // The workspace's tabs, less the sessions that left the board or went to the archive.
+  const workspace = normalizeWorkspace(board.workspace, (id) => Boolean(board.nodes[id] && !board.nodes[id].archived))
+  board.workspace = workspace
 
   project.openedAt = Date.now()
   save()
@@ -164,7 +168,17 @@ export function loadBoard(project: Project): BoardSnapshot {
   // Oldest first, so newer notes draw on top.
   const notes = Object.values(board.notes!).sort((a, b) => a.createdAt - b.createdAt)
   const views = Object.values(board.views!).sort((a, b) => a.createdAt - b.createdAt)
-  return { project, cards, archive: board.archive, sections, notes, views, ink: board.ink ?? [], viewport: board.viewport }
+  return {
+    project,
+    cards,
+    archive: board.archive,
+    sections,
+    notes,
+    views,
+    ink: board.ink ?? [],
+    viewport: board.viewport,
+    workspace
+  }
 }
 
 /**

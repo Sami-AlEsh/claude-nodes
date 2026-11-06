@@ -36,6 +36,7 @@ import type {
 } from '@shared/types'
 import { FOLDER_COLORS } from '@shared/types'
 import { windowColor } from '@shared/schemes'
+import { normalizeWorkspace } from '@shared/workspace'
 import { draftAction, normalizeAction, runArgs } from './actions'
 import { hasPendingWork, readAgents } from './agents'
 import {
@@ -577,6 +578,12 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
 
   ipcMain.handle(IPC.boardSaveViewport, (_e, projectId: string, viewport: Viewport) => {
     getBoard(projectId).viewport = viewport
+    save()
+  })
+
+  ipcMain.handle(IPC.boardSaveWorkspace, (_e, projectId: string, workspace: unknown) => {
+    const board = getBoard(projectId)
+    board.workspace = normalizeWorkspace(workspace, (id) => Boolean(board.nodes[id]))
     save()
   })
 

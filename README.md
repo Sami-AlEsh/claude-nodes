@@ -35,7 +35,7 @@ You need [Claude Code](https://code.claude.com/docs/en/overview) installed, with
 ## ✨ Features
 
 - 🟠 working · 🔴 needs you · 🔵 done, on every session's card
-- The real `claude` terminal, in a window or right on the board
+- The real `claude` terminal, in a workspace with a tab per session beside the project panel, or right on the board
 - Start a session from what other sessions already did
 - ⌘K searches everything every session said and did
 - An archive of finished sessions. Drag one out to pick it back up

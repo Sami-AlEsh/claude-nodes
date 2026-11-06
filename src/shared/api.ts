@@ -46,7 +46,8 @@ import type {
   ViewEvent,
   ViewPatch,
   Viewport,
-  VoiceKeySource
+  VoiceKeySource,
+  WorkspaceTabs
 } from './types'
 
 export const IPC = {
@@ -73,6 +74,7 @@ export const IPC = {
   boardSaveNodes: 'board:save-nodes',
   boardSaveArchive: 'board:save-archive',
   boardSaveViewport: 'board:save-viewport',
+  boardSaveWorkspace: 'board:save-workspace',
   boardRemoveNode: 'board:remove-node',
   boardSaveSection: 'board:save-section',
   boardRemoveSection: 'board:remove-section',
@@ -227,6 +229,8 @@ export interface Api {
     saveNodes(projectId: string, patches: NodePatch[]): Promise<void>
     saveArchive(projectId: string, rect: Rect): Promise<void>
     saveViewport(projectId: string, viewport: Viewport): Promise<void>
+    /** Saves the sessions opened in the project's workspace, as tabs. */
+    saveWorkspace(projectId: string, workspace: WorkspaceTabs): Promise<void>
     /** Removes a card from the board (the transcript on disk is untouched). */
     removeNode(projectId: string, sessionId: string): Promise<void>
     /** Creates or updates a section. Cards join it through saveNodes' sectionId. */

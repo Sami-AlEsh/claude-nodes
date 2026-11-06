@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { isEmptySession } from '@shared/sessions'
+import * as tabs from '@shared/workspace'
 import type {
   ActionLists,
   AgentInfo,
@@ -22,7 +23,8 @@ import type {
   SessionCard,
   SessionStatus,
   SessionUsage,
-  ViewPatch
+  ViewPatch,
+  WorkspaceTabs
 } from '@shared/types'
 import { dispose as disposeTerminal } from './terminal/registry'
 import type { PanelTab, PrFilter, TicketFilter } from './components/panel/panelUi'
@@ -57,8 +59,15 @@ interface AppState {
   prFilter: PrFilter
   ticketFilter: TicketFilter
 
-  /** Session whose terminal modal is open. */
-  terminalSessionId: string | null
+  /**
+   * The sessions opened in the open board's workspace, as tabs, and the one
+   * showing. They're kept while the board shows instead, and saved with it.
+   */
+  workspace: WorkspaceTabs
+  /** The workspace is up, in the board's place. */
+  workspaceOpen: boolean
+  /** Counts openInWorkspace calls, so a session opened again while it shows can start (see wasOpened). */
+  opens: number
   /** Archived session whose read-only transcript preview is open. */
   previewSessionId: string | null
   /** What the preview was opened from a search for: it scrolls to the match and marks the words. */
@@ -120,8 +129,13 @@ interface AppState {
   /** Deletes one of the project's actions, or a global one. */
   removeAction(projectId: string, actionId: string): Promise<void>
 
-  openTerminal(sessionId: string): void
-  closeTerminal(): void
+  /** Opens a session in the workspace, in a tab of its own (or the one it has), and brings the workspace up. */
+  openInWorkspace(sessionId: string): void
+  /** Takes a session's tab off the strip; its session keeps running. The last tab closing goes back to the board. */
+  closeTab(sessionId: string): void
+  activateTab(sessionId: string): void
+  /** Goes back to the board, keeping the tabs for next time. */
+  leaveWorkspace(): void
   openPreview(sessionId: string, find?: PreviewFind): void
   closePreview(): void
   openAgents(sessionId: string, agentId?: string): void
@@ -156,7 +170,9 @@ export const useApp = create<AppState>((set, get) => ({
   panelTab: 'prs',
   prFilter: 'all',
   ticketFilter: 'all',
-  terminalSessionId: null,
+  workspace: tabs.NO_TABS,
+  workspaceOpen: false,
+  opens: 0,
   previewSessionId: null,
   previewFind: null,
   agentView: null,
@@ -167,11 +183,14 @@ export const useApp = create<AppState>((set, get) => ({
   openRequest: null,
 
   navigate(route) {
+    opened = null
     set({
       route,
       board: null,
       selection: [],
-      terminalSessionId: null,
+      // The tabs were saved as they changed; the next board brings its own.
+      workspace: tabs.NO_TABS,
+      workspaceOpen: false,
       previewSessionId: null,
       agentView: null,
       git: null,
@@ -193,14 +212,26 @@ export const useApp = create<AppState>((set, get) => ({
 
   async loadBoard(projectId) {
     set({ boardLoading: get().board?.project.id !== projectId })
+    const load = ++boardLoads
     try {
       const board = await window.api.board.load(projectId)
       // Ignore stale responses if the user navigated away meanwhile.
       if (projectIdOf(get().route) === projectId) {
-        // A session archived from outside the renderer (archive_self) closes its terminal.
-        const open = get().terminalSessionId
-        const archived = board.cards.some((c) => c.sessionId === open && c.archived)
-        set(archived ? { board, terminalSessionId: null } : { board })
+        if (get().board?.project.id !== projectId) {
+          // The board's first showing brings the tabs it saved.
+          set({ board, workspace: board.workspace })
+        } else {
+          set({ board })
+          // A session archived or taken off the board from outside the renderer (archive_self, a
+          // finished run) closes its tab. One missing from a board read before its tab opened may
+          // just be newer than that read.
+          const cards = new Map(board.cards.map((c) => [c.sessionId, c]))
+          const gone = get().workspace.tabs.filter((id) => {
+            const card = cards.get(id)
+            return card ? card.archived : (openedAtLoad.get(id) ?? 0) < load
+          })
+          if (gone.length > 0) setTabs(tabs.closeTabs(get().workspace, gone))
+        }
       }
     } finally {
       set({ boardLoading: false })
@@ -241,6 +272,9 @@ export const useApp = create<AppState>((set, get) => ({
       selection: get().selection.filter((id) => !gone.has(id))
     })
     for (const id of gone) disposeTerminal(id)
+    // A session going to the archive leaves the workspace too.
+    const archived = patches.filter((p) => p.archived).map((p) => p.sessionId)
+    if (archived.length > 0) setTabs(tabs.closeTabs(get().workspace, archived))
     window.api.board.saveNodes(board.project.id, patches)
   },
 
@@ -270,6 +304,7 @@ export const useApp = create<AppState>((set, get) => ({
       },
       selection: get().selection.filter((id) => id !== sessionId)
     })
+    setTabs(tabs.closeTab(get().workspace, sessionId))
     disposeTerminal(sessionId)
     await window.api.board.removeNode(board.project.id, sessionId)
   },
@@ -371,10 +406,12 @@ export const useApp = create<AppState>((set, get) => ({
         ...board,
         views: board.views.filter((v) => v.id !== viewId),
         cards: view?.sessionId ? board.cards.filter((c) => c.sessionId !== view.sessionId) : board.cards
-      },
-      terminalSessionId: get().terminalSessionId === view?.sessionId ? null : get().terminalSessionId
+      }
     })
-    if (view?.sessionId) disposeTerminal(view.sessionId)
+    if (view?.sessionId) {
+      setTabs(tabs.closeTab(get().workspace, view.sessionId))
+      disposeTerminal(view.sessionId)
+    }
     await window.api.views.remove(board.project.id, viewId)
   },
 
@@ -437,9 +474,19 @@ export const useApp = create<AppState>((set, get) => ({
     return promise
   },
 
-  openTerminal: (sessionId) => set({ terminalSessionId: sessionId, previewSessionId: null }),
-  closeTerminal: () => set({ terminalSessionId: null }),
-  openPreview: (sessionId, find) => set({ previewSessionId: sessionId, previewFind: find ?? null, terminalSessionId: null }),
+  openInWorkspace(sessionId) {
+    openedAtLoad.set(sessionId, boardLoads)
+    opened = sessionId
+    set({ previewSessionId: null, opens: get().opens + 1 })
+    setTabs(tabs.openTab(get().workspace, sessionId), true)
+  },
+  closeTab: (sessionId) => setTabs(tabs.closeTab(get().workspace, sessionId)),
+  activateTab: (sessionId) => setTabs(tabs.activateTab(get().workspace, sessionId)),
+  leaveWorkspace() {
+    opened = null
+    set({ workspaceOpen: false })
+  },
+  openPreview: (sessionId, find) => set({ previewSessionId: sessionId, previewFind: find ?? null }),
   closePreview: () => set({ previewSessionId: null }),
   openAgents: (sessionId, agentId) => set({ agentView: { sessionId, agentId } }),
   closeAgents: () => set({ agentView: null }),
@@ -484,14 +531,52 @@ export const useApp = create<AppState>((set, get) => ({
     if (route.view !== 'board' || route.projectId !== request.projectId) {
       navigate({ view: 'board', projectId: request.projectId })
     } else {
-      // Nothing may cover the card.
-      set({ terminalSessionId: null, previewSessionId: null, agentView: null, diffOpen: false })
+      // Nothing may cover the card. The workspace can stay for a session: opening its card shows it there.
+      set({ previewSessionId: null, agentView: null, diffOpen: false })
+      if (!request.sessionId) set({ workspaceOpen: false })
     }
     set({ settingsOpen: false, openRequest: request.sessionId ? request : null })
   },
 
   clearOpenRequest: () => set({ openRequest: null })
 }))
+
+/**
+ * The session openInWorkspace opened last, until its pane takes it. Opening a
+ * session starts it if it isn't running; a tab that's only switched to shows
+ * its session as it is.
+ */
+let opened: string | null = null
+
+/** Whether this session was just opened in the workspace. Reading it doesn't take it. */
+export function wasOpened(sessionId: string): boolean {
+  return opened === sessionId
+}
+
+/** Takes the session's open, once its pane has acted on it; true if there was one. */
+export function takeOpened(sessionId: string): boolean {
+  if (opened !== sessionId) return false
+  opened = null
+  return true
+}
+
+/** Board loads asked for so far. */
+let boardLoads = 0
+/** How many board loads had been asked for when each tab opened, to tell a gone session from a new one. */
+const openedAtLoad = new Map<string, number>()
+
+/**
+ * Puts the workspace's tabs in the store and saves them with the board. With
+ * no tab left, the board shows again.
+ */
+function setTabs(next: WorkspaceTabs, open = useApp.getState().workspaceOpen) {
+  const { workspace, route } = useApp.getState()
+  useApp.setState({ workspace: next, workspaceOpen: open && next.active !== null })
+  const projectId = projectIdOf(route)
+  if (projectId && JSON.stringify(next) !== JSON.stringify(workspace)) {
+    void window.api.board.saveWorkspace(projectId, next)
+  }
+}
 
 /** Puts the action lists the main process changed into the store: the project's own, and the global ones. */
 function setActions({ project, global }: ActionLists) {

@@ -4,18 +4,19 @@ import { useApp } from './store'
 import { TitleBar } from './components/TitleBar'
 import { ProjectsView } from './views/ProjectsView'
 import { BoardView } from './views/BoardView'
-import { TerminalModal } from './terminal/TerminalModal'
 import { TranscriptPreview } from './terminal/TranscriptPreview'
 import { AgentViewer } from './terminal/AgentViewer'
 import { DiffModal } from './components/git/DiffModal'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ProjectRail } from './components/projects/ProjectRail'
 import { PanelDock, usePanelPlacement } from './components/panel/PanelDock'
+import { SessionWorkspace } from './components/workspace/SessionWorkspace'
 import { PANEL_STRIP_W } from '@shared/panel'
 
 export function App() {
   const route = useApp((s) => s.route)
   const pinRail = useApp((s) => s.settings?.pinProjectRail ?? false)
+  const workspaceOpen = useApp((s) => s.workspaceOpen)
   const panel = usePanelPlacement()
 
   useEffect(() => {
@@ -50,16 +51,17 @@ export function App() {
     // A session added a project with its board tools.
     const offProjects = window.api.on.projectsChanged(() => useApp.getState().refreshProjects())
 
-    // Cmd+W closes the top-most layer and never the window itself.
+    // Cmd+W closes the top-most layer and never the window itself: a dialog, then the workspace's
+    // tab (the last one goes back to the board), then the board.
     const offMenu = window.api.on.menu((command) => {
       if (command === 'settings') useApp.getState().openSettings()
       if (command !== 'close') return
       const s = useApp.getState()
       if (s.settingsOpen) s.closeSettings()
       else if (s.agentView) s.closeAgents()
-      else if (s.terminalSessionId) s.closeTerminal()
       else if (s.previewSessionId) s.closePreview()
       else if (s.diffOpen) s.closeDiff()
+      else if (s.workspaceOpen && s.workspace.active) s.closeTab(s.workspace.active)
       else if (s.route.view === 'board') s.navigate({ view: 'projects' })
     })
 
@@ -109,16 +111,27 @@ export function App() {
           <ProjectsView />
         ) : (
           <>
-            {/* A pinned rail and the project panel take columns of their own, so they never cover the board. */}
-            <div className={clsx('board-area beside-panel', pinRail && 'beside-rail')}>
+            {/*
+              A pinned rail and the project panel take columns of their own, so they never cover the board.
+              Under the workspace the board stays mounted, laid out as it was, so its viewport is where it
+              was on the way back; it's hidden and inert, so nothing in it takes the pointer, focus or keys.
+            */}
+            <div
+              className={clsx('board-area beside-panel', pinRail && 'beside-rail', workspaceOpen && 'is-covered')}
+              inert={workspaceOpen}
+            >
               <BoardView key={route.projectId} projectId={route.projectId} />
             </div>
+            {/* The workspace has the project panel in a column of its own, in place of the board's strip. */}
+            {workspaceOpen ? (
+              <SessionWorkspace projectId={route.projectId} pinRail={pinRail} />
+            ) : (
+              <PanelDock projectId={route.projectId} />
+            )}
             <ProjectRail activeId={route.projectId} pinned={pinRail} />
-            <PanelDock projectId={route.projectId} />
           </>
         )}
       </main>
-      <TerminalModal />
       <TranscriptPreview />
       <AgentViewer />
       <DiffModal />
