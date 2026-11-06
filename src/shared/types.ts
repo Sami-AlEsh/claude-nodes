@@ -549,7 +549,7 @@ export interface AppSettings {
   dockBadge: boolean
   /** Keep the project rail out beside the board, instead of sliding it in from the window's left edge. */
   pinProjectRail: boolean
-  /** The project panel is open beside the board, rather than folded to its strip. Kept across launches. */
+  /** The project panel is open beside the board, rather than folded to its corner button. Kept across launches. */
   panelOpen: boolean
   /** The project panel's width in px, dragged at its left edge (PANEL_MIN_W to PANEL_MAX_W). */
   panelWidth: number
