@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
   type WheelEvent as ReactWheelEvent
 } from 'react'
 import {
@@ -127,7 +128,7 @@ import {
 } from '@renderer/components/board/notes'
 import { SelectionBar } from '@renderer/components/board/SelectionBar'
 import { BoardControls } from '@renderer/components/board/BoardControls'
-import { MAX_ZOOM, MIN_ZOOM, mouseControls, shiftTracker } from '@renderer/components/board/navigation'
+import { MAX_ZOOM, MIN_ZOOM, mouseControls, rightClicks } from '@renderer/components/board/navigation'
 import { INK_SHORTCUTS, InkLayer, type InkHandle } from '@renderer/components/board/InkLayer'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
 import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
@@ -471,38 +472,43 @@ interface MenuState {
 }
 
 /**
- * Whether ⇧ is held, tracked only while `enabled` (Mouse only, where ⇧-drag
- * on the canvas draws a selection box). The pointer says so too, which covers
- * a ⇧ pressed while a view's frame had the keyboard. It doesn't change while a
- * button is down (shiftTracker).
+ * Mouse only: opens the board's menu (`open`, at the press) on a right-click
+ * (or ⌃-click) on the empty canvas that didn't move, since the right button
+ * pans there and React Flow no longer reports the pane's contextmenu
+ * (rightClicks). The canvas is React Flow's pane itself, as for
+ * onPaneContextMenu, so a card, a note, a view or a section's header keeps
+ * its own menu. The release is read on the window, so a press let go of off
+ * the board is forgotten too.
  */
-function useShiftHeld(enabled: boolean): boolean {
-  const [held, setHeld] = useState(false)
+function useRightClickMenu(
+  enabled: boolean,
+  wrapperRef: RefObject<HTMLDivElement | null>,
+  open: (x: number, y: number) => void
+) {
+  const openRef = useRef(open)
+  openRef.current = open
   useEffect(() => {
-    if (!enabled) return
-    const shift = shiftTracker(setHeld)
-    const onKey = (e: KeyboardEvent) => shift.key(e)
-    const onPointer = (e: PointerEvent) => shift.pointer(e)
-    const onBlur = () => shift.blur()
-    const keys = ['keydown', 'keyup'] as const
-    const presses = ['pointerdown', 'pointermove'] as const
-    // A release is read after the board has handled it, bubbling up to the
-    // window last: React re-renders between listeners, and React Flow must
-    // end the press with the props it started with.
-    const releases = ['pointerup', 'pointercancel'] as const
-    for (const type of keys) window.addEventListener(type, onKey, true)
-    for (const type of presses) window.addEventListener(type, onPointer, true)
-    for (const type of releases) window.addEventListener(type, onPointer)
-    window.addEventListener('blur', onBlur)
+    const wrapper = wrapperRef.current
+    if (!enabled || !wrapper) return
+    const clicks = rightClicks((at) => openRef.current(at.x, at.y))
+    const onDown = (e: PointerEvent) =>
+      clicks.down(e, e.target instanceof Element && e.target.classList.contains('react-flow__pane'))
+    const onMove = (e: PointerEvent) => clicks.move(e)
+    const onUp = (e: PointerEvent) => clicks.up(e)
+    const onCancel = () => clicks.cancel()
+    wrapper.addEventListener('pointerdown', onDown)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onCancel)
+    window.addEventListener('blur', onCancel)
     return () => {
-      for (const type of keys) window.removeEventListener(type, onKey, true)
-      for (const type of presses) window.removeEventListener(type, onPointer, true)
-      for (const type of releases) window.removeEventListener(type, onPointer)
-      window.removeEventListener('blur', onBlur)
-      setHeld(false)
+      wrapper.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onCancel)
+      window.removeEventListener('blur', onCancel)
     }
-  }, [enabled])
-  return enabled && held
+  }, [enabled, wrapperRef])
 }
 
 function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnapshot }) {
@@ -558,8 +564,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   /** Settings › Board › Controls: how the mouse pans, zooms and selects. */
   const mouseMode = useApp((s) => s.settings?.mouseMode ?? 'withKeyboard')
   const mouseOnly = mouseMode === 'mouseOnly'
-  const shiftHeld = useShiftHeld(mouseOnly)
-  const controls = mouseControls(mouseMode, shiftHeld)
+  const controls = mouseControls(mouseMode)
 
   const [renaming, setRenaming] = useState<string | null>(null)
   const renamingRef = useRef(renaming)
@@ -2051,15 +2056,15 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     createSession({ x: p.x - CARD_W / 2, y: p.y - CARD_H / 2 })
   }
 
-  const onPaneContextMenu = useCallback(
-    (e: ReactMouseEvent | MouseEvent) => {
-      e.preventDefault()
-      const p = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+  /** The board's own menu, for a right-click on the empty canvas at (x, y) on screen. */
+  const openPaneMenu = useCallback(
+    (x: number, y: number) => {
+      const p = rf.screenToFlowPosition({ x, y })
       const inArchive = containsPoint(dockRef.current, p)
       const inSection = groupsRef.current.some((g) => containsPoint(g.frame, p))
       setMenu({
-        x: e.clientX,
-        y: e.clientY,
+        x,
+        y,
         items: [
           {
             label: 'New session here',
@@ -2106,6 +2111,14 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     },
     [rf, createSession, createTerminal, createSectionAt, createNoteAt, selectAllActive, fitActive]
   )
+  const onPaneContextMenu = useCallback(
+    (e: ReactMouseEvent | MouseEvent) => {
+      e.preventDefault()
+      openPaneMenu(e.clientX, e.clientY)
+    },
+    [openPaneMenu]
+  )
+  useRightClickMenu(mouseOnly, wrapperRef, openPaneMenu)
 
   const sectionMenu = useCallback(
     (group: SectionView): MenuItem[] => {
@@ -2592,7 +2605,10 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                     onNodeClick={onNodeClick}
                     onNodeDoubleClick={onNodeDoubleClick}
                     onNodeContextMenu={onNodeContextMenu}
-                    onPaneContextMenu={onPaneContextMenu}
+                    // Mouse only opens it from useRightClickMenu instead. Given it there,
+                    // React Flow would open it as well, on a right release that hadn't
+                    // moved a pixel.
+                    onPaneContextMenu={mouseOnly ? undefined : onPaneContextMenu}
                     onPaneClick={() => setMenu(null)}
                     onSelectionChange={onSelectionChange}
                     onMoveStart={() => setMenu(null)}

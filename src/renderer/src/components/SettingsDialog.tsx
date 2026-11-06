@@ -35,7 +35,7 @@ const MOUSE_MODES: { value: MouseMode; label: string; hint: string }[] = [
   {
     value: 'mouseOnly',
     label: 'Mouse only',
-    hint: 'Scrolling and middle-drag still pan, and ⇧-click still adds a card to the selection.'
+    hint: 'Right-click still opens the menu; scrolling and middle-drag still pan.'
   }
 ]
 
