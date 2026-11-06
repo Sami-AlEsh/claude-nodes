@@ -1,6 +1,6 @@
-/* ───────────── Placement: a strip on the board's right, and the panel beyond it ───────────── */
+/* ───────────── Placement: a strip on the board's right while folded, the panel's column while open ───────────── */
 
-/* Always there on a board: the panel's arrow, folded or open. Open, it's the panel's edge, and drags to resize it. */
+/* Folded: the strip on the window's right edge, with the arrow that opens the panel. */
 .panel-strip {
   position: absolute;
   z-index: 44;
@@ -15,14 +15,7 @@
   border-left: 0.5px solid var(--separator);
   background: var(--bg-window);
 }
-.panel-strip.is-open {
-  cursor: col-resize;
-}
-.panel-strip.is-open:hover {
-  background: color-mix(in srgb, var(--bg-window) 94%, var(--text-primary));
-}
 
-/* Level with the panel's header, so open it reads as part of that row. */
 .panel-strip-btn {
   display: grid;
   place-items: center;
@@ -43,7 +36,7 @@
   background: var(--bg-pressed);
 }
 
-/* Open: a column flush with the window's right edge, which the board and the strip leave free. */
+/* Open: a column flush with the window's right edge. Its own header holds the arrow that folds it. */
 .panel-dock {
   position: absolute;
   z-index: 44;
@@ -54,6 +47,35 @@
   width: var(--panel-w);
   border-left: 0.5px solid var(--separator);
   background: var(--bg-window);
+}
+
+/*
+ * App counts the strip in --panel-offset, for the folded panel. Open, there's
+ * no strip, so the board, and what's placed from its right edge (the Actions
+ * rail's hint and run cards), stop at the panel instead.
+ */
+.app-main:has(> .panel-dock) > .board-area {
+  --panel-offset: var(--panel-w);
+}
+
+/*
+ * The panel's left edge drags to resize it: a 7 px hit area from its hairline
+ * inwards. It stays off the board, whose own right edge is where the Actions
+ * rail slides in from.
+ */
+.panel-resize {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 7px;
+  cursor: col-resize;
+}
+.panel-resize:hover,
+.panel-resize:active {
+  background: linear-gradient(to right, var(--accent) 2px, transparent 2px);
+  opacity: 0.6;
 }
 
 /* ───────────── The panel ───────────── */

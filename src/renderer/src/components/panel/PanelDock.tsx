@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
-import clsx from 'clsx'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { PANEL_DEFAULT_W, fitPanelWidth } from '@shared/panel'
 import { useApp } from '@renderer/store'
 import { ProjectPanel } from './ProjectPanel'
@@ -36,11 +35,12 @@ export function usePanelPlacement() {
 }
 
 /**
- * The project panel on the board's right. A narrow strip always holds its
- * arrow: folded, that's all there is; open, the panel takes a column of its
- * own beyond the strip and the board gets narrower. Open, the strip is the
- * panel's edge too, and dragging it resizes the panel. Widths come from
- * App's --panel-w and --panel-strip-w, which it sets for the board as well.
+ * The project panel on the board's right. Folded, a narrow strip on the
+ * window's right edge holds the arrow that opens it. Open, the panel takes a
+ * column of its own up to the window's edge, with no strip: the arrow that
+ * folds it is in its header, and its left edge drags to resize it. Widths
+ * come from App's --panel-w and --panel-strip-w, which it sets for the board
+ * as well (panel.css says how the board stops at the open panel).
  */
 export function PanelDock({ projectId }: { projectId: string }) {
   const { open, width, leftW } = usePanelPlacement()
@@ -54,7 +54,7 @@ export function PanelDock({ projectId }: { projectId: string }) {
       settings: s.settings && { ...s.settings, panelWidth: fitPanelWidth(w, window.innerWidth, leftW) }
     }))
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (!open || e.button !== 0 || (e.target as HTMLElement).closest('button')) return
+    if (e.button !== 0) return
     e.preventDefault()
     e.currentTarget.setPointerCapture(e.pointerId)
     drag.current = { x: e.clientX, width }
@@ -69,46 +69,45 @@ export function PanelDock({ projectId }: { projectId: string }) {
     if (w) useApp.getState().updateSettings({ panelWidth: w })
   }
 
+  if (!open) {
+    return (
+      <div className="panel-strip">
+        <button
+          className="panel-strip-btn"
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+          aria-label="Show the project panel"
+          title="Show the project panel: pull requests, tickets and changes"
+        >
+          <ChevronLeft size={14} strokeWidth={2.2} />
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <>
+    <aside
+      id="project-panel"
+      className="panel-dock"
+      aria-label="Project panel"
+      onKeyDown={(e) => {
+        // The board's shortcuts listen on window; keys pressed in the panel are the panel's.
+        if (!e.metaKey) e.stopPropagation()
+      }}
+    >
       <div
-        className={clsx('panel-strip', open && 'is-open')}
-        role={open ? 'separator' : undefined}
-        aria-orientation={open ? 'vertical' : undefined}
-        aria-label={open ? 'Resize the project panel' : undefined}
-        title={open ? 'Drag to resize the panel, double-click for the default width' : undefined}
+        className="panel-resize"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize the project panel"
+        title="Drag to resize the panel, double-click for the default width"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        onDoubleClick={(e) => {
-          if (open && !(e.target as HTMLElement).closest('button')) useApp.getState().updateSettings({ panelWidth: PANEL_DEFAULT_W })
-        }}
-      >
-        <button
-          className="panel-strip-btn"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          aria-controls="project-panel"
-          aria-label={open ? 'Hide the project panel' : 'Show the project panel'}
-          title={open ? 'Hide the project panel' : 'Show the project panel: pull requests, tickets and changes'}
-        >
-          {open ? <ChevronRight size={14} strokeWidth={2.2} /> : <ChevronLeft size={14} strokeWidth={2.2} />}
-        </button>
-      </div>
-      {open && (
-        <aside
-          id="project-panel"
-          className="panel-dock"
-          aria-label="Project panel"
-          onKeyDown={(e) => {
-            // The board's shortcuts listen on window; keys pressed in the panel are the panel's.
-            if (!e.metaKey) e.stopPropagation()
-          }}
-        >
-          <ProjectPanel projectId={projectId} />
-        </aside>
-      )}
-    </>
+        onDoubleClick={() => useApp.getState().updateSettings({ panelWidth: PANEL_DEFAULT_W })}
+      />
+      <ProjectPanel projectId={projectId} onHide={() => setOpen(false)} />
+    </aside>
   )
 }
