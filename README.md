@@ -42,14 +42,14 @@ You need [Claude Code](https://code.claude.com/docs/en/overview) installed, with
 - Sessions keep running when you quit the app
 - Focus mode hides every project but this week's
 - Views: ask Claude for a live table of your deploys or tickets
-- A project panel beside the board with the repo's pull requests, its Jira tickets and your uncommitted changes
+- A project panel beside the board with the repo's pull requests and your uncommitted changes, with Jira tickets coming
 - Sticky notes, action buttons and spoken prompts
 - Colour schemes for dark mode, terminals included: Graphite, Ink, Moss and Atom One Dark
 - Terminals in JetBrains Mono with the Nerd Font symbols prompts use, and a font and size setting
 
 ## 🔒 Private by design
 
-Everything stays on your machine. Nodus reads transcripts where Claude Code keeps them and saves only the board layout. Spoken prompts use xAI's speech to text with your own key. The project panel reads pull requests through your GitHub CLI and tickets from your Jira site, and never changes either.
+Everything stays on your machine. Nodus reads transcripts where Claude Code keeps them and saves only the board layout. Spoken prompts use xAI's speech to text with your own key. The project panel reads pull requests through your GitHub CLI and never changes them.
 
 ## 📖 Learn more
 

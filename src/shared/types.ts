@@ -28,14 +28,6 @@ export interface Project {
   focused?: boolean
   /** The project's action buttons, in the order the dock lists them. */
   actions?: ProjectAction[]
-  /** The Jira project whose tickets the project panel shows for this folder. */
-  jira?: ProjectJiraLink
-}
-
-/** A project's link to a Jira project, set from the project panel's Tickets tab. */
-export interface ProjectJiraLink {
-  /** The Jira project's key, e.g. NDS. */
-  key: string
 }
 
 /**
@@ -643,7 +635,7 @@ export interface GitFileDiff {
 /**
  * Why the project panel can't show a tab's list, so it can say what to do
  * next instead. The PRs tab needs a git repository with a GitHub remote and
- * the GitHub CLI signed in; the Tickets tab a Jira account and a link.
+ * the GitHub CLI signed in.
  */
 export type PanelProblem =
   | { kind: 'no-repo' }
@@ -653,10 +645,6 @@ export type PanelProblem =
   | { kind: 'gh-logged-out'; host: string }
   /** gh couldn't connect to the host: offline, a DNS or proxy failure, or no answer in time. */
   | { kind: 'unreachable'; host: string }
-  | { kind: 'jira-no-account' }
-  | { kind: 'jira-not-linked' }
-  /** Jira turned the saved token down (401): it expired or was revoked. */
-  | { kind: 'jira-auth'; site: string }
   | { kind: 'error'; message: string }
 
 /** How a pull request's checks went, on its latest commit. Skipped and neutral checks count as passed. */
@@ -700,60 +688,4 @@ export interface PullRequestsResult {
   rows: PullRequestRow[]
   problem?: PanelProblem
   fetchedAt: number
-}
-
-/** Jira's three status categories, which every status, built-in or custom, belongs to. */
-export type TicketCategory = 'todo' | 'in-progress' | 'done'
-
-/** A Jira issue in the project panel. */
-export interface TicketRow {
-  key: string
-  summary: string
-  url: string
-  /** The status's own name, e.g. In Review. */
-  status: string
-  category: TicketCategory
-  /** The priority's name, e.g. High; unset when the issue has none. */
-  priority?: string
-  /** The issue type's name, e.g. Story. */
-  type?: string
-  assignee?: { name: string; accountId: string }
-  /** Assigned to the Jira account signed in in Settings. */
-  mine: boolean
-  /** In a sprint that's going now. */
-  inActiveSprint: boolean
-  updatedAt: number
-}
-
-export interface TicketsResult {
-  /** The linked Jira project, and its page. */
-  project?: { key: string; url: string }
-  /** Work in flight and to do, then what was done in the last week, most recently updated first. */
-  rows: TicketRow[]
-  /** The site has a Sprint field (Jira Software), so the This sprint chip can filter. */
-  sprints: boolean
-  problem?: PanelProblem
-  fetchedAt: number
-}
-
-/** The Jira Cloud account saved in Settings › Integrations. The API token never leaves the main process. */
-export interface JiraAccountInfo {
-  site: string
-  email: string
-  displayName?: string
-}
-
-/** What Settings sends to sign in to Jira. */
-export interface JiraAccountInput {
-  site: string
-  email: string
-  token: string
-}
-
-/** A Jira project the account can see, to link a folder to. */
-export interface JiraProjectInfo {
-  key: string
-  name: string
-  /** Team-managed (next-gen) rather than company-managed. */
-  teamManaged?: boolean
 }
