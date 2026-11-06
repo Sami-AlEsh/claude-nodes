@@ -66,19 +66,6 @@ export interface State {
   actions?: ProjectAction[]
   /** The xAI API key for voice prompts, encrypted with safeStorage (base64). Never sent to the renderer. */
   voiceKey?: string
-  /** The Jira Cloud account for the project panel's Tickets tab (panel/jira.ts). */
-  jira?: JiraAccountState
-}
-
-/** A Jira Cloud account, as saved. */
-export interface JiraAccountState {
-  site: string
-  email: string
-  /** The API token, encrypted with safeStorage (base64). Never sent to the renderer. */
-  token: string
-  /** Who the token belongs to, read when it was saved, for the Mine chip. */
-  accountId?: string
-  displayName?: string
 }
 
 let state: State = { projects: [], groups: [], boards: {}, settings: normalizeSettings(null) }
@@ -120,24 +107,11 @@ export function loadState() {
       boards: raw.boards && typeof raw.boards === 'object' ? raw.boards : {},
       settings: normalizeSettings(raw.settings),
       actions: Array.isArray(raw.actions) ? raw.actions : undefined,
-      voiceKey: typeof raw.voiceKey === 'string' && raw.voiceKey ? raw.voiceKey : undefined,
-      jira: normalizeJiraAccount(raw.jira)
+      voiceKey: typeof raw.voiceKey === 'string' && raw.voiceKey ? raw.voiceKey : undefined
     }
   } catch {
     state = { projects: [], groups: [], boards: {}, settings: normalizeSettings(null) }
   }
-}
-
-/** A saved Jira account, or undefined when it's missing a part it can't work without. */
-export function normalizeJiraAccount(raw: unknown): JiraAccountState | undefined {
-  if (!raw || typeof raw !== 'object') return undefined
-  const a = raw as Partial<JiraAccountState>
-  const text = (v: unknown) => (typeof v === 'string' && v ? v : undefined)
-  const site = text(a.site)
-  const email = text(a.email)
-  const token = text(a.token)
-  if (!site || !email || !token) return undefined
-  return { site, email, token, accountId: text(a.accountId), displayName: text(a.displayName) }
 }
 
 export function getState(): State {

@@ -14,7 +14,6 @@ import type {
   Project,
   ProjectAction,
   ProjectGroup,
-  ProjectJiraLink,
   ProjectStats,
   Rect,
   GitStatus,
@@ -25,7 +24,7 @@ import type {
   ViewPatch
 } from '@shared/types'
 import { dispose as disposeTerminal } from './terminal/registry'
-import type { PanelTab, PrFilter, TicketFilter } from './components/panel/panelUi'
+import type { PanelTab, PrFilter } from './components/panel/panelUi'
 
 export type Route = { view: 'projects' } | { view: 'board'; projectId: string }
 
@@ -55,7 +54,6 @@ interface AppState {
 
   panelTab: PanelTab
   prFilter: PrFilter
-  ticketFilter: TicketFilter
 
   /** Session whose terminal modal is open. */
   terminalSessionId: string | null
@@ -69,8 +67,6 @@ interface AppState {
   selection: string[]
   /** The Settings dialog is open. It survives navigation. */
   settingsOpen: boolean
-  /** The Settings section to scroll to as it opens, e.g. integrations. */
-  settingsSection: string | null
   /** App-wide preferences; null until loaded. */
   settings: AppSettings | null
   /** A card a notification asked to open, until its board has it on screen. */
@@ -108,13 +104,10 @@ interface AppState {
   /** Opens the Changes modal, on one file when given. */
   openDiff(path?: string): void
   closeDiff(): void
-  /** Opens the project panel beside the board, or folds it to its strip, and remembers it. */
+  /** Opens the project panel beside the board, or folds it to its corner button, and remembers it. */
   setPanelOpen(open: boolean): void
   setPanelTab(tab: PanelTab): void
   setPrFilter(filter: PrFilter): void
-  setTicketFilter(filter: TicketFilter): void
-  /** Links the project to a Jira project, or unlinks it with null, and saves it. */
-  setProjectJira(projectId: string, link: ProjectJiraLink | null): Promise<void>
   /** Adds an action, or replaces it, and persists it: on the project, or app-wide when global. */
   saveAction(projectId: string, action: ProjectAction): Promise<void>
   /** Deletes one of the project's actions, or a global one. */
@@ -127,7 +120,7 @@ interface AppState {
   openAgents(sessionId: string, agentId?: string): void
   closeAgents(): void
   setSelection(ids: string[]): void
-  openSettings(section?: string): void
+  openSettings(): void
   closeSettings(): void
   loadSettings(): Promise<void>
   /** Applies the changed settings at once and saves them. */
@@ -155,14 +148,12 @@ export const useApp = create<AppState>((set, get) => ({
   diffPath: null,
   panelTab: 'prs',
   prFilter: 'all',
-  ticketFilter: 'all',
   terminalSessionId: null,
   previewSessionId: null,
   previewFind: null,
   agentView: null,
   selection: [],
   settingsOpen: false,
-  settingsSection: null,
   settings: null,
   openRequest: null,
 
@@ -448,16 +439,6 @@ export const useApp = create<AppState>((set, get) => ({
   setPanelOpen: (open) => get().updateSettings({ panelOpen: open }),
   setPanelTab: (tab) => set({ panelTab: tab }),
   setPrFilter: (filter) => set({ prFilter: filter }),
-  setTicketFilter: (filter) => set({ ticketFilter: filter }),
-
-  async setProjectJira(projectId, link) {
-    const project = await window.api.projects.update(projectId, { jira: link })
-    const { projects, board } = get()
-    set({
-      projects: projects.map((p) => (p.id === project.id ? project : p)),
-      board: board?.project.id === project.id ? { ...board, project } : board
-    })
-  },
 
   async saveAction(projectId, action) {
     setActions(await window.api.actions.save(projectId, action))
@@ -467,8 +448,8 @@ export const useApp = create<AppState>((set, get) => ({
     setActions(await window.api.actions.remove(projectId, actionId))
   },
   setSelection: (ids) => set({ selection: ids }),
-  openSettings: (section) => set({ settingsOpen: true, settingsSection: section ?? null }),
-  closeSettings: () => set({ settingsOpen: false, settingsSection: null }),
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
 
   async loadSettings() {
     set({ settings: await window.api.settings.get() })
