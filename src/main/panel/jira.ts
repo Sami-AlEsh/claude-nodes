@@ -179,8 +179,21 @@ async function jiraGet(creds: Credentials, path: string): Promise<JiraAnswer> {
     const host = new URL(creds.site).host
     return { ok: false, status: 0, message: timedOut ? `${host} didn’t answer in time.` : `Couldn’t reach ${host}.` }
   }
-  const body: unknown = await res.json().catch(() => null)
+  const text = await res.text().catch(() => '')
+  let body: unknown
+  try {
+    body = JSON.parse(text)
+  } catch {
+    // A proxy, a captive portal or a single sign-on page can answer 200 with HTML.
+    if (res.ok) return { ok: false, status: res.status, message: notJira(creds.site) }
+    body = null
+  }
   return res.ok ? { ok: true, body } : { ok: false, status: res.status, message: jiraErrorText(body, res.status) }
+}
+
+/** What to say when something other than Jira's API answered. */
+function notJira(site: string): string {
+  return `${new URL(site).host} didn’t answer like Jira’s API. A proxy or a sign-in page may be in the way.`
 }
 
 function unseal(account: JiraAccountState): string | null {
@@ -298,6 +311,10 @@ export async function tickets(project: Project, now = Date.now()): Promise<Ticke
       project: linked,
       problem: res.status === 401 ? { kind: 'jira-auth', site: creds.site } : { kind: 'error', message: res.message }
     }
+  }
+  // JSON, but not a search answer: treat it as an error rather than as no tickets.
+  if (!Array.isArray((res.body as { issues?: unknown } | null)?.issues)) {
+    return { ...base, project: linked, problem: { kind: 'error', message: notJira(creds.site) } }
   }
   return {
     project: linked,

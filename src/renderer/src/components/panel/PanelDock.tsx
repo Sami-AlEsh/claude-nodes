@@ -1,15 +1,38 @@
-import { useRef, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import clsx from 'clsx'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { PANEL_DEFAULT_W, clampPanelWidth } from '@shared/panel'
+import { PANEL_DEFAULT_W, fitPanelWidth } from '@shared/panel'
 import { useApp } from '@renderer/store'
 import { ProjectPanel } from './ProjectPanel'
 
-/** Whether the project panel is open, and how wide. Both are settings, so they last across launches. */
+function useWindowWidth(): number {
+  const [width, setWidth] = useState(() => window.innerWidth)
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return width
+}
+
+/** The pinned project rail's width (--rail-w in tokens.css), or 0 when it slides in over the board. */
+function railWidth(pinned: boolean): number {
+  if (!pinned) return 0
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--rail-w')) || 0
+}
+
+/**
+ * Whether the project panel is open, and how wide it is drawn: the saved
+ * width, cut down to what the window leaves once the board keeps its minimum
+ * (fitPanelWidth). Both are settings, so they last across launches.
+ */
 export function usePanelPlacement() {
   const open = useApp((s) => s.settings?.panelOpen ?? false)
-  const width = useApp((s) => s.settings?.panelWidth ?? PANEL_DEFAULT_W)
-  return { open, width }
+  const saved = useApp((s) => s.settings?.panelWidth ?? PANEL_DEFAULT_W)
+  const pinnedRail = useApp((s) => s.settings?.pinProjectRail ?? false)
+  const windowWidth = useWindowWidth()
+  const leftW = railWidth(pinnedRail)
+  return { open, width: fitPanelWidth(saved, windowWidth, leftW), leftW }
 }
 
 /**
@@ -20,13 +43,16 @@ export function usePanelPlacement() {
  * App's --panel-w and --panel-strip-w, which it sets for the board as well.
  */
 export function PanelDock({ projectId }: { projectId: string }) {
-  const { open, width } = usePanelPlacement()
+  const { open, width, leftW } = usePanelPlacement()
   const drag = useRef<{ x: number; width: number } | null>(null)
   const setOpen = useApp((s) => s.setPanelOpen)
 
-  // Dragging shows the new width at once and saves it on release, not on every move.
+  // Dragging shows the new width at once and saves it on release, not on every move. It stops
+  // where the board would get narrower than its minimum, so what's saved is what's shown.
   const setWidth = (w: number) =>
-    useApp.setState((s) => ({ settings: s.settings && { ...s.settings, panelWidth: clampPanelWidth(w) } }))
+    useApp.setState((s) => ({
+      settings: s.settings && { ...s.settings, panelWidth: fitPanelWidth(w, window.innerWidth, leftW) }
+    }))
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (!open || e.button !== 0 || (e.target as HTMLElement).closest('button')) return
     e.preventDefault()

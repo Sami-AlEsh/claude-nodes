@@ -395,8 +395,12 @@ function IntegrationSettings() {
 
   const signOut = async () => {
     setError(null)
-    changed(await window.api.jira.setAccount(null))
-    setToken('')
+    try {
+      changed(await window.api.jira.setAccount(null))
+      setToken('')
+    } catch (err) {
+      setError(errorText(err))
+    }
   }
 
   const showForm = account === null || editing

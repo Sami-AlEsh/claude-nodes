@@ -76,6 +76,8 @@ export function checksLabel(checks: PullRequestChecks): { text: string; tone: To
 export function reviewLabel(review: NonNullable<PullRequestRow['review']>): { text: string; tone: Tone } {
   if (review === 'approved') return { text: 'approved', tone: 'passed' }
   if (review === 'changes-requested') return { text: 'changes requested', tone: 'failed' }
+  // Branch protection wants a review, but nobody is asked yet.
+  if (review === 'review-required') return { text: 'needs review', tone: 'neutral' }
   return { text: 'review requested', tone: 'pending' }
 }
 
@@ -187,6 +189,11 @@ export function problemCopy(problem: PanelProblem, what = 'pull requests'): Prob
         title: 'Not signed in to GitHub',
         body: `The GitHub CLI isn’t signed in to ${problem.host}. Sign in in a terminal, then refresh.`,
         command: problem.host === 'github.com' ? 'gh auth login' : `gh auth login --hostname ${problem.host}`
+      }
+    case 'unreachable':
+      return {
+        title: `Couldn’t reach ${problem.host}`,
+        body: 'The GitHub CLI couldn’t connect. Check your connection, then refresh.'
       }
     case 'jira-no-account':
       return {

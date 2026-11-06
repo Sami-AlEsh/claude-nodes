@@ -204,6 +204,8 @@ describe('the Jira client, against a local server', () => {
   let server: http.Server
   let site: string
   let token = 'good-token'
+  /** Something other than Jira answering 200: a sign-in page, or JSON that isn't a search answer. */
+  let impostor: 'html' | 'json' | null = null
   const requests: { url: string; auth?: string }[] = []
 
   beforeAll(async () => {
@@ -216,6 +218,11 @@ describe('the Jira client, against a local server', () => {
       const expected = `Basic ${Buffer.from(`sami@example.com:${token}`).toString('base64')}`
       if (req.headers.authorization !== expected) return send(401, { errorMessages: ['Unauthorized'] })
       const url = new URL(req.url ?? '/', 'http://x')
+      if (impostor === 'html' && url.pathname !== '/rest/api/3/field') {
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        return res.end('<html><body>Sign in to continue</body></html>')
+      }
+      if (impostor === 'json' && url.pathname === '/rest/api/3/search/jql') return send(200, { message: 'ok' })
       if (url.pathname === '/rest/api/3/myself') return send(200, { accountId: 'acc-sami', displayName: 'Sami AlEsh' })
       if (url.pathname === '/rest/api/3/field')
         return send(200, [{ id: 'customfield_10020', schema: { custom: 'com.pyxis.greenhopper.jira:gh-sprint' } }])
@@ -234,6 +241,7 @@ describe('the Jira client, against a local server', () => {
 
   beforeEach(() => {
     token = 'good-token'
+    impostor = null
     requests.length = 0
     delete getState().jira
   })
@@ -285,6 +293,24 @@ describe('the Jira client, against a local server', () => {
     const search = new URL(requests.find((r) => r.url.startsWith('/rest/api/3/search/jql'))!.url, 'http://x')
     expect(search.searchParams.get('jql')).toBe(buildJql('NDS'))
     expect(search.searchParams.get('fields')).toBe('summary,status,priority,issuetype,assignee,updated,customfield_10020')
+  })
+
+  it('says so when a sign-in page answers instead of Jira, rather than showing no tickets', async () => {
+    await setAccount({ site, email: 'sami@example.com', token: 'good-token' })
+    impostor = 'html'
+    const result = await tickets(project({ key: 'NDS' }))
+    expect(result.rows).toEqual([])
+    expect(result.problem).toEqual({
+      kind: 'error',
+      message: `${new URL(site).host} didn’t answer like Jira’s API. A proxy or a sign-in page may be in the way.`
+    })
+    await expect(setAccount({ site, email: 'sami@example.com', token: 'good-token' })).rejects.toThrow(/didn’t answer like Jira’s API/)
+  })
+
+  it('says so when the answer is JSON but not a search result', async () => {
+    await setAccount({ site, email: 'sami@example.com', token: 'good-token' })
+    impostor = 'json'
+    expect((await tickets(project({ key: 'NDS' }))).problem).toMatchObject({ kind: 'error' })
   })
 
   it('asks to sign in again once the token stops working', async () => {

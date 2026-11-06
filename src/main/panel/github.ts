@@ -46,12 +46,14 @@ export interface RemoteRepo {
   name: string
 }
 
-interface RunResult {
+export interface RunResult {
   code: number | null
   stdout: string
   stderr: string
   /** The program isn't installed (or not on the user's PATH). */
   missing?: boolean
+  /** It didn't answer in time and was stopped. */
+  timedOut?: boolean
 }
 
 function run(bin: string, args: string[], cwd: string): Promise<RunResult> {
@@ -71,11 +73,12 @@ function run(bin: string, args: string[], cwd: string): Promise<RunResult> {
         if (!err) return resolve({ code: 0, stdout, stderr })
         const code = (err as { code?: unknown }).code
         if (code === 'ENOENT') return resolve({ code: null, stdout, stderr, missing: true })
-        const timedOut = (err as { killed?: boolean }).killed
+        const timedOut = (err as { killed?: boolean }).killed === true
         resolve({
           code: typeof code === 'number' ? code : null,
           stdout,
-          stderr: timedOut ? `${bin} didn’t answer in ${TIMEOUT_MS / 1000} seconds.` : stderr || err.message
+          stderr: timedOut ? `${bin} didn’t answer in ${TIMEOUT_MS / 1000} seconds.` : stderr || err.message,
+          ...(timedOut ? { timedOut } : {})
         })
       }
     )
@@ -119,23 +122,46 @@ export function isGithubHost(host: string, ghHosts: readonly string[]): boolean 
 }
 
 /**
- * The repository the PRs tab lists: the remote `gh repo set-default` picked,
- * else origin, else the first remote on a GitHub host. Unlike gh, which
- * prefers a remote called upstream, the panel follows origin: in a fork you
- * work on, that's where its PRs are.
+ * What `gh repo set-default` saved, from `git config --get-regexp
+ * '^remote\..*\.gh-resolved$'`: `base` on the remote it picked, or the
+ * picked repository's OWNER/REPO, on a remote, when none of the remotes is it.
+ */
+export interface GhDefault {
+  remote: string
+  repo?: { owner: string; name: string }
+}
+
+export function parseGhDefault(output: string): GhDefault | undefined {
+  for (const line of output.split('\n')) {
+    const m = /^remote\.(.+)\.gh-resolved\s+(\S+)\s*$/.exec(line.trim())
+    if (!m) continue
+    if (m[2] === 'base') return { remote: m[1] }
+    const [owner, name, ...rest] = m[2].split('/')
+    if (owner && name && rest.length === 0) return { remote: m[1], repo: { owner, name } }
+  }
+  return undefined
+}
+
+/**
+ * The repository the PRs tab lists: the one `gh repo set-default` picked
+ * (a remote, or a repository it named on that remote's host), else origin,
+ * else the first remote on a GitHub host. Unlike gh, which prefers a remote
+ * called upstream, the panel follows origin: in a fork you work on, that's
+ * where its PRs are.
  */
 export function chooseRemote(
   remotes: readonly GitRemote[],
   ghHosts: readonly string[],
-  ghDefault?: string
+  ghDefault?: GhDefault
 ): { repo: RemoteRepo } | { problem: PanelProblem } {
   const parsed = remotes.flatMap((r) => {
     const p = parseRemoteUrl(r.url)
     return p ? [{ remote: r.name, ...p }] : []
   })
   const github = parsed.filter((r) => isGithubHost(r.host, ghHosts))
-  const repo =
-    github.find((r) => r.remote === ghDefault) ?? github.find((r) => r.remote === 'origin') ?? github[0]
+  const picked = github.find((r) => r.remote === ghDefault?.remote)
+  if (picked && ghDefault?.repo) return { repo: { ...picked, ...ghDefault.repo } }
+  const repo = picked ?? github.find((r) => r.remote === 'origin') ?? github[0]
   if (repo) return { repo }
   const other = parsed.find((r) => r.remote === 'origin') ?? parsed[0]
   return {
@@ -175,6 +201,8 @@ function ghHosts(): string[] {
 }
 
 const FAILED = new Set(['FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'STARTUP_FAILURE', 'ERROR'])
+/** A run GitHub gave up waiting on, after two weeks without finishing: not a pass. */
+const UNFINISHED = new Set(['STALE'])
 
 /**
  * Totals of a PR's checks on its latest commit. A check run again shows up
@@ -197,7 +225,11 @@ export function checksOf(rollup: unknown): PullRequestChecks | undefined {
       key = `check:${String(c.workflowName ?? '')}/${String(c.name)}`
       const conclusion = String(c.conclusion ?? '').toUpperCase()
       outcome =
-        String(c.status).toUpperCase() !== 'COMPLETED' ? 'pending' : FAILED.has(conclusion) ? 'failed' : 'passed'
+        String(c.status).toUpperCase() !== 'COMPLETED' || UNFINISHED.has(conclusion)
+          ? 'pending'
+          : FAILED.has(conclusion)
+            ? 'failed'
+            : 'passed'
     }
     const at = Date.parse(String(c.completedAt ?? c.startedAt ?? '')) || 0
     const prev = latest.get(key)
@@ -209,12 +241,17 @@ export function checksOf(rollup: unknown): PullRequestChecks | undefined {
   return checks
 }
 
-/** What a PR's reviews say, from gh's reviewDecision (empty without branch protection) and who's asked to review. */
+/**
+ * What a PR's reviews say, from gh's reviewDecision and who's asked to
+ * review. REVIEW_REQUIRED only means branch protection wants a review, not
+ * that anyone was asked, so it reads as requested only once someone is.
+ * reviewDecision is empty without branch protection.
+ */
 export function reviewOf(decision: unknown, requests: unknown): PullRequestRow['review'] {
   if (decision === 'APPROVED') return 'approved'
   if (decision === 'CHANGES_REQUESTED') return 'changes-requested'
-  if (decision === 'REVIEW_REQUIRED') return 'review-requested'
-  return Array.isArray(requests) && requests.length > 0 ? 'review-requested' : undefined
+  if (Array.isArray(requests) && requests.length > 0) return 'review-requested'
+  return decision === 'REVIEW_REQUIRED' ? 'review-required' : undefined
 }
 
 function authorOf(raw: unknown): PullRequestRow['author'] {
@@ -279,9 +316,38 @@ export function sortPullRequests(rows: PullRequestRow[]): PullRequestRow[] {
   return [...rows].sort((a, b) => at(b) - at(a))
 }
 
-/** Whether gh failed because it isn't signed in, from what it printed. */
-export function looksLoggedOut(stderr: string): boolean {
-  return /gh auth login|not logged in|authentication required|HTTP 401|bad credentials/i.test(stderr)
+/** Whether gh couldn't connect, from what it printed: offline, DNS, a proxy, or no answer in time. */
+export function looksUnreachable(text: string): boolean {
+  return /error connecting to|dial tcp|proxyconnect|no such host|network is unreachable|connection refused|i\/o timeout|timed out|timeout|didn’t answer in/i.test(
+    text
+  )
+}
+
+/**
+ * Whether gh says it isn't signed in. Not gh auth status's "token in keyring
+ * is invalid", which it also says when it can't reach the host to check.
+ */
+export function looksLoggedOut(text: string): boolean {
+  return /not logged in|no accounts|to get started with github cli|HTTP 401|bad credentials/i.test(text)
+}
+
+/**
+ * Why a gh pr list failed: it couldn't connect, it isn't signed in, or
+ * something else, in gh's words. `auth` is gh auth status, asked only when
+ * the list's own output doesn't say.
+ */
+export function ghFailure(list: RunResult, auth: RunResult | null, host: string): PanelProblem {
+  if (list.timedOut || looksUnreachable(list.stderr)) return { kind: 'unreachable', host }
+  if (looksLoggedOut(list.stderr)) return { kind: 'gh-logged-out', host }
+  const said = auth ? `${auth.stdout}\n${auth.stderr}` : ''
+  if (auth && (auth.timedOut || looksUnreachable(said))) return { kind: 'unreachable', host }
+  if (auth && auth.code !== 0 && looksLoggedOut(said)) return { kind: 'gh-logged-out', host }
+  return { kind: 'error', message: ghError(list) }
+}
+
+/** Whether ghFailure needs gh auth status to tell why the list failed. */
+function needsAuthCheck(list: RunResult): boolean {
+  return !list.timedOut && !looksUnreachable(list.stderr) && !looksLoggedOut(list.stderr)
 }
 
 /** The first line gh printed about a failure, for the panel to show. */
@@ -329,8 +395,7 @@ export async function pullRequests(repoPath: string, now = Date.now()): Promise<
     // `gh repo set-default` marks its pick in the repository's config.
     run('git', ['config', '--get-regexp', '^remote\\..*\\.gh-resolved$'], repoPath)
   ])
-  const ghDefault = /^remote\.(.+)\.gh-resolved\s/m.exec(defaultsOut.stdout)?.[1]
-  const chosen = chooseRemote(parseRemotes(remotesOut.stdout), ghHosts(), ghDefault)
+  const chosen = chooseRemote(parseRemotes(remotesOut.stdout), ghHosts(), parseGhDefault(defaultsOut.stdout))
   if ('problem' in chosen) return fail(chosen.problem)
 
   const { host, owner, name } = chosen.repo
@@ -344,7 +409,8 @@ export async function pullRequests(repoPath: string, now = Date.now()): Promise<
   const since = new Date(now - WEEK_MS).toISOString().slice(0, 10)
 
   const [open, merged, reviewMe, me] = await Promise.all([
-    run('gh', list('--state', 'open', '--json', FIELDS, '--jq', JQ), repoPath),
+    // Sorted by GitHub, so the 50 kept are the newest even when there are more.
+    run('gh', list('--state', 'open', '--search', 'sort:updated-desc', '--json', FIELDS, '--jq', JQ), repoPath),
     run('gh', list('--state', 'merged', '--search', `merged:>=${since}`, '--json', FIELDS, '--jq', JQ), repoPath),
     // Covers review asked of a team the user is in, which reviewRequests can't tell.
     run('gh', list('--state', 'open', '--search', 'review-requested:@me', '--json', 'number', '--jq', 'map(.number)'), repoPath),
@@ -354,9 +420,8 @@ export async function pullRequests(repoPath: string, now = Date.now()): Promise<
   if (open.missing) return fail({ kind: 'gh-missing' }, repo)
   for (const res of [open, merged]) {
     if (res.code === 0) continue
-    if (looksLoggedOut(res.stderr)) return fail({ kind: 'gh-logged-out', host }, repo)
-    const auth = await run('gh', ['auth', 'status', '--hostname', host], repoPath)
-    return fail(auth.code === 0 ? { kind: 'error', message: ghError(res) } : { kind: 'gh-logged-out', host }, repo)
+    const auth = needsAuthCheck(res) ? await run('gh', ['auth', 'status', '--hostname', host], repoPath) : null
+    return fail(ghFailure(res, auth, host), repo)
   }
 
   const reviewNumbers = parseJson(reviewMe.stdout)

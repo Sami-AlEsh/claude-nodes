@@ -84,6 +84,7 @@ describe('pull requests', () => {
     expect(reviewLabel('approved').text).toBe('approved')
     expect(reviewLabel('changes-requested')).toEqual({ text: 'changes requested', tone: 'failed' })
     expect(reviewLabel('review-requested')).toEqual({ text: 'review requested', tone: 'pending' })
+    expect(reviewLabel('review-required')).toEqual({ text: 'needs review', tone: 'neutral' })
   })
 })
 
@@ -151,6 +152,7 @@ describe('labels', () => {
       { kind: 'no-github-remote', remote: { name: 'origin', host: 'gitlab.com' } },
       { kind: 'gh-missing' },
       { kind: 'gh-logged-out', host: 'github.com' },
+      { kind: 'unreachable', host: 'github.com' },
       { kind: 'jira-no-account' },
       { kind: 'jira-not-linked' },
       { kind: 'jira-auth', site: 'https://team.atlassian.net' },
@@ -169,6 +171,9 @@ describe('labels', () => {
     )
     expect(problemCopy({ kind: 'jira-auth', site: 'https://team.atlassian.net' }).body).toContain('team.atlassian.net')
     expect(problemCopy({ kind: 'no-repo' }, 'changes').body).toContain('no changes to show')
+    const unreachable = problemCopy({ kind: 'unreachable', host: 'github.com' })
+    expect(unreachable.title).toBe('Couldn’t reach github.com')
+    expect(`${unreachable.body} ${unreachable.command ?? ''}`).not.toMatch(/sign|login/i)
   })
 
   it('marks commands in backticks as code', () => {

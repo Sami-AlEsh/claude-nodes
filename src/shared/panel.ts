@@ -8,9 +8,23 @@ export const PANEL_DEFAULT_W = 360
 /** The strip on the board's right edge that holds the panel's arrow, open or folded. */
 export const PANEL_STRIP_W = 22
 
+/** The narrowest the board gets for the panel: room for the prompt bar and a column of cards. */
+export const BOARD_MIN_W = 480
+
 /** A width in the panel's range, rounded to whole pixels. */
 export function clampPanelWidth(width: number): number {
   return Math.round(Math.min(PANEL_MAX_W, Math.max(PANEL_MIN_W, width)))
+}
+
+/**
+ * The width the panel gets in a window this wide, with this much taken on
+ * the left (the pinned project rail): the saved width, cut down so the board
+ * keeps BOARD_MIN_W, but never below PANEL_MIN_W. The saved width stays as it
+ * is, so a wider window gives it back.
+ */
+export function fitPanelWidth(width: number, windowWidth: number, leftW = 0): number {
+  const room = Math.floor(windowWidth - leftW - PANEL_STRIP_W - BOARD_MIN_W)
+  return clampPanelWidth(Math.min(width, Math.max(PANEL_MIN_W, room)))
 }
 
 /** The panel's settings from saved state, with defaults for anything missing or not understood. */

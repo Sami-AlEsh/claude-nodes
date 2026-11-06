@@ -640,6 +640,8 @@ export type PanelProblem =
   | { kind: 'no-github-remote'; remote?: { name: string; host: string } }
   | { kind: 'gh-missing' }
   | { kind: 'gh-logged-out'; host: string }
+  /** gh couldn't connect to the host: offline, a DNS or proxy failure, or no answer in time. */
+  | { kind: 'unreachable'; host: string }
   | { kind: 'jira-no-account' }
   | { kind: 'jira-not-linked' }
   /** Jira turned the saved token down (401): it expired or was revoked. */
@@ -665,8 +667,12 @@ export interface PullRequestRow {
   author: { login: string; name?: string; bot?: boolean }
   /** Unset when the PR has no checks. */
   checks?: PullRequestChecks
-  /** What its reviews say: unset when nobody reviewed it and none is asked for. */
-  review?: 'approved' | 'changes-requested' | 'review-requested'
+  /**
+   * What its reviews say: approved, changes requested, someone asked to
+   * review, or a review that branch protection requires though nobody is
+   * asked yet. Unset when none of these.
+   */
+  review?: 'approved' | 'changes-requested' | 'review-requested' | 'review-required'
   /** The signed-in GitHub user opened it. */
   mine: boolean
   /** The signed-in GitHub user's review is asked for, or one of their teams'. */

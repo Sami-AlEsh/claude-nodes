@@ -6,8 +6,11 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import {
   checksOf,
   chooseRemote,
+  ghFailure,
   isGithubHost,
   looksLoggedOut,
+  looksUnreachable,
+  parseGhDefault,
   parseGhHosts,
   parsePullRequests,
   parseRemotes,
@@ -123,7 +126,13 @@ describe('chooseRemote', () => {
   })
 
   it('follows the remote gh repo set-default picked', () => {
-    expect(chooseRemote([upstream, fork], [], 'upstream')).toMatchObject({ repo: { owner: 'saleem-hadad' } })
+    expect(chooseRemote([upstream, fork], [], { remote: 'upstream' })).toMatchObject({ repo: { owner: 'saleem-hadad' } })
+  })
+
+  it('goes straight to the repository gh repo set-default named when no remote is it', () => {
+    expect(chooseRemote([fork], [], { remote: 'origin', repo: { owner: 'acme', name: 'nodus' } })).toEqual({
+      repo: { remote: 'origin', host: 'github.com', owner: 'acme', name: 'nodus' }
+    })
   })
 
   it('takes the first GitHub remote when origin is elsewhere', () => {
@@ -162,10 +171,60 @@ describe('git and gh output', () => {
     expect(parseGhHosts(yaml)).toEqual(['github.com', 'ghe.example.com'])
   })
 
+  it('reads what gh repo set-default saved: the remote it picked, or the repository it named', () => {
+    expect(parseGhDefault('remote.upstream.gh-resolved base\n')).toEqual({ remote: 'upstream' })
+    expect(parseGhDefault('remote.origin.gh-resolved acme/nodus\n')).toEqual({
+      remote: 'origin',
+      repo: { owner: 'acme', name: 'nodus' }
+    })
+    expect(parseGhDefault('')).toBeUndefined()
+  })
+
   it('tells a signed-out gh from other failures', () => {
     expect(looksLoggedOut('To get started with GitHub CLI, please run:  gh auth login')).toBe(true)
     expect(looksLoggedOut('HTTP 401: Bad credentials (https://api.github.com/graphql)')).toBe(true)
+    expect(looksLoggedOut('You are not logged into any GitHub hosts. To log in, run: gh auth login')).toBe(true)
     expect(looksLoggedOut('GraphQL: Could not resolve to a Repository with the name x/y.')).toBe(false)
+    // gh auth status says this when it can't reach the host to check the token, too.
+    expect(looksLoggedOut('X Failed to log in to github.com account sami (keyring)\n- The token in keyring is invalid.\n- To re-authenticate, run: gh auth login -h github.com')).toBe(false)
+  })
+
+  it('tells a connection failure from the rest', () => {
+    expect(looksUnreachable('error connecting to api.github.com\ncheck your internet connection or https://githubstatus.com')).toBe(true)
+    expect(looksUnreachable('Post "https://api.github.com/graphql": dial tcp: lookup api.github.com: no such host')).toBe(true)
+    expect(looksUnreachable('proxyconnect tcp: dial tcp 10.0.0.1:8080: connect: connection refused')).toBe(true)
+    expect(looksUnreachable('GraphQL: Could not resolve to a Repository with the name x/y.')).toBe(false)
+  })
+
+})
+
+describe('ghFailure', () => {
+  const failed = (stderr: string, extra = {}) => ({ code: 1, stdout: '', stderr, ...extra })
+  const keyringInvalid = failed(
+    'X Failed to log in to github.com account sami (keyring)\n- The token in keyring is invalid.\n- To re-authenticate, run: gh auth login -h github.com'
+  )
+
+  it('says the host couldn’t be reached when gh timed out or couldn’t connect', () => {
+    expect(ghFailure({ code: null, stdout: '', stderr: 'gh didn’t answer in 15 seconds.', timedOut: true }, null, 'github.com')).toEqual({
+      kind: 'unreachable',
+      host: 'github.com'
+    })
+    expect(ghFailure(failed('error connecting to api.github.com'), null, 'github.com').kind).toBe('unreachable')
+  })
+
+  it('asks to sign in only when gh says it isn’t signed in', () => {
+    expect(ghFailure(failed('To get started with GitHub CLI, please run:  gh auth login'), null, 'github.com').kind).toBe('gh-logged-out')
+    const notLoggedIn = failed('You are not logged into any GitHub hosts. To log in, run: gh auth login')
+    expect(ghFailure(failed('something went wrong'), notLoggedIn, 'github.com').kind).toBe('gh-logged-out')
+  })
+
+  it('doesn’t take an unverifiable token for being signed out', () => {
+    expect(ghFailure(failed('GraphQL: Something went wrong'), keyringInvalid, 'github.com')).toEqual({
+      kind: 'error',
+      message: 'GraphQL: Something went wrong'
+    })
+    const offlineAuth = failed(`${keyringInvalid.stderr}\nerror connecting to api.github.com`)
+    expect(ghFailure(failed('GraphQL: Something went wrong'), offlineAuth, 'github.com').kind).toBe('unreachable')
   })
 })
 
@@ -189,6 +248,15 @@ describe('checksOf', () => {
     expect(checksOf(rollup)).toEqual({ total: 5, passed: 1, failed: 2, pending: 2 })
   })
 
+  it('doesn’t count a run GitHub marked stale as passed', () => {
+    expect(checksOf([{ __typename: 'CheckRun', name: 'a', status: 'COMPLETED', conclusion: 'STALE' }])).toEqual({
+      total: 1,
+      passed: 0,
+      failed: 0,
+      pending: 1
+    })
+  })
+
   it('is undefined for a PR with no checks', () => {
     expect(checksOf([])).toBeUndefined()
     expect(checksOf(null)).toBeUndefined()
@@ -196,12 +264,16 @@ describe('checksOf', () => {
 })
 
 describe('reviewOf', () => {
-  it('reads the review decision, and asks for review when one is requested without branch protection', () => {
+  it('reads the review decision, and says requested only when someone is asked', () => {
     expect(reviewOf('APPROVED', [])).toBe('approved')
     expect(reviewOf('CHANGES_REQUESTED', [])).toBe('changes-requested')
-    expect(reviewOf('REVIEW_REQUIRED', [])).toBe('review-requested')
     expect(reviewOf('', [{ login: 'a' }])).toBe('review-requested')
+    expect(reviewOf('REVIEW_REQUIRED', [{ login: 'a' }])).toBe('review-requested')
     expect(reviewOf('', [])).toBeUndefined()
+  })
+
+  it('says a review is needed when branch protection wants one and nobody is asked', () => {
+    expect(reviewOf('REVIEW_REQUIRED', [])).toBe('review-required')
   })
 })
 
@@ -268,6 +340,12 @@ describe('pullRequests', () => {
       `#!/bin/sh
 echo "$*" >> "$FAKE_GH/calls"
 signed_in() { [ -f "$FAKE_GH/logged-in" ]; }
+if [ -f "$FAKE_GH/offline" ]; then
+  case "$*" in
+    "auth status"*) echo "X Failed to log in to github.com account Sami-AlEsh (keyring)" >&2; echo "  - The token in keyring is invalid." >&2; echo "  - To re-authenticate, run: gh auth login -h github.com" >&2; exit 1 ;;
+    *) echo "error connecting to api.github.com" >&2; echo "check your internet connection or https://githubstatus.com" >&2; exit 1 ;;
+  esac
+fi
 case "$*" in
   "auth status"*) signed_in && exit 0; echo "You are not logged into any GitHub hosts." >&2; exit 1 ;;
   "api user"*) signed_in && echo "Sami-AlEsh" && exit 0; exit 1 ;;
@@ -289,6 +367,7 @@ esac
     fs.rmSync(path.join(fake.dir, 'calls'), { force: true })
     flag('logged-in', true)
     flag('broken', false)
+    flag('offline', false)
     installGh()
   })
 
@@ -326,6 +405,22 @@ esac
     expect((await pullRequests(repo, NOW)).problem).toEqual({ kind: 'gh-logged-out', host: 'github.com' })
   })
 
+  it('says GitHub couldn’t be reached when offline, not that gh is signed out', async () => {
+    git('init', '-q')
+    git('remote', 'add', 'origin', 'git@github.com:Sami-AlEsh/nodus.git')
+    flag('offline', true)
+    expect((await pullRequests(repo, NOW)).problem).toEqual({ kind: 'unreachable', host: 'github.com' })
+  })
+
+  it('lists the repository gh repo set-default named', async () => {
+    git('init', '-q')
+    git('remote', 'add', 'origin', 'git@github.com:Sami-AlEsh/nodus.git')
+    git('config', 'remote.origin.gh-resolved', 'saleem-hadad/nodus')
+    const result = await pullRequests(repo, NOW)
+    expect(result.repo?.nameWithOwner).toBe('saleem-hadad/nodus')
+    expect(fs.readFileSync(path.join(fake.dir, 'calls'), 'utf8')).toContain('pr list -R saleem-hadad/nodus')
+  })
+
   it('passes on what gh said when it failed for another reason', async () => {
     git('init', '-q')
     git('remote', 'add', 'origin', 'git@github.com:Sami-AlEsh/nodus.git')
@@ -346,7 +441,7 @@ esac
     expect(result.rows.map((r) => r.number)).toEqual([12, 15, 16])
     expect(result.rows.find((r) => r.number === 16)?.needsMyReview).toBe(true)
     const calls = fs.readFileSync(path.join(fake.dir, 'calls'), 'utf8')
-    expect(calls).toContain('pr list -R Sami-AlEsh/nodus --limit 50 --state open')
+    expect(calls).toContain('pr list -R Sami-AlEsh/nodus --limit 50 --state open --search sort:updated-desc')
     expect(calls).toContain('--state merged --search merged:>=2026-10-30')
   })
 })

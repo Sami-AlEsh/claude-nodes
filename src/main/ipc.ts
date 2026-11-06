@@ -627,7 +627,9 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
   ipcMain.handle(IPC.jiraAccount, () => jira.accountInfo())
 
   ipcMain.handle(IPC.jiraSetAccount, async (_e, input: JiraAccountInput | null) => {
-    const account = await jira.setAccount(input && typeof input === 'object' ? input : null)
+    // Only null (or nothing) signs out; anything else that isn't an account is a mistake, not a sign-out.
+    if (input && typeof input !== 'object') throw new Error('Not a Jira account')
+    const account = await jira.setAccount(input || null)
     forgetTickets()
     return account
   })

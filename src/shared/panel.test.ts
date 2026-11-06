@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { PANEL_DEFAULT_W, PANEL_MAX_W, PANEL_MIN_W, clampPanelWidth, normalizePanel, prForIssue } from './panel'
+import {
+  PANEL_DEFAULT_W,
+  PANEL_MAX_W,
+  PANEL_MIN_W,
+  clampPanelWidth,
+  fitPanelWidth,
+  normalizePanel,
+  prForIssue
+} from './panel'
 import type { PullRequestRow } from './types'
 
 const pr = (number: number, headRef: string, state: PullRequestRow['state'] = 'open'): PullRequestRow => ({
@@ -26,6 +34,15 @@ describe('panel settings', () => {
   it('folds the panel to its strip unless it was left open, at the default width unless one was dragged', () => {
     expect(normalizePanel({})).toEqual({ panelOpen: false, panelWidth: PANEL_DEFAULT_W })
     expect(normalizePanel({ panelOpen: true, panelWidth: 500 })).toEqual({ panelOpen: true, panelWidth: 500 })
+  })
+
+  it('cuts the width down so the board keeps its minimum, and gives it back in a wider window', () => {
+    // The smallest window, with the project rail pinned: 960 − 52 − 22 (strip) − 480 (board) = 406.
+    expect(fitPanelWidth(640, 960, 52)).toBe(406)
+    expect(fitPanelWidth(360, 960, 52)).toBe(360)
+    expect(fitPanelWidth(640, 1440)).toBe(640)
+    // Never below the panel's own minimum, even if the board then gets less.
+    expect(fitPanelWidth(640, 700)).toBe(PANEL_MIN_W)
   })
 
   it('drops values it doesn’t understand', () => {
