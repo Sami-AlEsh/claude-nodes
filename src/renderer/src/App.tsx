@@ -11,7 +11,6 @@ import { DiffModal } from './components/git/DiffModal'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ProjectRail } from './components/projects/ProjectRail'
 import { PanelDock, usePanelPlacement } from './components/panel/PanelDock'
-import { PANEL_STRIP_W } from '@shared/panel'
 
 export function App() {
   const route = useApp((s) => s.route)
@@ -92,16 +91,16 @@ export function App() {
     <div className="app">
       <TitleBar />
       {/*
-        On a board, the project panel's strip, and the panel when it's open, take the window's right:
-        --panel-offset is how much, for the board and for what's placed from the board's right edge.
+        On a board, the open project panel takes the window's right: --panel-offset is how much, for
+        the board and for what's placed from the board's right edge. Folded, it takes nothing: its
+        button floats over the board.
       */}
       <main
         className="app-main"
         style={
           {
             '--panel-w': `${panel.width}px`,
-            '--panel-strip-w': `${PANEL_STRIP_W}px`,
-            '--panel-offset': route.view === 'board' ? `${PANEL_STRIP_W + (panel.open ? panel.width : 0)}px` : '0px'
+            '--panel-offset': route.view === 'board' && panel.open ? `${panel.width}px` : '0px'
           } as CSSProperties
         }
       >

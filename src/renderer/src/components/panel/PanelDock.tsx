@@ -35,12 +35,12 @@ export function usePanelPlacement() {
 }
 
 /**
- * The project panel on the board's right. Folded, a narrow strip on the
- * window's right edge holds the arrow that opens it. Open, the panel takes a
- * column of its own up to the window's edge, with no strip: the arrow that
- * folds it is in its header, and its left edge drags to resize it. Widths
- * come from App's --panel-w and --panel-strip-w, which it sets for the board
- * as well (panel.css says how the board stops at the open panel).
+ * The project panel on the board's right. Folded, it takes no room: a small
+ * button floats at the board's top right, over the board, and opens it. Open,
+ * the panel takes a column of its own up to the window's edge, and the board
+ * stops at it; the arrow that folds it is in its header, and its left edge
+ * drags to resize it. Its width is App's --panel-w, which App also gives the
+ * board.
  */
 export function PanelDock({ projectId }: { projectId: string }) {
   const { open, width, leftW } = usePanelPlacement()
@@ -71,17 +71,15 @@ export function PanelDock({ projectId }: { projectId: string }) {
 
   if (!open) {
     return (
-      <div className="panel-strip">
-        <button
-          className="panel-strip-btn"
-          onClick={() => setOpen(true)}
-          aria-expanded={false}
-          aria-label="Show the project panel"
-          title="Show the project panel: pull requests, tickets and changes"
-        >
-          <ChevronLeft size={14} strokeWidth={2.2} />
-        </button>
-      </div>
+      <button
+        className="panel-corner-btn"
+        onClick={() => setOpen(true)}
+        aria-expanded={false}
+        aria-label="Show the project panel"
+        title="Show the project panel"
+      >
+        <ChevronLeft size={16} strokeWidth={2.2} />
+      </button>
     )
   }
 
