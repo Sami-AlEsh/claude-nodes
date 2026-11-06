@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import clsx from 'clsx'
-import { ChevronLeft } from 'lucide-react'
 import { PANEL_DEFAULT_W } from '@shared/panel'
 import { clampSplit, cycleTab, tabAt } from '@shared/workspace'
 import { useApp } from '@renderer/store'
@@ -37,7 +36,8 @@ function dialogOpen(): boolean {
 /**
  * The project's sessions in the board's place: tabs along the top, the tab
  * showing's terminal in the middle, and the project panel on the right behind
- * a divider, or folded to a strip at the edge. Only the tab showing has its
+ * a divider. Hidden, the panel takes no room, and its arrow waits at the end
+ * of the tabs. Only the tab showing has its
  * terminal attached; the registry parks the others, still running.
  */
 export function SessionWorkspace({ projectId, pinRail }: { projectId: string; pinRail: boolean }) {
@@ -74,13 +74,14 @@ export function SessionWorkspace({ projectId, pinRail }: { projectId: string; pi
   }, [])
 
   return (
-    <div ref={rootRef} className={clsx('workspace', pinRail && 'beside-rail')} data-panel-open={panelOpen || undefined}>
-      <SessionTabs />
+    <div ref={rootRef} className={clsx('workspace', pinRail && 'beside-rail')}>
+      <SessionTabs onShowPanel={panelOpen ? undefined : () => setPanelOpen(true)} />
       <div ref={rowRef} className="ws-row">
         <section className="ws-pane" id={PANE_ID} role="tabpanel" aria-labelledby={active ? tabId(active) : undefined}>
           {active && <SessionPane key={active} sessionId={active} projectId={projectId} />}
         </section>
-        {panelOpen ? (
+        {/* Hidden, the panel leaves no column: the terminal runs to the edge, and the tabs hold its arrow. */}
+        {panelOpen && (
           <>
             <SplitHandle width={width} row={row} />
             <aside
@@ -97,19 +98,6 @@ export function SessionWorkspace({ projectId, pinRail }: { projectId: string; pi
               <ProjectPanel projectId={projectId} onHide={() => setPanelOpen(false)} />
             </aside>
           </>
-        ) : (
-          <div className="ws-strip">
-            <button
-              className="panel-strip-btn"
-              onClick={() => setPanelOpen(true)}
-              aria-expanded={false}
-              aria-controls="project-panel"
-              aria-label="Show the project panel"
-              title="Show the project panel: pull requests, tickets and changes"
-            >
-              <ChevronLeft size={14} strokeWidth={2.2} />
-            </button>
-          </div>
         )}
       </div>
     </div>

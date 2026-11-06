@@ -39,7 +39,7 @@ Switching tabs leaves the other sessions running, and each terminal keeps its sc
 
 ⤡, or the title bar's back arrow, goes back to the board and keeps the tabs for next time. The session that was showing waits there expanded on its card. Each project has its own tabs, saved with its board, so they're still there after a relaunch, less any session that has gone to the archive or left the board. Opening a project shows its board first, and opening any session brings the workspace back with its tabs.
 
-The panel is the board's own, in a column beside the terminal. Drag the divider between them to resize it, from 280 px up to 640 px or half the space, whichever is less. Double-click the divider for the default width, or focus it and use the arrow keys. The panel's › hides it, leaving its arrow in a strip at the edge to bring it back. Whether it's open, and how wide, are the panel's settings, so the board's panel follows.
+The panel is the board's own, in a column beside the terminal. Drag the divider between them to resize it, from 280 px up to 640 px or half the space, whichever is less. Double-click the divider for the default width, or focus it and use the arrow keys. The panel's › hides it, and the terminal runs to the window's edge; ‹ at the right end of the tabs brings it back. Whether it's open, and how wide, are the panel's settings, so the board's panel follows.
 
 ## Sessions keep running after you quit
 
@@ -247,7 +247,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | New session in a tab | **+** after the tabs · ⌘N |
 | | Back to the board, keeping the tabs | ⤡ in the header · the title bar's back arrow |
 | | Resize the project panel | Drag the divider · double-click it for the default width · arrow keys on it |
-| | Hide the project panel, or show it | Its › · the arrow in the strip at the edge |
+| | Hide the project panel, or show it | Its › · the ‹ at the right end of the tabs |
 | Terminal | Newline in Claude's prompt | ⇧Enter |
 | | Clear · copy · select all | ⌘K · ⌘C · ⌘A |
 | New session from context | Start | ⌘Enter |
