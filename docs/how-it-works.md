@@ -145,7 +145,7 @@ This makes one Claude request per selected session, so it counts toward your Cla
 
 ## Actions
 
-A project's buttons live in a rail on the board's right edge. It hides like the project rail on the left: point at the board's right edge, beside the project panel's strip or the open panel, to slide it in. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button to run, edit or delete it.
+A project's buttons live in a rail on the board's right edge. It hides like the project rail on the left: point at the board's right edge (the window's, or the open project panel's) to slide it in. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button to run, edit or delete it.
 
 Turn on **Use in every project** to make a button global: it shows in every project's rail, below that project's own buttons, with a globe on its tile. Claude then writes its prompt to work in any repository, finding commands at run time rather than assuming this one's. Turning the switch off moves the button into the project you're in. A project's buttons are stored with it in `state.json`, global ones at the top level of the same file, and never in the repo.
 
@@ -159,7 +159,7 @@ When the run's turn ends, the session goes, its transcript is hidden like a remo
 
 ## Project panel
 
-The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it's a narrow strip on the window's right edge with an arrow: click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. Open, there's no strip: the **›** button in the panel's header folds it back. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. The actions rail slides in at the board's edge, beside the strip or the open panel. In the workspace the panel is the right column instead, beside the terminal (see [The workspace](#the-workspace)).
+The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it takes no room: the board runs to the window's edge, and a small button with an arrow floats at the board's top right. Click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. The **›** button in the panel's header folds it back to the button. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. The actions rail slides in at the board's edge: the window's when the panel is folded, the panel's when it's open. In the workspace the panel is the right column instead, beside the terminal (see [The workspace](#the-workspace)).
 
 It shows the project whose board is open, in three segments, each with its count:
 
@@ -238,7 +238,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Change a view | Its ✎ button · talk to its brain with ⌨ |
 | | Rename a view · delete it | Double-click its title · ⌫ (asks first) |
 | | Fan out a card's agents | Point at the deck under it · click to pin |
-| | Open the project panel, or fold it to its strip | The arrow in the strip on the window's right edge · the panel's › button |
+| | Open the project panel, or fold it | The arrow button at the board's top right · the panel's › button |
 | | Resize the project panel | Drag its left edge · double-click the edge for the default width |
 | | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also drag on empty canvas) · pinch or ⌘-scroll |
 | Workspace | Next tab · previous tab | ⌃Tab · ⌃⇧Tab |

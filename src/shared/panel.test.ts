@@ -37,8 +37,8 @@ describe('panel settings', () => {
   })
 
   it('cuts the width down so the board keeps its minimum, and gives it back in a wider window', () => {
-    // The smallest window, with the project rail pinned: 960 − 52 − 22 (strip) − 480 (board) = 406.
-    expect(fitPanelWidth(640, 960, 52)).toBe(406)
+    // The smallest window, with the project rail pinned: 960 − 52 − 480 (board) = 428.
+    expect(fitPanelWidth(640, 960, 52)).toBe(428)
     expect(fitPanelWidth(360, 960, 52)).toBe(360)
     expect(fitPanelWidth(640, 1440)).toBe(640)
     // Never below the panel's own minimum, even if the board then gets less.
