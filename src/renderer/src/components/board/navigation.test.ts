@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { mouseControls, shiftTracker } from './navigation'
+import type { Point } from '@shared/geometry'
+import { mouseControls, rightClick, rightClicks } from './navigation'
 
 describe('mouseControls', () => {
   it('keeps today’s controls with the keyboard', () => {
-    const expected = {
+    expect(mouseControls('withKeyboard')).toEqual({
       panOnScroll: true,
       zoomOnPinch: true,
       selectionOnDrag: true,
@@ -11,71 +12,154 @@ describe('mouseControls', () => {
       panActivationKeyCode: 'Space',
       selectionKeyCode: null,
       multiSelectionKeyCode: ['Meta', 'Shift']
-    }
-    expect(mouseControls('withKeyboard', false)).toEqual(expected)
-    expect(mouseControls('withKeyboard', true)).toEqual(expected)
-  })
-
-  it('pans with a left-drag for the mouse alone, and leaves scrolling and zooming as they were', () => {
-    expect(mouseControls('mouseOnly', false)).toEqual({
-      panOnScroll: true,
-      zoomOnPinch: true,
-      selectionOnDrag: false,
-      panOnDrag: [0, 1],
-      panActivationKeyCode: 'Space',
-      selectionKeyCode: null,
-      multiSelectionKeyCode: ['Meta', 'Shift'],
-      paneClickDistance: 4
     })
   })
 
-  it('draws a selection box with ⇧ held, without making ⇧ a selection key that would catch cards', () => {
-    const shifted = mouseControls('mouseOnly', true)
-    expect(shifted.selectionOnDrag).toBe(true)
-    expect(shifted.panOnDrag).toEqual([1])
-    expect(shifted.selectionKeyCode).toBeNull()
-    expect(shifted.multiSelectionKeyCode).toEqual(['Meta', 'Shift'])
+  it('pans with the right button for the mouse alone, and leaves the left button its selection box', () => {
+    expect(mouseControls('mouseOnly')).toEqual({
+      panOnScroll: true,
+      zoomOnPinch: true,
+      selectionOnDrag: true,
+      panOnDrag: [1, 2],
+      panActivationKeyCode: 'Space',
+      selectionKeyCode: null,
+      multiSelectionKeyCode: ['Meta', 'Shift']
+    })
   })
 
   it('gives React Flow the same objects from one render to the next', () => {
-    expect(mouseControls('mouseOnly', false)).toBe(mouseControls('mouseOnly', false))
-    expect(mouseControls('withKeyboard', false)).toBe(mouseControls('mouseOnly', true))
+    expect(mouseControls('mouseOnly')).toBe(mouseControls('mouseOnly'))
+    expect(mouseControls('withKeyboard')).toBe(mouseControls('withKeyboard'))
   })
 })
 
-describe('shiftTracker', () => {
+describe('rightClick', () => {
+  const press = { x: 100, y: 100 }
+
+  it('counts a release where the press was, or a few pixels off, as a click', () => {
+    expect(rightClick(press, press)).toBe(true)
+    expect(rightClick(press, { x: 102, y: 101 })).toBe(true)
+    expect(rightClick(press, { x: 100, y: 96.5 })).toBe(true)
+  })
+
+  it('counts 4 pixels or more as a pan', () => {
+    expect(rightClick(press, { x: 104, y: 100 })).toBe(false)
+    expect(rightClick(press, { x: 103, y: 103 })).toBe(false)
+    expect(rightClick(press, { x: 40, y: 180 })).toBe(false)
+  })
+})
+
+describe('rightClicks', () => {
   const track = () => {
-    const changes: boolean[] = []
-    return { shift: shiftTracker((held) => changes.push(held)), changes }
+    const clicks: Point[] = []
+    return { right: rightClicks((at) => clicks.push(at)), clicks }
   }
+  const at = (x: number, y: number) => ({ clientX: x, clientY: y })
+  // `buttons` defaults to the pressed button alone (bit 1 left, 2 right, 4 middle).
+  const down = (x: number, y: number, button = 2, ctrlKey = false, buttons = [1, 4, 2][button]) => ({
+    button,
+    buttons,
+    ctrlKey,
+    ...at(x, y)
+  })
+  const held = (x: number, y: number, buttons = 2) => ({ buttons, ...at(x, y) })
+  const up = (x: number, y: number, button = 2) => ({ button, ...at(x, y) })
 
-  it('follows ⇧ from the keyboard and the pointer', () => {
-    const { shift, changes } = track()
-    shift.key({ shiftKey: true })
-    shift.key({ shiftKey: false })
-    shift.pointer({ shiftKey: true, buttons: 0 })
-    shift.pointer({ shiftKey: true, buttons: 0 })
-    shift.blur()
-    expect(changes).toEqual([true, false, true, false])
+  it('opens on a right-click on the canvas, at the press', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.up(up(300, 200))
+    expect(clicks).toEqual([{ x: 300, y: 200 }])
   })
 
-  it('waits for the button to come up before swapping, so a press ends with the props it began with', () => {
-    const { shift, changes } = track()
-    shift.key({ shiftKey: true })
-    shift.pointer({ shiftKey: true, buttons: 1 })
-    shift.key({ shiftKey: false })
-    shift.pointer({ shiftKey: false, buttons: 1 })
-    expect(changes).toEqual([true])
-    shift.pointer({ shiftKey: false, buttons: 0 })
-    expect(changes).toEqual([true, false])
+  it('opens after a long press that didn’t move, since only the release decides', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.move(held(300, 200))
+    right.move(held(300, 200))
+    right.up(up(300, 200))
+    expect(clicks).toEqual([{ x: 300, y: 200 }])
   })
 
-  it('doesn’t start a box from ⇧ pressed mid-pan', () => {
-    const { shift, changes } = track()
-    shift.pointer({ shiftKey: false, buttons: 1 })
-    shift.key({ shiftKey: true })
-    expect(changes).toEqual([])
-    shift.pointer({ shiftKey: true, buttons: 0 })
-    expect(changes).toEqual([true])
+  it('opens at the press after a small wobble', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.move(held(302, 201))
+    right.move(held(298, 199))
+    right.up(up(301, 202))
+    expect(clicks).toEqual([{ x: 300, y: 200 }])
+  })
+
+  it('opens nothing after a drag, even one that comes back to where it started', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.move(held(360, 240))
+    right.up(up(360, 240))
+    right.down(down(300, 200), true)
+    right.move(held(308, 200))
+    right.move(held(300, 200))
+    right.up(up(300, 200))
+    expect(clicks).toEqual([])
+  })
+
+  it('leaves presses on cards and other buttons alone', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), false)
+    right.up(up(300, 200))
+    right.down(down(300, 200, 0), true)
+    right.up(up(300, 200, 0))
+    right.down(down(300, 200, 1), true)
+    right.up(up(300, 200, 1))
+    expect(clicks).toEqual([])
+  })
+
+  it('counts ⌃-click as a right-click, as macOS does', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200, 0, true), true)
+    right.move(held(301, 200, 1))
+    right.up(up(301, 200, 0))
+    right.down(down(300, 200, 0, true), true)
+    right.move(held(340, 240, 1))
+    right.up(up(340, 240, 0))
+    expect(clicks).toEqual([{ x: 300, y: 200 }])
+  })
+
+  it('opens nothing for a right press made while the left button is down, as when drawing a selection box', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200, 2, false, 3), true)
+    right.up(up(300, 200))
+    right.down(down(300, 200, 0, true, 3), true)
+    right.up(up(300, 200, 0))
+    expect(clicks).toEqual([])
+  })
+
+  it('opens nothing when the button that comes up isn’t the one that went down', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.up(up(300, 200, 0))
+    right.down(down(300, 200, 0, true), true)
+    right.up(up(300, 200, 2))
+    expect(clicks).toEqual([])
+  })
+
+  it('opens nothing when another button joins the press, or the press is cut short', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.move(held(300, 200, 3))
+    right.up(up(300, 200))
+    right.down(down(300, 200), true)
+    right.cancel()
+    right.up(up(300, 200))
+    expect(clicks).toEqual([])
+  })
+
+  it('starts afresh with each press', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.move(held(400, 200))
+    right.up(up(400, 200))
+    right.down(down(400, 200), true)
+    right.up(up(400, 200))
+    expect(clicks).toEqual([{ x: 400, y: 200 }])
   })
 })

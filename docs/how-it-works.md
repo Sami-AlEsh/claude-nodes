@@ -215,7 +215,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Open a card in the workspace | Click · Enter |
 | | Expand a card on the board, or collapse it | E · the card's ⤢ button |
 | | Resize an expanded card | Drag its edges or corners |
-| | Select | Drag on empty canvas (⇧-drag with Mouse only) · ⇧-click · ⌘-click · ⌘A (all active) |
+| | Select | Drag on empty canvas · ⇧-click · ⌘-click · ⌘A (all active) |
 | | Group the selection into a section | ⌘G |
 | | Archive the selection | ⌫ |
 | | Stop a session, keeping its card | **Stop** in the workspace or its card's title bar · right-click › Stop session |
@@ -240,7 +240,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Fan out a card's agents | Point at the deck under it · click to pin |
 | | Open the project panel, or fold it | The arrow button at the board's top right · the panel's › button |
 | | Resize the project panel | Drag its left edge · double-click the edge for the default width |
-| | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also drag on empty canvas) · pinch or ⌘-scroll |
+| | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also right-drag on empty canvas) · pinch or ⌘-scroll |
 | Workspace | Next tab · previous tab | ⌃Tab · ⌃⇧Tab |
 | | Jump to a tab | ⌘1 to ⌘8 · ⌘9 for the last |
 | | Close a tab, keeping its session running | ⌘W · its × · middle-click |
@@ -254,7 +254,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 
 In the terminal, Esc goes to Claude (it interrupts a turn), so it never leaves the workspace. ⌘W never closes the window.
 
-**Settings › Board › Mouse** picks how the mouse gets around the board. **Keyboard + mouse** is the default: Space-drag pans, ⌘-scroll zooms, and dragging draws a selection box. **Mouse only** frees the other hand: drag on empty canvas (or inside a section) to pan, and hold ⇧ to drag a selection box. ⌘-scroll or a pinch zooms in both, scrolling pans in both, ⇧-click and ⌘-click still add a card to the selection, and dragging a card still moves it. The trackpad works the same either way. The change applies straight away.
+**Settings › Board › Mouse** picks how the mouse gets around the board. **Keyboard + mouse** is the default: hold Space and drag to pan. **Mouse only** frees the other hand: hold the right button and move to pan, from empty canvas or inside a section. A right-click that doesn't move still opens the board's menu, as the button comes up; a press that strays 4 pixels or more pans instead. In both, dragging on empty canvas draws a selection box, ⌘-scroll or a pinch zooms, scrolling and middle-drag pan, ⇧-click and ⌘-click add a card to the selection, and dragging a card moves it. The trackpad works the same either way. The change applies straight away.
 
 ## Known limitations
 
