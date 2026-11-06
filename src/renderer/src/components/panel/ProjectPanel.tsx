@@ -1,49 +1,35 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
 import {
-  ArrowDown,
-  ArrowUp,
   ChevronRight,
-  ChevronsDown,
-  ChevronsUp,
   FileDiff,
   GitBranch,
   GitMerge,
   GitPullRequest,
   GitPullRequestDraft,
-  Minus,
   RefreshCw,
   SquareKanban,
   TriangleAlert
 } from 'lucide-react'
-import type { PanelProblem, PullRequestRow, PullRequestsResult, TicketRow, TicketsResult } from '@shared/types'
-import { prForIssue } from '@shared/panel'
+import type { PanelProblem, PullRequestRow, PullRequestsResult } from '@shared/types'
 import { useApp } from '@renderer/store'
 import { timeAgo } from '@renderer/components/board/layout'
 import { FilePath, StatusIcon, fileTitle } from '@renderer/components/git/DiffModal'
 import { branchLabel } from '@renderer/components/git/GitControls'
-import { JiraLinkDialog } from './JiraLinkDialog'
 import { fetchedAt, refreshPanel, showLast, usePanelData } from './panelData'
 import {
   PR_FILTERS,
-  TICKET_FILTERS,
   checksLabel,
   codeSpans,
   errorText,
   filterPullRequests,
-  filterTickets,
   groupPullRequests,
-  groupTickets,
   initials,
-  priorityLevel,
   problemCopy,
   pullRequestCount,
   reviewLabel,
-  statusTone,
-  ticketCount,
   type Group,
   type PanelTab,
-  type PriorityLevel,
   type Tone
 } from './panelUi'
 import './panel.css'
@@ -76,7 +62,8 @@ const open = (url: string) => {
 }
 
 /**
- * The project's pull requests, tickets and uncommitted changes, in segments.
+ * The project's pull requests and uncommitted changes, in segments, with a
+ * Tickets segment that says tickets are coming.
  * Self-contained: it reads and refreshes its own lists for `projectId`, so it
  * can sit beside the board or anywhere else. `active` is whether it's showing;
  * nothing is read or polled while it isn't.
@@ -94,7 +81,6 @@ export function ProjectPanel({
   const setTab = useApp((s) => s.setPanelTab)
   const git = useApp((s) => s.git)
   const prs = usePanelData((s) => s.prs[projectId])
-  const tickets = usePanelData((s) => s.tickets[projectId])
   const loading = usePanelData((s) => s.loading[projectId] ?? false)
   const now = useTick(active)
 
@@ -120,7 +106,8 @@ export function ProjectPanel({
 
   const counts: Record<PanelTab, number | undefined> = {
     prs: pullRequestCount(prs),
-    tickets: ticketCount(tickets),
+    // No count for tickets until they come.
+    tickets: undefined,
     changes: git?.files.length
   }
 
@@ -158,7 +145,7 @@ export function ProjectPanel({
       </div>
 
       {tab === 'prs' && <PullRequestsTab projectId={projectId} result={prs} now={now} />}
-      {tab === 'tickets' && <TicketsTab projectId={projectId} result={tickets} prs={prs} now={now} />}
+      {tab === 'tickets' && <TicketsTab />}
       {tab === 'changes' && <ChangesTab projectId={projectId} prs={prs} />}
     </div>
   )
@@ -315,92 +302,12 @@ function PullRequestItem({ pr, now }: { pr: PullRequestRow; now: number }) {
 
 /* ───────────── Tickets ───────────── */
 
-function TicketsTab({
-  projectId,
-  result,
-  prs,
-  now
-}: {
-  projectId: string
-  result: TicketsResult | undefined
-  prs: PullRequestsResult | undefined
-  now: number
-}) {
-  const filter = useApp((s) => s.ticketFilter)
-  const setFilter = useApp((s) => s.setTicketFilter)
-  const [linking, setLinking] = useState(false)
-  if (!result) return <Loading what="tickets" />
-
-  const dialog = linking && <JiraLinkDialog projectId={projectId} onClose={() => setLinking(false)} />
-  if (result.problem) {
-    return (
-      <>
-        <Problem projectId={projectId} problem={result.problem} onLink={() => setLinking(true)} linked={result.project?.key} />
-        {dialog}
-      </>
-    )
-  }
-
-  // Without a Sprint field there's nothing for This sprint to go by.
-  const options = result.sprints ? TICKET_FILTERS : TICKET_FILTERS.filter((f) => f.id !== 'sprint')
-  const current = options.some((o) => o.id === filter) ? filter : 'all'
-  const groups = groupTickets(filterTickets(result.rows, current))
-  const openPrs = prs?.rows ?? []
+/** Jira tickets are still to come; until then the segment says so. */
+function TicketsTab() {
   return (
-    <>
-      <Chips options={options} value={current} onPick={setFilter} label="Show tickets" />
-      <div className="panel-list">
-        <Groups
-          groups={groups}
-          empty={current === 'all' ? 'Nothing to do or in progress, and nothing done this week.' : 'None match this filter.'}
-          render={(t) => <TicketItem key={t.key} ticket={t} pr={prForIssue(t.key, openPrs)} />}
-        />
-      </div>
-      <Footer link={result.project && { url: result.project.url, label: 'Jira' }}>
-        <button className="panel-foot-key" onClick={() => setLinking(true)} title="Link another Jira project">
-          {result.project?.key}
-        </button>{' '}
-        · updated {timeAgo(result.fetchedAt, now)}
-      </Footer>
-      {dialog}
-    </>
-  )
-}
-
-const PRIORITY_ICON: Record<PriorityLevel, typeof ArrowUp> = {
-  highest: ChevronsUp,
-  high: ArrowUp,
-  medium: Minus,
-  low: ArrowDown,
-  lowest: ChevronsDown
-}
-
-function PriorityIcon({ name }: { name?: string }) {
-  const level = priorityLevel(name)
-  if (!level) return <span className="panel-priority" title={name ? `${name} priority` : 'No priority'} />
-  const Icon = PRIORITY_ICON[level]
-  return (
-    <span className="panel-priority" data-level={level} title={`${name} priority`}>
-      <Icon size={14} strokeWidth={2.2} aria-label={`${name} priority`} />
-    </span>
-  )
-}
-
-function TicketItem({ ticket, pr }: { ticket: TicketRow; pr?: PullRequestRow }) {
-  return (
-    <button className="panel-row" onClick={() => open(ticket.url)} title={`Open ${ticket.key} in Jira`}>
-      <PriorityIcon name={ticket.priority} />
-      <span className="panel-row-main">
-        <span className="panel-row-title">{ticket.summary}</span>
-        <span className="panel-row-sub">
-          <span className="panel-key">{ticket.key}</span>
-          <Tag tone={statusTone(ticket)}>{ticket.status}</Tag>
-          {ticket.type && <span>{ticket.type}</span>}
-          {ticket.assignee && <Avatar name={ticket.assignee.name} />}
-          {pr && <span title={pr.title}>PR #{pr.number}</span>}
-        </span>
-      </span>
-    </button>
+    <EmptyState icon={<SquareKanban size={22} strokeWidth={1.6} />} title="Tickets are coming soon">
+      <p>The tickets of the Jira project you link to this folder will show here.</p>
+    </EmptyState>
   )
 }
 
@@ -498,10 +405,6 @@ function problemIcon(problem: PanelProblem) {
     case 'gh-missing':
     case 'gh-logged-out':
       return <GitPullRequest size={22} strokeWidth={1.6} />
-    case 'jira-no-account':
-    case 'jira-not-linked':
-    case 'jira-auth':
-      return <SquareKanban size={22} strokeWidth={1.6} />
     default:
       return <TriangleAlert size={22} strokeWidth={1.6} />
   }
@@ -511,16 +414,11 @@ function problemIcon(problem: PanelProblem) {
 function Problem({
   projectId,
   problem,
-  what,
-  onLink,
-  linked
+  what
 }: {
   projectId: string
   problem: PanelProblem
   what?: string
-  onLink?: () => void
-  /** The Jira project a failed tickets read was for. */
-  linked?: string
 }) {
   const copy = problemCopy(problem, what)
   const [busy, setBusy] = useState(false)
@@ -539,7 +437,6 @@ function Problem({
     }
   }
 
-  const settings = () => useApp.getState().openSettings('integrations')
   let action: ReactNode = null
   if (problem.kind === 'no-repo') {
     action = (
@@ -547,30 +444,11 @@ function Problem({
         {busy ? 'Initialising…' : 'Initialise a repository'}
       </button>
     )
-  } else if (problem.kind === 'jira-not-linked') {
-    action = (
-      <button className="btn btn-primary" onClick={onLink}>
-        Link a Jira project
-      </button>
-    )
-  } else if (problem.kind === 'jira-no-account' || problem.kind === 'jira-auth') {
-    action = (
-      <button className="btn btn-primary" onClick={settings}>
-        {problem.kind === 'jira-auth' ? 'Sign in again' : 'Open Settings › Integrations'}
-      </button>
-    )
   } else if (problem.kind === 'error') {
     action = (
-      <span className="panel-empty-actions">
-        <button className="btn" onClick={() => void refreshPanel(projectId)}>
-          Try again
-        </button>
-        {linked && onLink && (
-          <button className="btn" onClick={onLink}>
-            Link another project
-          </button>
-        )}
-      </span>
+      <button className="btn" onClick={() => void refreshPanel(projectId)}>
+        Try again
+      </button>
     )
   }
 
