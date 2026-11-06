@@ -55,7 +55,13 @@ describe('rightClicks', () => {
     return { right: rightClicks((at) => clicks.push(at)), clicks }
   }
   const at = (x: number, y: number) => ({ clientX: x, clientY: y })
-  const down = (x: number, y: number, button = 2, ctrlKey = false) => ({ button, ctrlKey, ...at(x, y) })
+  // `buttons` defaults to the pressed button alone (bit 1 left, 2 right, 4 middle).
+  const down = (x: number, y: number, button = 2, ctrlKey = false, buttons = [1, 4, 2][button]) => ({
+    button,
+    buttons,
+    ctrlKey,
+    ...at(x, y)
+  })
   const held = (x: number, y: number, buttons = 2) => ({ buttons, ...at(x, y) })
   const up = (x: number, y: number, button = 2) => ({ button, ...at(x, y) })
 
@@ -116,6 +122,24 @@ describe('rightClicks', () => {
     right.move(held(340, 240, 1))
     right.up(up(340, 240, 0))
     expect(clicks).toEqual([{ x: 300, y: 200 }])
+  })
+
+  it('opens nothing for a right press made while the left button is down, as when drawing a selection box', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200, 2, false, 3), true)
+    right.up(up(300, 200))
+    right.down(down(300, 200, 0, true, 3), true)
+    right.up(up(300, 200, 0))
+    expect(clicks).toEqual([])
+  })
+
+  it('opens nothing when the button that comes up isn’t the one that went down', () => {
+    const { right, clicks } = track()
+    right.down(down(300, 200), true)
+    right.up(up(300, 200, 0))
+    right.down(down(300, 200, 0, true), true)
+    right.up(up(300, 200, 2))
+    expect(clicks).toEqual([])
   })
 
   it('opens nothing when another button joins the press, or the press is cut short', () => {

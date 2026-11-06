@@ -63,23 +63,30 @@ export function rightClick(press: Point, at: Point): boolean {
  * right press on the canvas that comes back up without having strayed
  * RIGHT_CLICK_DISTANCE calls `onClick` with the point it was pressed at,
  * however long it was held. A press that strayed that far was a pan, even if
- * it came back, and so was one that another button joined. ⌃-click, the
- * Mac's other right-click, counts too: it doesn't pan, but React Flow keeps
- * its contextmenu all the same.
+ * it came back, and so was one that another button joined. A press that
+ * joined another button already down isn't a click either: a right tap while
+ * the left button draws a selection box would open the menu over the box.
+ * ⌃-click, the Mac's other right-click, counts too: it doesn't pan, but
+ * React Flow keeps its contextmenu all the same.
  */
 export function rightClicks(onClick: (press: Point) => void) {
   let press: (Point & { button: number }) | null = null
+  // Whether `button` is the only one down. `buttons` has bit 1 for the left
+  // button and bit 2 for the right one.
+  const alone = (button: number, buttons: number) => buttons === (button === 2 ? 2 : 1)
   return {
     /** A button went down; `onCanvas` says whether on the empty canvas, where the board's menu belongs. */
-    down(e: { button: number; ctrlKey: boolean; clientX: number; clientY: number }, onCanvas: boolean) {
+    down(
+      e: { button: number; buttons: number; ctrlKey: boolean; clientX: number; clientY: number },
+      onCanvas: boolean
+    ) {
       const secondary = e.button === 2 || (e.button === 0 && e.ctrlKey)
-      press = secondary && onCanvas ? { x: e.clientX, y: e.clientY, button: e.button } : null
+      const counts = secondary && onCanvas && alone(e.button, e.buttons)
+      press = counts ? { x: e.clientX, y: e.clientY, button: e.button } : null
     },
     move(e: { buttons: number; clientX: number; clientY: number }) {
       if (!press) return
-      // `buttons` has bit 1 for the left button and bit 2 for the right one.
-      const alone = e.buttons === (press.button === 2 ? 2 : 1)
-      if (!alone || !rightClick(press, { x: e.clientX, y: e.clientY })) press = null
+      if (!alone(press.button, e.buttons) || !rightClick(press, { x: e.clientX, y: e.clientY })) press = null
     },
     up(e: { button: number; clientX: number; clientY: number }) {
       const at = press

@@ -119,9 +119,14 @@
   font: 600 10px/1.3 var(--font-mono);
   animation: mouse-demo-key-0 var(--md-loop) infinite;
 }
-/* A mouse button held instead of a key (Mouse only's right-drag): a mouse with that button filled in. */
+/*
+ * A mouse button held instead of a key (Mouse only's right-drag): a mouse
+ * with that button filled in, framed like the keys (kbd in board.css) and the
+ * size of the ⌘ one, 18 × 16 px.
+ */
 .mouse-demo-key.is-button {
-  padding: 0.5px 4px;
+  padding: 0.5px 3.5px;
+  border: 0.5px solid var(--border-strong);
   line-height: 0;
 }
 .mouse-demo-mouse {
