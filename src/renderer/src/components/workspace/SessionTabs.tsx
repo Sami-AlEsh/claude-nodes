@@ -57,7 +57,7 @@ function SessionTab({ sessionId, active }: { sessionId: string; active: boolean 
   const card = useCard(sessionId)
   const activateTab = useApp((s) => s.activateTab)
   const closeTab = useApp((s) => s.closeTab)
-  // A run shows its action's icon, as its button in the actions rail does.
+  // A run shows its action's icon, as its tile above the Actions button does.
   const runIcon = useApp((s) =>
     card?.runOf ? [...(s.board?.project.actions ?? []), ...s.globalActions].find((a) => a.id === card.runOf)?.icon : undefined
   )

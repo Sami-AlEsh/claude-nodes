@@ -169,7 +169,7 @@ import {
 import { wakeCardTerminal } from '@renderer/components/board/ExpandedCard'
 import { provideBoardCommands } from '@renderer/components/board/boardCommands'
 import { dispose as disposeTerminal, focus as focusTerminal } from '@renderer/terminal/registry'
-import { ActionRail } from '@renderer/components/actions/ActionRail'
+import { ActionButton } from '@renderer/components/actions/ActionButton'
 import { Sidekick, type SidekickHandle, type Submission } from '@renderer/components/sidekick/Sidekick'
 import { withContext, type ContextItem } from '@renderer/components/sidekick/compose'
 import { fuzzyMatch } from '@renderer/components/board/fuzzy'
@@ -219,7 +219,7 @@ const VIEW_SESSION_GAP = 3 * GAP
 export function BoardView({ projectId }: { projectId: string }) {
   const snapshot = useApp((s) => s.board)
   const loading = useApp((s) => s.boardLoading)
-  // Action runs show beside their button in the actions rail, not on the board,
+  // Action runs show on their tile above the Actions button, not on the board,
   // and a view's brain shows on its view.
   const board = useMemo(
     () =>
@@ -581,7 +581,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   const [searchQuery, setSearchQuery] = useState('')
 
   const closeMenu = useCallback(() => setMenu(null), [])
-  // The actions rail's dialogs and menus, which the board's shortcuts must not reach behind.
+  // The Actions button's stack and its dialogs, which the board's shortcuts must not reach behind.
   const [dockOverlay, setDockOverlay] = useState(false)
   const overlayOpen = Boolean(menu || confirmReq || merge || dockOverlay || viewDialog || searchOpen)
   const overlayOpenRef = useRef(overlayOpen)
@@ -1136,7 +1136,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
 
   // ---- actions ---------------------------------------------------------------
 
-  /** Starts a run of `action`: a session on its prompt, shown in the actions rail rather than here. */
+  /** Starts a run of `action`: a session on its prompt, shown on its tile above the Actions button rather than here. */
   const runAction = useCallback(
     async (action: ProjectAction) => {
       // Where its card goes should the user take the run over.
@@ -1181,7 +1181,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     [projectId, showToast]
   )
 
-  // A card a notification asked to open, brought on screen. A run opens in the workspace, as from its button.
+  // A card a notification asked to open, brought on screen. A run opens in the workspace, as from its tile.
   const openRequest = useApp((s) => s.openRequest)
   useEffect(() => {
     if (openRequest?.projectId !== projectId || !openRequest.sessionId) return
@@ -2657,8 +2657,6 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                     </div>
                   )}
 
-                  <ActionRail onRun={runAction} onOverlayChange={setDockOverlay} />
-
                   {/* Under the workspace the board is hidden, so its notices show over the workspace instead. */}
                   {toast &&
                     covered &&
@@ -2675,6 +2673,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
                     into={sendInto && { sessionId: sendInto.sessionId, title: cardTitle(sendInto) }}
                     contextCount={contextCount}
                     onSubmit={submitFromBar}
+                    beforeMic={<ActionButton onRun={runAction} onOverlayChange={setDockOverlay} />}
                     above={
                       <>
                         {toast && !covered && (

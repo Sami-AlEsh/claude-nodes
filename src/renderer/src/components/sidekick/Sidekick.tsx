@@ -35,6 +35,8 @@ interface Props {
   onSubmit: (submission: Submission) => Promise<boolean>
   /** Stacked above the bar, such as the selection's actions. */
   above?: ReactNode
+  /** Between the bar and the mic, such as the Actions button. */
+  beforeMic?: ReactNode
   ref?: Ref<SidekickHandle>
 }
 
@@ -42,12 +44,13 @@ const swatchColor = (color: FolderColor) =>
   `linear-gradient(${FOLDER_HUES[color].frontTop}, ${FOLDER_HUES[color].frontBottom})`
 
 /**
- * The board's prompt bar, bottom centre, with the mic beside it. What's typed
+ * The board's prompt bar, bottom centre, with the mic beside it (and what
+ * `beforeMic` puts between them). What's typed
  * or said starts a session; /view and /note make those instead. With one
  * session selected it's sent into that session, and with more selected, they
  * go to the new session as context.
  */
-export function Sidekick({ projectId, into, contextCount, onSubmit, above, ref }: Props) {
+export function Sidekick({ projectId, into, contextCount, onSubmit, above, beforeMic, ref }: Props) {
   const [text, setText] = useState('')
   const [target, setTarget] = useState<Target | null>(null)
   const [color, setColor] = useState<FolderColor>(NOTE_COLOR)
@@ -357,6 +360,8 @@ export function Sidekick({ projectId, into, contextCount, onSubmit, above, ref }
             {sending ? <Loader2 size={15} className="spin" /> : <ArrowUp size={16} strokeWidth={2.4} />}
           </button>
         </div>
+
+        {beforeMic}
 
         <button
           className={clsx('sidekick-orb', phase === 'recording' && 'is-recording')}

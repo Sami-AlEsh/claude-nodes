@@ -1,23 +1,54 @@
-/* ───────────── Actions rail: the project rail's twin on the right edge (ProjectRail.css) ───────────── */
+/* ───────────── The Actions button, beside the prompt bar, and the rail's tiles stacked above it ───────────── */
 
-.rail-edge.is-right {
-  left: auto;
-  right: 0;
+.action-button-wrap {
+  position: relative;
+  display: flex;
+  flex: none;
 }
 
-.rail.is-right {
-  left: auto;
-  right: var(--rail-inset);
-  transform: translateX(calc(100% + var(--rail-inset)));
+/* The mic's twin (.sidekick-orb in sidekick.css), with its dot for a run that is going. */
+.action-button {
+  position: relative;
 }
-.rail.is-right.is-open {
-  transform: none;
+/* Open, its bolt takes the accent (scoped up to win over the mic's hover colour). */
+.sidekick-row .action-button.is-open,
+.sidekick-row .action-button.is-open:hover {
+  color: var(--accent);
+}
+.action-button .status-dot.action-button-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--bg-elevated);
 }
 
-.rail-hint.is-right {
-  left: auto;
-  /* Fixed to the window, so it moves over by what the project panel takes of its right (App's --panel-offset). */
-  right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 6px);
+/*
+ * The project rail's panel (.rail in ProjectRail.css), as wide as the button and
+ * centred on it, its inset above it, rising from it instead of sliding in from an edge.
+ */
+.rail.action-stack {
+  top: auto;
+  bottom: calc(100% + var(--rail-inset));
+  left: 50%;
+  max-height: 60vh;
+  margin: 0 0 0 calc(var(--rail-w) / -2);
+  animation: action-stack-in var(--dur-fast) var(--ease-out);
+}
+@keyframes action-stack-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+/* The tile the arrow keys are on, as the pointer's would be. */
+.action-stack .rail-item.is-current {
+  background: var(--bg-hover);
+}
+
+/* Beside the stack on its left, when the window has no room on its right. */
+.rail-hint.is-flipped {
   animation-name: action-hint-in;
 }
 @keyframes action-hint-in {
@@ -59,38 +90,22 @@
   color: var(--status-working);
 }
 
-/* While the rail is hidden: a sliver on the edge for a run that is going, red when it needs you. */
-.action-rail-mark {
-  position: absolute;
-  top: 50%;
-  right: 1px;
-  width: 3px;
-  height: 36px;
-  border-radius: 2px;
-  background: var(--status-working);
-  transform: translateY(-50%);
-  animation: action-mark-breathe 1.6s ease-in-out infinite;
-}
-.action-rail-mark[data-status='waiting'] {
-  background: var(--status-waiting);
-  animation-duration: 1.1s;
-}
-@keyframes action-mark-breathe {
-  50% {
-    opacity: 0.45;
-  }
-}
-
-/* Running actions' sessions, dealt out of the rail (cards styled by .fan-card in board.css). */
+/*
+ * A running action's session, dealt out beside the stack while its tile is
+ * highlighted (the card is .fan-card in board.css). The tile's click opens it.
+ */
 .action-fan {
-  --deal-x: 46px;
+  --deal-x: -46px;
   position: fixed;
   z-index: 45;
-  right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 10px);
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 260px;
+  pointer-events: none;
+}
+.action-fan.is-flipped {
+  --deal-x: 46px;
 }
 
 /* ───────────── Add / edit action ───────────── */

@@ -41,7 +41,7 @@ interface AppState {
   projects: Project[]
   groups: ProjectGroup[]
   stats: Record<string, ProjectStats>
-  /** Actions in every project's rail, beside each project's own. */
+  /** Actions in every project's actions, below each project's own. */
   globalActions: ProjectAction[]
 
   /** Board of the project in the current route, or null on the projects view. */

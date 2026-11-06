@@ -42,8 +42,7 @@
 
 /*
  * The panel's left edge drags to resize it: a 7 px hit area from its hairline
- * inwards. It stays off the board, whose own right edge is where the Actions
- * rail slides in from.
+ * inwards, so it stays off the board.
  */
 .panel-resize {
   position: absolute;

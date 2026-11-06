@@ -108,7 +108,7 @@ export function ActionDialog({
         <span className="action-scope-title">Use in every project</span>
         <span className="action-scope-hint">
           {global
-            ? 'A global button, in the actions rail of all your projects. Claude writes its prompt to work in any repository.'
+            ? 'A global button, in the actions of all your projects. Claude writes its prompt to work in any repository.'
             : 'Only this project has it.'}
         </span>
       </span>

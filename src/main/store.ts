@@ -65,7 +65,7 @@ export interface State {
   groups: ProjectGroup[]
   boards: Record<string, BoardState>
   settings: AppSettings
-  /** Global actions, in every project's actions rail. A project's own are on the project. */
+  /** Global actions, in every project's actions. A project's own are on the project. */
   actions?: ProjectAction[]
   /** The xAI API key for voice prompts, encrypted with safeStorage (base64). Never sent to the renderer. */
   voiceKey?: string

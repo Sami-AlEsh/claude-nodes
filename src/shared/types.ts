@@ -31,9 +31,9 @@ export interface Project {
 }
 
 /**
- * A button in the board's actions rail. Claude drafts it from what the user
- * describes; each press starts a session on its prompt, in auto mode, that
- * shows beside the button rather than on the board and goes once it finishes.
+ * A button stacked above the board's Actions button. Claude drafts it from what
+ * the user describes; each press starts a session on its prompt, in auto mode,
+ * that shows beside the button rather than on the board and goes once it finishes.
  */
 export interface ProjectAction {
   id: string
@@ -44,7 +44,7 @@ export interface ProjectAction {
   description: string
   /** The run's first prompt. */
   prompt: string
-  /** In every project's rail, and kept app-wide rather than with one project. */
+  /** In every project's actions, and kept app-wide rather than with one project. */
   global?: boolean
   createdAt: number
 }

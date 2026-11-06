@@ -95,8 +95,7 @@ export function App() {
       <TitleBar />
       {/*
         On a board, the open project panel takes the window's right: --panel-offset is how much, for
-        the board and for what's placed from the board's right edge. Folded, it takes nothing: its
-        button floats over the board.
+        the board to stop short of it. Folded, it takes nothing: its button floats over the board.
       */}
       <main
         className="app-main"
