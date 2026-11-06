@@ -154,7 +154,7 @@ The project panel sits on the board's right, the counterpart of the project rail
 It shows the project whose board is open, in three segments:
 
 - **PRs**, with a count of those open: the repository's pull requests, grouped **Open**, **Draft** and **Merged this week**, newest first. A row has the number, title and branches, how its checks went (the latest run of each check), the review state (review requested, changes requested or approved), the author, its comments and how long ago it changed. **Mine**, **Needs my review** (asked of you or one of your teams) and **Failing** narrow the list. A click opens the PR in your browser.
-- **Tickets**: coming soon. For now the segment says the Jira tickets of the project linked to the folder will show there.
+- **Tickets**: coming soon. For now the segment says the tickets of the Jira project you link to the folder will show there.
 - **Changes**, with a count: the uncommitted files the Changes window lists. A click opens that file's diff.
 
 The panel reads its pull requests again every two minutes while it's open and the window is in front, when you come back to the window if they're more than 30 seconds old, and with its refresh button. Nothing is read while it's folded. Switching projects shows each one's last list at once while a new one loads.

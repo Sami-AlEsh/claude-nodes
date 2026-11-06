@@ -306,7 +306,7 @@ function PullRequestItem({ pr, now }: { pr: PullRequestRow; now: number }) {
 function TicketsTab() {
   return (
     <EmptyState icon={<SquareKanban size={22} strokeWidth={1.6} />} title="Tickets are coming soon">
-      <p>The Jira tickets of the project linked to this folder will show here.</p>
+      <p>The tickets of the Jira project you link to this folder will show here.</p>
     </EmptyState>
   )
 }
