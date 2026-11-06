@@ -39,7 +39,7 @@ Switching tabs leaves the other sessions running, and each terminal keeps its sc
 
 ⤡, or the title bar's back arrow, goes back to the board and keeps the tabs for next time. The session that was showing waits there expanded on its card. Each project has its own tabs, saved with its board, so they're still there after a relaunch, less any session that has gone to the archive or left the board. Opening a project shows its board first, and opening any session brings the workspace back with its tabs.
 
-The panel is the board's own, in a column beside the terminal. Drag the divider between them to resize it, from 280 px up to 640 px or half the space, whichever is less. Double-click the divider for the default width, or focus it and use the arrow keys. The panel's › hides it, leaving its arrow in a strip at the edge to bring it back. Whether it's open, and how wide, are the panel's settings, so the board's panel follows.
+The panel is the board's own, in a column beside the terminal. Drag the divider between them to resize it, from 280 px up to 640 px or half the space, whichever is less. Double-click the divider for the default width, or focus it and use the arrow keys. The panel's › hides it, and the terminal runs to the window's edge; ‹ at the right end of the tabs brings it back. Whether it's open, and how wide, are the panel's settings, so the board's panel follows.
 
 ## Sessions keep running after you quit
 
@@ -159,7 +159,7 @@ When the run's turn ends, the session goes, its transcript is hidden like a remo
 
 ## Project panel
 
-The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it's a narrow strip on the window's right edge with an arrow: click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. Open, there's no strip: the **›** button in the panel's header folds it back. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. In the workspace the panel is the right column instead, beside the terminal (see [The workspace](#the-workspace)).
+The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it takes no room: the board runs to the window's edge, and a small button with an arrow floats at the board's top right. Click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. The **›** button in the panel's header folds it back to the button. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. In the workspace the panel is the right column instead, beside the terminal (see [The workspace](#the-workspace)).
 
 It shows the project whose board is open, in three segments, each with its count:
 
@@ -240,7 +240,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Change a view | Its ✎ button · talk to its brain with ⌨ |
 | | Rename a view · delete it | Double-click its title · ⌫ (asks first) |
 | | Fan out a card's agents | Point at the deck under it · click to pin |
-| | Open the project panel, or fold it to its strip | The arrow in the strip on the window's right edge · the panel's › button |
+| | Open the project panel, or fold it | The arrow button at the board's top right · the panel's › button |
 | | Resize the project panel | Drag its left edge · double-click the edge for the default width |
 | | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also drag on empty canvas) · pinch or ⌘-scroll |
 | Workspace | Next tab · previous tab | ⌃Tab · ⌃⇧Tab |
@@ -249,7 +249,7 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | New session in a tab | **+** after the tabs · ⌘N |
 | | Back to the board, keeping the tabs | ⤡ in the header · the title bar's back arrow |
 | | Resize the project panel | Drag the divider · double-click it for the default width · arrow keys on it |
-| | Hide the project panel, or show it | Its › · the arrow in the strip at the edge |
+| | Hide the project panel, or show it | Its › · the ‹ at the right end of the tabs |
 | Terminal | Newline in Claude's prompt | ⇧Enter |
 | | Clear · copy · select all | ⌘K · ⌘C · ⌘A |
 | New session from context | Start | ⌘Enter |

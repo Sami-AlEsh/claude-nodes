@@ -14,14 +14,6 @@
   left: var(--rail-w);
 }
 
-/*
- * The board underneath keeps the width it has beside the board's own panel,
- * which, open, has no strip (panel.css), so it doesn't resize while hidden.
- */
-.app-main:has(> .workspace[data-panel-open]) > .board-area {
-  --panel-offset: var(--panel-w);
-}
-
 /* The board's notices (a run finishing, a session that couldn't start) still show, over the workspace, and clicks go through them. */
 .board-toast.is-over-workspace {
   z-index: 45;
@@ -152,6 +144,17 @@
   background: var(--bg-pressed);
 }
 
+/* The hidden panel's arrow, at the strip's right end, level with where the open panel's › sits. */
+.ws-show-panel {
+  align-self: center;
+  flex: none;
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+.ws-show-panel:hover {
+  color: var(--text-primary);
+}
+
 /* ───────────── The terminal, the divider and the panel ───────────── */
 
 .ws-row {
@@ -211,17 +214,5 @@
   display: flex;
   flex: none;
   min-width: 0;
-  background: var(--bg-window);
-}
-
-/* The panel folded: its arrow, in a strip at the edge as on the board. */
-.ws-strip {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  align-items: center;
-  width: 22px;
-  padding-top: 8px;
-  border-left: 0.5px solid var(--separator);
   background: var(--bg-window);
 }

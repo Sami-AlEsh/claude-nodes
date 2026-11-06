@@ -1,6 +1,6 @@
 import { useEffect, type MouseEvent } from 'react'
 import clsx from 'clsx'
-import { LayoutDashboard, Plus, SquareTerminal, X } from 'lucide-react'
+import { ChevronLeft, LayoutDashboard, Plus, SquareTerminal, X } from 'lucide-react'
 import { ActionIcon } from '@renderer/components/actions/ActionIcon'
 import { newSession } from '@renderer/components/board/boardCommands'
 import * as registry from '@renderer/terminal/registry'
@@ -16,8 +16,10 @@ const keepFocus = (e: MouseEvent) => e.preventDefault()
 /**
  * The sessions opened in the workspace, a tab each, and a + for a new one.
  * Each tab has its session's status dot (a shell's icon), its title and a ×.
+ * With the project panel hidden, `onShowPanel` puts its arrow at the strip's
+ * right end, where the panel's header has the › that hides it.
  */
-export function SessionTabs() {
+export function SessionTabs({ onShowPanel }: { onShowPanel?: () => void }) {
   const workspace = useApp((s) => s.workspace)
 
   // The tab showing stays in view as tabs open and switch.
@@ -35,6 +37,18 @@ export function SessionTabs() {
       <button className="ws-tab-new" onMouseDown={keepFocus} onClick={newSession} title="New session (⌘N)" aria-label="New session">
         <Plus size={15} strokeWidth={2} />
       </button>
+      {onShowPanel && (
+        <button
+          className="btn btn-icon ws-show-panel"
+          onMouseDown={keepFocus}
+          onClick={onShowPanel}
+          aria-expanded={false}
+          aria-label="Show the project panel"
+          title="Show the project panel"
+        >
+          <ChevronLeft size={15} strokeWidth={2} />
+        </button>
+      )}
     </div>
   )
 }

@@ -1,42 +1,33 @@
-/* ───────────── Placement: a strip on the board's right while folded, the panel's column while open ───────────── */
+/* ───────────── Placement: a corner button over the board while folded, the panel's column while open ───────────── */
 
-/* Folded: the strip on the window's right edge, with the arrow that opens the panel. */
-.panel-strip {
+/* Folded: no column, just this button floating at the board's top right, styled like the zoom controls. */
+.panel-corner-btn {
   position: absolute;
   z-index: 44;
-  top: 0;
-  right: calc(var(--panel-offset) - var(--panel-strip-w));
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: var(--panel-strip-w);
-  padding-top: 8px;
-  border-left: 0.5px solid var(--separator);
-  background: var(--bg-window);
-}
-
-.panel-strip-btn {
+  top: 12px;
+  right: 12px;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: 0;
-  border-radius: 5px;
-  background: transparent;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+  backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: var(--shadow-md);
   color: var(--text-secondary);
   cursor: default;
 }
-.panel-strip-btn:hover {
-  background: var(--bg-hover);
+.panel-corner-btn:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 86%, var(--text-primary) 6%);
   color: var(--text-primary);
 }
-.panel-strip-btn:active {
-  background: var(--bg-pressed);
+.panel-corner-btn:active {
+  background: color-mix(in srgb, var(--bg-elevated) 80%, var(--text-primary) 12%);
 }
 
-/* Open: a column flush with the window's right edge. Its own header holds the arrow that folds it. */
+/* Open: a column flush with the window's right edge, where the board stops. Its own header holds the arrow that folds it. */
 .panel-dock {
   position: absolute;
   z-index: 44;
@@ -47,14 +38,6 @@
   width: var(--panel-w);
   border-left: 0.5px solid var(--separator);
   background: var(--bg-window);
-}
-
-/*
- * App counts the strip in --panel-offset, for the folded panel. Open, there's
- * no strip, so the board stops at the panel instead.
- */
-.app-main:has(> .panel-dock) > .board-area {
-  --panel-offset: var(--panel-w);
 }
 
 /*
