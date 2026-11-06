@@ -42,6 +42,8 @@ const api: Api = {
     saveArchive: (projectId, rect) => ipcRenderer.invoke(IPC.boardSaveArchive, projectId, rect),
     saveViewport: (projectId, viewport) =>
       ipcRenderer.invoke(IPC.boardSaveViewport, projectId, viewport),
+    saveWorkspace: (projectId, workspace) =>
+      ipcRenderer.invoke(IPC.boardSaveWorkspace, projectId, workspace),
     removeNode: (projectId, sessionId) =>
       ipcRenderer.invoke(IPC.boardRemoveNode, projectId, sessionId),
     saveSection: (projectId, section) =>

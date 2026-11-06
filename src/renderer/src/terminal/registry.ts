@@ -1,7 +1,7 @@
 // Keeps one xterm instance per session alive for the lifetime of the renderer.
-// Closing the terminal modal (or collapsing an expanded card) only moves the
-// terminal's host element into a hidden holder, so reopening a card shows the
-// exact screen it left.
+// Switching the workspace's tab, leaving the workspace (or collapsing an
+// expanded card) only moves the terminal's host element into a hidden holder,
+// so showing the session again shows the exact screen it left.
 //
 // Ordering: sessions.open() returns the output buffered by the main process
 // up to the moment it replied. Electron delivers main -> renderer messages in
@@ -80,7 +80,7 @@ export function setTerminalTheme(next: ITheme) {
 
 let holder: HTMLDivElement | null = null
 
-/** Offscreen parking spot for terminals whose modal is closed. */
+/** Offscreen parking spot for terminals not showing anywhere. */
 function getHolder(): HTMLDivElement {
   if (!holder) {
     holder = document.createElement('div')
@@ -206,6 +206,10 @@ function createEntry(sessionId: string, kind: SessionKind, container: HTMLElemen
       return false
     }
 
+    // ⌃Tab and ⌃⇧Tab go round the workspace's tabs, as in a browser, so they never reach the
+    // process: without this the terminal would send them as a plain Tab.
+    if (ev.key === 'Tab' && ev.ctrlKey && !ev.metaKey && !ev.altKey) return false
+
     if (ev.metaKey && !ev.ctrlKey && !ev.altKey) {
       if (ev.type !== 'keydown') return false
       const key = ev.key.toLowerCase()
@@ -329,13 +333,15 @@ async function openProcess(sessionId: string, projectId: string, entry: Entry) {
  * Shows the session's terminal inside `container`, creating it and starting
  * (or resuming) the claude process — or shell, for a terminal card — if
  * needed. Resolves once output is flowing; rejects if the process could not
- * be started.
+ * be started. With `resume: false`, a terminal whose process has ended only
+ * shows the screen it left, until it's attached again with `resume`.
  */
 export async function attach(
   sessionId: string,
   projectId: string,
   container: HTMLElement,
-  kind: SessionKind = 'claude'
+  kind: SessionKind = 'claude',
+  { resume = true }: { resume?: boolean } = {}
 ) {
   ensureSubscribed()
 
@@ -357,6 +363,7 @@ export async function attach(
   }
 
   if (isNew || entry.state === 'exited') {
+    if (!isNew && !resume) return
     if (!isNew) {
       // A resumed Claude redraws the whole conversation, and a restarted
       // shell is a new one; start from a clean screen.
@@ -374,7 +381,7 @@ export async function attach(
 /**
  * Parks the terminal offscreen, keeping its state for the next attach. With
  * `container`, only if it is still shown there: the terminal may have moved on
- * to another view (the modal, or its card on the board) meanwhile.
+ * to another view (the workspace, or its card on the board) meanwhile.
  */
 export function detach(sessionId: string, container?: HTMLElement) {
   const entry = entries.get(sessionId)
@@ -408,6 +415,16 @@ export function focus(sessionId: string) {
 /** Whether the terminal has shown any output yet. */
 export function hasOutput(sessionId: string): boolean {
   return entries.get(sessionId)?.hasOutput ?? false
+}
+
+/** Whether the session has a terminal in this window, showing or parked. */
+export function has(sessionId: string): boolean {
+  return entries.has(sessionId)
+}
+
+/** Whether the session's terminal is left from a process that has ended. */
+export function isExited(sessionId: string): boolean {
+  return entries.get(sessionId)?.state === 'exited'
 }
 
 /** Whether the next attach will start or resume a process. */

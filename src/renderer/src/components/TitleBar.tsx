@@ -13,6 +13,7 @@ export function TitleBar() {
   const route = useApp((s) => s.route)
   const focusFeature = useApp((s) => s.settings?.focusFeature ?? false)
   const focusMode = useApp((s) => s.settings?.focusMode ?? false)
+  const workspaceOpen = useApp((s) => s.workspaceOpen)
   const project = useApp((s) =>
     s.route.view === 'board'
       ? (s.board?.project ?? s.projects.find((p) => p.id === (s.route as { projectId: string }).projectId))
@@ -30,6 +31,10 @@ export function TitleBar() {
   )
 
   const goToProjects = () => useApp.getState().navigate({ view: 'projects' })
+  // From the workspace, back is the board (the tabs stay); the Projects crumb still goes all the way.
+  const back = workspaceOpen
+    ? { onClick: () => useApp.getState().leaveWorkspace(), label: 'Back to the board' }
+    : { onClick: goToProjects, label: 'Back to Projects' }
 
   return (
     <header className="titlebar drag">
@@ -38,9 +43,9 @@ export function TitleBar() {
           <>
             <button
               className="btn btn-ghost btn-icon titlebar-back no-drag"
-              onClick={goToProjects}
-              title="Back to Projects"
-              aria-label="Back to Projects"
+              onClick={back.onClick}
+              title={back.label}
+              aria-label={back.label}
             >
               <ChevronLeft size={18} strokeWidth={2} />
             </button>

@@ -5,72 +5,87 @@ import {
   Folder,
   GitBranch,
   LoaderCircle,
+  Minimize2,
   Play,
   RotateCcw,
   Square,
   SquareTerminal,
-  Trash2,
-  X
+  Trash2
 } from 'lucide-react'
-import { Modal } from '@renderer/components/Modal'
 import { UsageStats } from '@renderer/components/UsageStats'
 import { ConfirmDialog, type ConfirmRequest } from '@renderer/components/board/ConfirmDialog'
 import { stopConfirmation, stopSessions, stoppable } from '@renderer/components/board/stopSessions'
 import { SessionMic } from '@renderer/components/voice/SessionMic'
-import { cardTitle, isTerminal, tildePath, useApp, useCard } from '@renderer/store'
+import { cardTitle, isTerminal, takeOpened, tildePath, useApp, useCard, wasOpened } from '@renderer/store'
 import type { SessionCard } from '@shared/types'
 import * as registry from './registry'
 import { useAttachedTerminal } from './useAttachedTerminal'
 import './terminal.css'
 
-export function TerminalModal() {
-  const sessionId = useApp((s) => s.terminalSessionId)
-  const projectId = useApp((s) => s.board?.project.id)
-  const closeTerminal = useApp((s) => s.closeTerminal)
-  const open = Boolean(sessionId && projectId)
-
-  return (
-    <Modal
-      open={open}
-      onClose={closeTerminal}
-      // Escape belongs to the terminal (in Claude it interrupts the current turn).
-      closeOnEscape={false}
-      className="term-modal"
-      labelledBy="term-modal-title"
-    >
-      {sessionId && projectId && (
-        <TerminalPanel key={sessionId} sessionId={sessionId} projectId={projectId} />
-      )}
-    </Modal>
-  )
-}
-
-function TerminalPanel({ sessionId, projectId }: { sessionId: string; projectId: string }) {
+/**
+ * The workspace's middle column: a session's terminal under a slim header.
+ * Mounted per tab (keyed by session), so switching tabs parks one terminal
+ * and attaches the next, which the registry keeps as they were. Opening a
+ * session (its card, Enter, a notification) starts it if it isn't running;
+ * switching to its tab shows it as it is, and a stopped one waits for Resume.
+ */
+export function SessionPane({ sessionId, projectId }: { sessionId: string; projectId: string }) {
   const card = useCard(sessionId)
   const kind = card?.kind ?? 'claude'
   const shell = kind === 'terminal'
-  const { containerRef, phase, error, reattach } = useAttachedTerminal(sessionId, projectId, kind)
-  // Label the loading state by how the modal was opened, so it doesn't flip
+  const live = Boolean(card?.live)
+  // Asked to run: opened just now, or Resume pressed since.
+  const [asked, setAsked] = useState(() => wasOpened(sessionId))
+  // A terminal already in this window shows its last screen; with none, there's nothing to show until it runs.
+  const [hadTerminal] = useState(() => registry.has(sessionId))
+  const shows = live || asked || hadTerminal
+  const { containerRef, phase, error, reattach } = useAttachedTerminal(sessionId, projectId, kind, {
+    enabled: shows,
+    resume: live || asked
+  })
+  // Label the loading state by how the pane was opened, so it doesn't flip
   // mid-load when the status event marks the session live.
-  const startedLive = useRef(card?.live ?? false)
+  const startedLive = useRef(live)
 
   const resume = () => {
     startedLive.current = false
+    setAsked(true)
     reattach()
   }
 
+  // Opened again while it shows (its card clicked, say), a session that isn't running starts.
+  const opens = useApp((s) => s.opens)
+  const opensAtMount = useRef(opens)
+  const resumeRef = useRef(resume)
+  resumeRef.current = resume
+  useEffect(() => {
+    // The open that mounted the pane is in `asked` already.
+    if (opens === opensAtMount.current) return void takeOpened(sessionId)
+    if (!takeOpened(sessionId)) return
+    const now = useApp.getState().board?.cards.find((c) => c.sessionId === sessionId)
+    if (!now?.live && registry.needsOpen(sessionId)) resumeRef.current()
+  }, [opens, sessionId])
+
   return (
     <>
-      <TerminalHeader
+      <PaneHeader
         card={card}
         sessionId={sessionId}
         projectId={projectId}
-        canResume={!card?.live && phase !== 'loading'}
+        canResume={!live && (!shows || phase !== 'loading')}
         onResume={resume}
       />
-      <div className="term-body" onPointerDown={() => registry.focus(sessionId)}>
+      <div className="term-body" onPointerDown={() => shows && registry.focus(sessionId)}>
         <div ref={containerRef} className="term-container" />
-        {phase === 'loading' && (
+        {!shows && (
+          <div className="term-overlay is-blocking">
+            <button className="btn" onClick={resume}>
+              {shell ? <SquareTerminal size={13} /> : <Play size={13} />}
+              {shell ? 'Start shell' : 'Resume session'}
+            </button>
+          </div>
+        )}
+        {shows && phase === 'loading' && (
           <div className="term-overlay" aria-live="polite">
             <div className="term-overlay-pill">
               <LoaderCircle className="term-spin" size={14} />
@@ -78,7 +93,7 @@ function TerminalPanel({ sessionId, projectId }: { sessionId: string; projectId:
             </div>
           </div>
         )}
-        {phase === 'error' && (
+        {shows && phase === 'error' && (
           <div className="term-overlay is-blocking">
             <div className="term-error">
               <div className="term-error-title">
@@ -96,7 +111,8 @@ function TerminalPanel({ sessionId, projectId }: { sessionId: string; projectId:
   )
 }
 
-function statusLabel(card: SessionCard | undefined): string {
+/** What a tab's dot or icon stands for, in words. */
+export function statusLabel(card: SessionCard | undefined): string {
   if (!card) return ''
   if (isTerminal(card)) return card.live ? 'Running' : 'Exited'
   if (card.status === 'working') return 'Working'
@@ -104,7 +120,11 @@ function statusLabel(card: SessionCard | undefined): string {
   return card.live ? 'Idle' : 'Not running'
 }
 
-function TerminalHeader({
+/**
+ * The pane's header: the session's branch, id and usage on the left (the tab
+ * above has its title and status), and what can be done to it on the right.
+ */
+function PaneHeader({
   card,
   sessionId,
   projectId,
@@ -117,14 +137,13 @@ function TerminalHeader({
   canResume: boolean
   onResume: () => void
 }) {
-  const closeTerminal = useApp((s) => s.closeTerminal)
   const patchCards = useApp((s) => s.patchCards)
   const removeCard = useApp((s) => s.removeCard)
+  const leaveWorkspace = useApp((s) => s.leaveWorkspace)
   const repoPath = useApp((s) => s.board?.project.repoPath)
   const [copied, setCopied] = useState(false)
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
   const shell = isTerminal(card)
-  const status = card?.status ?? 'done'
   const branch = card?.meta?.gitBranch
   const canStop = stoppable(card ? [card] : []).length > 0
 
@@ -134,16 +153,24 @@ function TerminalHeader({
     return () => window.clearTimeout(timer)
   }, [copied])
 
+  // While the Stop confirmation is up, ⌘W (and the workspace's tab keys) are its, not the tab's.
+  useEffect(() => {
+    if (!confirm) return
+    const cancel = () => confirm.resolve(false)
+    useApp.setState({ cancelPaneDialog: cancel })
+    return () => {
+      if (useApp.getState().cancelPaneDialog === cancel) useApp.setState({ cancelPaneDialog: null })
+    }
+  }, [confirm])
+
   const copyId = () => {
     navigator.clipboard.writeText(sessionId).then(() => setCopied(true), () => {})
   }
 
-  const archive = () => {
-    patchCards([{ sessionId, archived: true }])
-    closeTerminal()
-  }
+  // Its tab goes with it: the next tab shows, or the board after the last.
+  const archive = () => patchCards([{ sessionId, archived: true }])
 
-  // The window stays open on the stopped session, with Resume in Stop's place.
+  // The pane stays on the stopped session, with Resume in Stop's place.
   const stop = () => {
     if (!card) return
     const ask = stopConfirmation([card], cardTitle)
@@ -157,11 +184,8 @@ function TerminalHeader({
     })
   }
 
-  // Terminals have nothing to archive: removing one stops its shell.
-  const remove = () => {
-    closeTerminal()
-    removeCard(sessionId)
-  }
+  // Terminals have nothing to archive: removing one stops its shell, and closes its tab.
+  const remove = () => removeCard(sessionId)
 
   // What's said waits at the prompt, for Return; a session that isn't running resumes to take it.
   const typeIn = (text: string) => {
@@ -172,52 +196,31 @@ function TerminalHeader({
 
   return (
     <header className="term-header">
-      <div className="term-status" title={statusLabel(card)}>
-        {shell ? (
-          <SquareTerminal size={14} strokeWidth={2} className="term-shell-icon" data-live={card?.live} />
-        ) : (
-          <span className="status-dot" data-status={status} />
+      <div className="term-meta">
+        {shell && repoPath && (
+          <span className="term-cwd selectable" title={repoPath}>
+            <Folder size={12} />
+            <span className="term-cwd-path">{tildePath(repoPath)}</span>
+          </span>
         )}
-        <span className="term-status-label" data-status={status}>
-          {statusLabel(card)}
-        </span>
-      </div>
-
-      <div className="term-heading">
-        <h2 id="term-modal-title" className="term-title">
-          {cardTitle(card)}
-        </h2>
-        <div className="term-sub">
-          {shell && repoPath && (
-            <span className="term-cwd selectable" title={repoPath}>
-              <Folder size={12} />
-              <span className="term-cwd-path">{tildePath(repoPath)}</span>
-            </span>
-          )}
-          {branch && (
-            <span className="term-branch">
-              <GitBranch size={12} />
-              {branch}
-            </span>
-          )}
-          {!shell && (
-            <button
-              className="term-id"
-              onClick={copyId}
-              title="Copy session ID"
-              aria-label="Copy session ID"
-            >
-              {copied ? (
-                <>
-                  <Check size={11} /> Copied
-                </>
-              ) : (
-                sessionId.slice(0, 8)
-              )}
-            </button>
-          )}
-          {!shell && card && <UsageStats usage={card.usage} live={card.live} />}
-        </div>
+        {branch && (
+          <span className="term-branch" title={`On ${branch}`}>
+            <GitBranch size={12} />
+            {branch}
+          </span>
+        )}
+        {!shell && (
+          <button className="term-id" onClick={copyId} title="Copy session ID" aria-label="Copy session ID">
+            {copied ? (
+              <>
+                <Check size={11} /> Copied
+              </>
+            ) : (
+              sessionId.slice(0, 8)
+            )}
+          </button>
+        )}
+        {!shell && card && <UsageStats usage={card.usage} live={card.live} />}
       </div>
 
       <div className="term-actions">
@@ -255,11 +258,11 @@ function TerminalHeader({
         <span className="term-divider" />
         <button
           className="btn btn-ghost btn-icon"
-          onClick={closeTerminal}
-          title={shell ? 'Close (⌘W). The shell keeps running.' : 'Close (⌘W). The session keeps running.'}
-          aria-label="Close"
+          onClick={leaveWorkspace}
+          title="Back to the board. The tabs stay, and the session keeps running."
+          aria-label="Back to the board"
         >
-          <X size={16} />
+          <Minimize2 size={15} />
         </button>
       </div>
       <ConfirmDialog request={confirm} />

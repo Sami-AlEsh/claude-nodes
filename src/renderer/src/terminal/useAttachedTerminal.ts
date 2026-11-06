@@ -9,6 +9,11 @@ interface Options {
   enabled?: boolean
   /** Focus the terminal when it is attached (read at that moment). */
   focus?: boolean
+  /**
+   * Start the process again if it has ended (read when attaching). Off, the
+   * terminal shows the screen its process left; reattach() always starts it.
+   */
+  resume?: boolean
 }
 
 /**
@@ -20,28 +25,38 @@ export function useAttachedTerminal(
   sessionId: string,
   projectId: string,
   kind: SessionKind,
-  { enabled = true, focus = true }: Options = {}
+  { enabled = true, focus = true, resume = true }: Options = {}
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [phase, setPhase] = useState<TerminalPhase>(() =>
-    registry.hasOutput(sessionId) && !registry.needsOpen(sessionId) ? 'ready' : 'loading'
+    registry.hasOutput(sessionId) && (!registry.needsOpen(sessionId) || (!resume && registry.isExited(sessionId)))
+      ? 'ready'
+      : 'loading'
   )
   const [error, setError] = useState<string | null>(null)
   // Bumped by reattach() to re-run the attach effect.
   const [attachKey, setAttachKey] = useState(0)
   const focusRef = useRef(focus)
   focusRef.current = focus
+  const resumeRef = useRef(resume)
+  resumeRef.current = resume
+  /** reattach() asked for the process to start again. */
+  const forceResume = useRef(false)
 
   useEffect(() => {
     const container = containerRef.current
     if (!container || !enabled) return
     let cancelled = false
     const shouldFocus = focusRef.current
+    const resuming = resumeRef.current || forceResume.current
+    forceResume.current = false
 
-    if (registry.needsOpen(sessionId) || !registry.hasOutput(sessionId)) setPhase('loading')
+    // An ended process's screen shows as it was; anything else waits for output.
+    if (!resuming && registry.isExited(sessionId)) setPhase('ready')
+    else if (registry.needsOpen(sessionId) || !registry.hasOutput(sessionId)) setPhase('loading')
     setError(null)
 
-    const attaching = registry.attach(sessionId, projectId, container, kind)
+    const attaching = registry.attach(sessionId, projectId, container, kind, { resume: resuming })
     const offOutput = registry.onOutput(sessionId, () => {
       if (!cancelled) setPhase('ready')
     })
@@ -81,5 +96,9 @@ export function useAttachedTerminal(
     }
   }, [sessionId, enabled])
 
-  return { containerRef, phase, error, reattach: () => setAttachKey((k) => k + 1) }
+  const reattach = () => {
+    forceResume.current = true
+    setAttachKey((k) => k + 1)
+  }
+  return { containerRef, phase, error, reattach }
 }

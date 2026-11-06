@@ -405,6 +405,17 @@ export interface BoardSnapshot {
   /** Ink drawn on the board, oldest first. */
   ink: InkStroke[]
   viewport?: Viewport
+  /** The sessions opened in the project's workspace, as tabs. */
+  workspace: WorkspaceTabs
+}
+
+/**
+ * The sessions opened in a project's workspace, in the order of their tabs,
+ * and the one showing. Saved with the board, so a relaunch brings them back.
+ */
+export interface WorkspaceTabs {
+  tabs: string[]
+  active: string | null
 }
 
 export interface NodePatch {

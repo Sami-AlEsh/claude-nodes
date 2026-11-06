@@ -13,7 +13,8 @@ import type {
   ProjectAction,
   ProjectGroup,
   Rect,
-  Viewport
+  Viewport,
+  WorkspaceTabs
 } from '@shared/types'
 import { normalizePanel } from '@shared/panel'
 import { normalizeSchemes } from '@shared/schemes'
@@ -53,6 +54,8 @@ export interface BoardState {
   /** Ink drawn on the board, oldest first. */
   ink?: InkStroke[]
   viewport?: Viewport
+  /** The sessions opened in the project's workspace, as tabs. */
+  workspace?: WorkspaceTabs
   /** Sessions removed from the board; never re-imported. */
   hidden?: string[]
 }

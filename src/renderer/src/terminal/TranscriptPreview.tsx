@@ -72,12 +72,12 @@ function PreviewPanel({ sessionId, projectId }: { sessionId: string; projectId: 
   }, [load, found])
 
   const restore = () => {
-    const { board, patchCards, closePreview, openTerminal } = useApp.getState()
+    const { board, patchCards, closePreview, openInWorkspace } = useApp.getState()
     if (!board) return
     const { x, y } = freeSlotBesideArchive(board, sessionId)
     patchCards([{ sessionId, archived: false, x, y }])
     closePreview()
-    openTerminal(sessionId)
+    openInWorkspace(sessionId)
   }
 
   const meta = card?.meta
