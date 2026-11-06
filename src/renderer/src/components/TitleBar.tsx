@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
-import clsx from 'clsx'
-import { ChevronLeft, ChevronRight, PanelRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '@renderer/store'
 import { FolderIcon } from './FolderIcon'
 import { GitControls } from './git/GitControls'
@@ -8,7 +7,6 @@ import { TITLEBAR_ACTIONS_ID } from './TitleBarActions'
 import { UpdateButton } from './UpdateButton'
 import { RunningCount } from './RunningCount'
 import { addProject, toggleFocusMode } from './projects/projectsUi'
-import { usePanelPlacement } from './panel/PanelDock'
 import './TitleBar.css'
 
 export function TitleBar() {
@@ -32,7 +30,6 @@ export function TitleBar() {
   )
 
   const goToProjects = () => useApp.getState().navigate({ view: 'projects' })
-  const panel = usePanelPlacement()
 
   return (
     <header className="titlebar drag">
@@ -87,17 +84,6 @@ export function TitleBar() {
         <UpdateButton />
         {/* Each view's own buttons. */}
         <div id={TITLEBAR_ACTIONS_ID} className="titlebar-actions" />
-        {route.view === 'board' && (
-          <button
-            className={clsx('btn btn-ghost btn-icon titlebar-panel', panel.open && 'is-on')}
-            onClick={() => useApp.getState().setPanelOpen(!panel.open)}
-            title={panel.open ? 'Hide the project panel' : 'Show the project panel: pull requests, tickets and changes'}
-            aria-label="Project panel"
-            aria-pressed={panel.open}
-          >
-            <PanelRight size={16} strokeWidth={1.9} />
-          </button>
-        )}
       </div>
     </header>
   )

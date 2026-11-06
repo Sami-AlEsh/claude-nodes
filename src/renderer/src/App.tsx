@@ -11,12 +11,12 @@ import { DiffModal } from './components/git/DiffModal'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ProjectRail } from './components/projects/ProjectRail'
 import { PanelDock, usePanelPlacement } from './components/panel/PanelDock'
+import { PANEL_STRIP_W } from '@shared/panel'
 
 export function App() {
   const route = useApp((s) => s.route)
   const pinRail = useApp((s) => s.settings?.pinProjectRail ?? false)
   const panel = usePanelPlacement()
-  const panelBeside = panel.pinned && panel.open
 
   useEffect(() => {
     useApp.getState().refreshProjects()
@@ -91,13 +91,17 @@ export function App() {
   return (
     <div className="app">
       <TitleBar />
-      {/* --panel-offset: how much of the window's right the pinned panel takes, for what's placed from that edge. */}
+      {/*
+        On a board, the project panel's strip, and the panel when it's open, take the window's right:
+        --panel-offset is how much, for the board and for what's placed from the board's right edge.
+      */}
       <main
         className="app-main"
         style={
           {
             '--panel-w': `${panel.width}px`,
-            '--panel-offset': route.view === 'board' && panelBeside ? `${panel.width}px` : '0px'
+            '--panel-strip-w': `${PANEL_STRIP_W}px`,
+            '--panel-offset': route.view === 'board' ? `${PANEL_STRIP_W + (panel.open ? panel.width : 0)}px` : '0px'
           } as CSSProperties
         }
       >
@@ -105,8 +109,8 @@ export function App() {
           <ProjectsView />
         ) : (
           <>
-            {/* A pinned rail or panel takes a column of its own, so it never covers the board. */}
-            <div className={clsx('board-area', pinRail && 'beside-rail', panelBeside && 'beside-panel')}>
+            {/* A pinned rail and the project panel take columns of their own, so they never cover the board. */}
+            <div className={clsx('board-area beside-panel', pinRail && 'beside-rail')}>
               <BoardView key={route.projectId} projectId={route.projectId} />
             </div>
             <ProjectRail activeId={route.projectId} pinned={pinRail} />

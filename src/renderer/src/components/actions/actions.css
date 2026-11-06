@@ -16,7 +16,7 @@
 
 .rail-hint.is-right {
   left: auto;
-  /* Fixed to the window, so it moves over by the pinned project panel's width (App's --panel-offset). */
+  /* Fixed to the window, so it moves over by what the project panel takes of its right (App's --panel-offset). */
   right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 6px);
   animation-name: action-hint-in;
 }

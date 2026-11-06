@@ -5,6 +5,8 @@ import type { AppSettings, PullRequestRow } from './types'
 export const PANEL_MIN_W = 280
 export const PANEL_MAX_W = 640
 export const PANEL_DEFAULT_W = 360
+/** The strip on the board's right edge that holds the panel's arrow, open or folded. */
+export const PANEL_STRIP_W = 22
 
 /** A width in the panel's range, rounded to whole pixels. */
 export function clampPanelWidth(width: number): number {
@@ -12,9 +14,9 @@ export function clampPanelWidth(width: number): number {
 }
 
 /** The panel's settings from saved state, with defaults for anything missing or not understood. */
-export function normalizePanel(s: Partial<AppSettings>): Pick<AppSettings, 'pinProjectPanel' | 'panelWidth'> {
+export function normalizePanel(s: Partial<AppSettings>): Pick<AppSettings, 'panelOpen' | 'panelWidth'> {
   const width = typeof s.panelWidth === 'number' && Number.isFinite(s.panelWidth) ? s.panelWidth : PANEL_DEFAULT_W
-  return { pinProjectPanel: s.pinProjectPanel === true, panelWidth: clampPanelWidth(width) }
+  return { panelOpen: s.panelOpen === true, panelWidth: clampPanelWidth(width) }
 }
 
 /**

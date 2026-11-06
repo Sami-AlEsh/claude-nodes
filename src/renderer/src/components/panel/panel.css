@@ -1,58 +1,59 @@
-/* ───────────── Placement: the project rail's twin on the right (ProjectRail.css) ───────────── */
+/* ───────────── Placement: a strip on the board's right, and the panel beyond it ───────────── */
 
-/* Slides in over the board from the title bar's button, floating like the rail. */
+/* Always there on a board: the panel's arrow, folded or open. Open, it's the panel's edge, and drags to resize it. */
+.panel-strip {
+  position: absolute;
+  z-index: 44;
+  top: 0;
+  right: calc(var(--panel-offset) - var(--panel-strip-w));
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--panel-strip-w);
+  padding-top: 8px;
+  border-left: 0.5px solid var(--separator);
+  background: var(--bg-window);
+}
+.panel-strip.is-open {
+  cursor: col-resize;
+}
+.panel-strip.is-open:hover {
+  background: color-mix(in srgb, var(--bg-window) 94%, var(--text-primary));
+}
+
+/* Level with the panel's header, so open it reads as part of that row. */
+.panel-strip-btn {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: default;
+}
+.panel-strip-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.panel-strip-btn:active {
+  background: var(--bg-pressed);
+}
+
+/* Open: a column flush with the window's right edge, which the board and the strip leave free. */
 .panel-dock {
   position: absolute;
   z-index: 44;
-  top: var(--rail-inset);
-  right: var(--rail-inset);
-  bottom: var(--rail-inset);
-  display: flex;
-  width: var(--panel-w);
-  max-width: calc(100% - 2 * var(--rail-inset));
-  border-radius: var(--radius-lg);
-  background: var(--bg-window);
-  box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transform: translateX(calc(100% + var(--rail-inset)));
-  transition:
-    transform var(--dur-med) var(--ease-out),
-    opacity var(--dur-med) ease;
-}
-.panel-dock.is-open {
-  opacity: 1;
-  transform: none;
-}
-
-/* Pinned: a column flush with the window's right edge, which the board leaves free. */
-.panel-dock.is-pinned {
   top: 0;
   right: 0;
   bottom: 0;
-  max-width: none;
+  display: flex;
+  width: var(--panel-w);
   border-left: 0.5px solid var(--separator);
-  border-radius: 0;
-  box-shadow: none;
-  transition: none;
-}
-.panel-dock.is-pinned:not(.is-open) {
-  visibility: hidden;
-}
-
-/* Drag the left edge to resize. */
-.panel-resize {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  bottom: 0;
-  left: -3px;
-  width: 6px;
-  cursor: col-resize;
-}
-.panel-resize:hover,
-.panel-resize:active {
-  background: linear-gradient(to right, transparent 2px, var(--accent) 2px, var(--accent) 4px, transparent 4px);
-  opacity: 0.6;
+  background: var(--bg-window);
 }
 
 /* ───────────── The panel ───────────── */

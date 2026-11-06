@@ -138,22 +138,6 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
               onChange={(e) => update({ pinProjectRail: e.target.checked })}
             />
           </label>
-          <label className="settings-row">
-            <span className="settings-row-text">
-              <span className="settings-row-title">Always show the project panel</span>
-              <span className="settings-row-hint">
-                Pull requests, tickets and changes beside the board. When off, the title bar’s panel button slides it in.
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              role="switch"
-              className="switch"
-              checked={settings?.pinProjectPanel ?? false}
-              disabled={!settings}
-              onChange={(e) => update({ pinProjectPanel: e.target.checked })}
-            />
-          </label>
         </fieldset>
 
         <fieldset className="settings-group">

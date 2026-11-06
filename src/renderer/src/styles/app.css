@@ -18,5 +18,5 @@
   left: var(--rail-w);
 }
 .board-area.beside-panel {
-  right: var(--panel-w);
+  right: var(--panel-offset);
 }

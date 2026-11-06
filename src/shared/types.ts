@@ -546,8 +546,8 @@ export interface AppSettings {
   dockBadge: boolean
   /** Keep the project rail out beside the board, instead of sliding it in from the window's left edge. */
   pinProjectRail: boolean
-  /** Keep the project panel out beside the board, instead of sliding it in from the title bar's button. */
-  pinProjectPanel: boolean
+  /** The project panel is open beside the board, rather than folded to its strip. Kept across launches. */
+  panelOpen: boolean
   /** The project panel's width in px, dragged at its left edge (PANEL_MIN_W to PANEL_MAX_W). */
   panelWidth: number
   /** Offers focus mode: the title bar's Focus switch, and Add to Focus on projects. Off, none of it shows. */

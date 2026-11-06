@@ -23,14 +23,14 @@ describe('panel settings', () => {
     expect(clampPanelWidth(401.6)).toBe(402)
   })
 
-  it('slides the panel in unless it was pinned, at the default width unless one was dragged', () => {
-    expect(normalizePanel({})).toEqual({ pinProjectPanel: false, panelWidth: PANEL_DEFAULT_W })
-    expect(normalizePanel({ pinProjectPanel: true, panelWidth: 500 })).toEqual({ pinProjectPanel: true, panelWidth: 500 })
+  it('folds the panel to its strip unless it was left open, at the default width unless one was dragged', () => {
+    expect(normalizePanel({})).toEqual({ panelOpen: false, panelWidth: PANEL_DEFAULT_W })
+    expect(normalizePanel({ panelOpen: true, panelWidth: 500 })).toEqual({ panelOpen: true, panelWidth: 500 })
   })
 
   it('drops values it doesn’t understand', () => {
-    const odd = { pinProjectPanel: 'yes', panelWidth: Number.NaN } as unknown as Parameters<typeof normalizePanel>[0]
-    expect(normalizePanel(odd)).toEqual({ pinProjectPanel: false, panelWidth: PANEL_DEFAULT_W })
+    const odd = { panelOpen: 'yes', panelWidth: Number.NaN } as unknown as Parameters<typeof normalizePanel>[0]
+    expect(normalizePanel(odd)).toEqual({ panelOpen: false, panelWidth: PANEL_DEFAULT_W })
     expect(normalizePanel({ panelWidth: 9000 }).panelWidth).toBe(PANEL_MAX_W)
   })
 })

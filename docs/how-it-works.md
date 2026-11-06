@@ -135,7 +135,7 @@ This makes one Claude request per selected session, so it counts toward your Cla
 
 ## Actions
 
-A project's buttons live in a rail on the board's right edge. It hides like the project rail on the left: point at the window's right edge to slide it in. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button to run, edit or delete it.
+A project's buttons live in a rail on the board's right edge. It hides like the project rail on the left: point at the board's right edge, just left of the project panel's strip, to slide it in. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button to run, edit or delete it.
 
 Turn on **Use in every project** to make a button global: it shows in every project's rail, below that project's own buttons, with a globe on its tile. Claude then writes its prompt to work in any repository, finding commands at run time rather than assuming this one's. Turning the switch off moves the button into the project you're in. A project's buttons are stored with it in `state.json`, global ones at the top level of the same file, and never in the repo.
 
@@ -149,7 +149,7 @@ When the run's turn ends, the session goes, its transcript is hidden like a remo
 
 ## Project panel
 
-The project panel sits on the board's right, the counterpart of the project rail on the left. The panel button at the right end of the title bar slides it in over the board, and the button again, the panel's **›** button or Esc while you're in it slides it away. Turn on **Always show the project panel** in Settings › Appearance to keep it out in a column of its own beside the board instead; the actions rail then slides in at the panel's edge. Drag the panel's left edge to resize it, from 280 to 640 px (double-click the edge for the default 360). The width is remembered.
+The project panel sits on the board's right, the counterpart of the project rail on the left. A narrow strip on the window's right edge always holds its arrow: click it to open the panel in a column of its own, which makes the board narrower, and click it again (now pointing right) to fold the panel back to the strip. Open, the strip is the panel's edge too: drag it to resize the panel, from 280 to 640 px, or double-click it for the default 360. Whether the panel is open, and how wide, are remembered across launches. The actions rail slides in at the board's edge, beside the strip or the open panel.
 
 It shows the project whose board is open, in three segments, each with its count:
 
@@ -157,7 +157,7 @@ It shows the project whose board is open, in three segments, each with its count
 - **Tickets**: the issues of the Jira project linked to the folder that are to do, in progress, or were done in the last week. Work in flight comes first, a group per status (In Progress, In Review…), then what's to do, then **Done this week**. A row has the priority, key, status, type and assignee, and the open PR whose branch names the key (as in `NDS-42-fix` or `feature/nds-42`). **Mine** and **This sprint** narrow the list. A click opens the issue in Jira.
 - **Changes**: the uncommitted files the Changes window lists. A click opens that file's diff.
 
-The panel reads its lists again every two minutes while it's out and the window is in front, when you come back to the window if they're more than 30 seconds old, and with its refresh button. Nothing is read while it's hidden. Switching projects shows each one's last lists at once while new ones load.
+The panel reads its lists again every two minutes while it's open and the window is in front, when you come back to the window if they're more than 30 seconds old, and with its refresh button. Nothing is read while it's folded. Switching projects shows each one's last lists at once while new ones load.
 
 **Pull requests come from the GitHub CLI**, signed in as it already is, so there's nothing to set up, and it works for GitHub Enterprise hosts `gh` is signed in to. The repository is `origin`'s, or the remote `gh repo set-default` picked. In a fork with an `upstream` remote that's the fork, unlike `gh`'s own default. The panel runs `gh pr list` for at most 50 open and 50 merged PRs, and never anything that changes GitHub. When it can't list them it says why and what to do: the folder isn't a git repository (a button runs `git init`, the one thing the panel ever does to your files), there's no GitHub remote or it points at GitLab or Bitbucket, or `gh` isn't installed or signed in (with the command to run).
 
@@ -187,7 +187,7 @@ The schemes are herdr-app's, with the colours around the cards derived from each
 
 ## Your data
 
-Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme, dark colour scheme, mouse, terminal font and size, the project panel's width, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. The Jira account for the project panel lives there too: the site, your email and the API token, encrypted with the Keychain, and each project's link to its Jira project. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
+Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme, dark colour scheme, mouse, terminal font and size, whether the project panel is open and its width, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. The Jira account for the project panel lives there too: the site, your email and the API token, encrypted with the Keychain, and each project's link to its Jira project. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
 The session host keeps its socket and log in the `host` folder next to it. Only your user can open the folder, which matters because anything that can connect to the socket can start processes as you.
 
 ## Shortcuts
@@ -228,8 +228,8 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Change a view | Its ✎ button · talk to its brain with ⌨ |
 | | Rename a view · delete it | Double-click its title · ⌫ (asks first) |
 | | Fan out a card's agents | Point at the deck under it · click to pin |
-| | Show or hide the project panel | The panel button at the right of the title bar · Esc in the panel hides it unless it’s pinned |
-| | Resize the project panel | Drag its left edge · double-click the edge for the default width |
+| | Open the project panel, or fold it to its strip | The arrow in the strip on the window's right edge |
+| | Resize the project panel | Drag the strip at its left edge · double-click the strip for the default width |
 | | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also drag on empty canvas) · pinch or ⌘-scroll |
 | Terminal | Newline in Claude's prompt | ⇧Enter |
 | | Clear · copy · select all | ⌘K · ⌘C · ⌘A |

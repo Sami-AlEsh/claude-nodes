@@ -53,11 +53,6 @@ interface AppState {
   /** The file the Changes modal opened on, when it was opened from one (the project panel). */
   diffPath: string | null
 
-  /**
-   * The project panel is out: the title bar's button and the panel's own hide
-   * button flip it. null follows Settings: out when pinned, in otherwise.
-   */
-  panelOpen: boolean | null
   panelTab: PanelTab
   prFilter: PrFilter
   ticketFilter: TicketFilter
@@ -113,6 +108,7 @@ interface AppState {
   /** Opens the Changes modal, on one file when given. */
   openDiff(path?: string): void
   closeDiff(): void
+  /** Opens the project panel beside the board, or folds it to its strip, and remembers it. */
   setPanelOpen(open: boolean): void
   setPanelTab(tab: PanelTab): void
   setPrFilter(filter: PrFilter): void
@@ -157,7 +153,6 @@ export const useApp = create<AppState>((set, get) => ({
   git: null,
   diffOpen: false,
   diffPath: null,
-  panelOpen: null,
   panelTab: 'prs',
   prFilter: 'all',
   ticketFilter: 'all',
@@ -450,7 +445,7 @@ export const useApp = create<AppState>((set, get) => ({
   closeAgents: () => set({ agentView: null }),
   openDiff: (path) => set({ diffOpen: true, diffPath: path ?? null }),
   closeDiff: () => set({ diffOpen: false, diffPath: null }),
-  setPanelOpen: (open) => set({ panelOpen: open }),
+  setPanelOpen: (open) => get().updateSettings({ panelOpen: open }),
   setPanelTab: (tab) => set({ panelTab: tab }),
   setPrFilter: (filter) => set({ prFilter: filter }),
   setTicketFilter: (filter) => set({ ticketFilter: filter }),
@@ -480,11 +475,7 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   updateSettings(patch) {
-    set((s) => ({
-      settings: s.settings && { ...s.settings, ...patch },
-      // Pinning or unpinning puts the panel where the setting says, whatever the button did before.
-      ...('pinProjectPanel' in patch ? { panelOpen: null } : {})
-    }))
+    set((s) => ({ settings: s.settings && { ...s.settings, ...patch } }))
     window.api.settings.update(patch).then((settings) => set({ settings }))
   },
 

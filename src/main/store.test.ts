@@ -33,10 +33,10 @@ describe('normalizeSettings', () => {
 })
 
 describe('the project panel’s settings', () => {
-  it('slides the panel in at 360 px unless it was pinned or dragged', () => {
-    expect(normalizeSettings(null)).toMatchObject({ pinProjectPanel: false, panelWidth: 360 })
-    expect(normalizeSettings({ pinProjectPanel: true, panelWidth: 480 })).toMatchObject({
-      pinProjectPanel: true,
+  it('starts folded at 360 px, and remembers being left open and its width', () => {
+    expect(normalizeSettings(null)).toMatchObject({ panelOpen: false, panelWidth: 360 })
+    expect(normalizeSettings({ panelOpen: true, panelWidth: 480 })).toMatchObject({
+      panelOpen: true,
       panelWidth: 480
     })
     expect(normalizeSettings({ panelWidth: 10 }).panelWidth).toBe(280)
