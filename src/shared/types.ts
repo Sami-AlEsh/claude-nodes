@@ -538,6 +538,10 @@ export interface AppSettings {
   dockBadge: boolean
   /** Keep the project rail out beside the board, instead of sliding it in from the window's left edge. */
   pinProjectRail: boolean
+  /** The project panel is open beside the board, rather than folded to its corner button. Kept across launches. */
+  panelOpen: boolean
+  /** The project panel's width in px, dragged at its left edge (PANEL_MIN_W to PANEL_MAX_W). */
+  panelWidth: number
   /** Offers focus mode: the title bar's Focus switch, and Add to Focus on projects. Off, none of it shows. */
   focusFeature: boolean
   /** The title bar's Focus switch: show only the projects in focus, in the grid and the rail. */
@@ -615,4 +619,62 @@ export interface GitFileDiff {
   patch: string
   binary?: boolean
   tooLarge?: boolean
+}
+
+/**
+ * Why the project panel can't show a tab's list, so it can say what to do
+ * next instead. The PRs tab needs a git repository with a GitHub remote and
+ * the GitHub CLI signed in.
+ */
+export type PanelProblem =
+  | { kind: 'no-repo' }
+  /** No remote at all, or none on a GitHub host; `remote` is the one there is, for saying where it points. */
+  | { kind: 'no-github-remote'; remote?: { name: string; host: string } }
+  | { kind: 'gh-missing' }
+  | { kind: 'gh-logged-out'; host: string }
+  /** gh couldn't connect to the host: offline, a DNS or proxy failure, or no answer in time. */
+  | { kind: 'unreachable'; host: string }
+  | { kind: 'error'; message: string }
+
+/** How a pull request's checks went, on its latest commit. Skipped and neutral checks count as passed. */
+export interface PullRequestChecks {
+  total: number
+  passed: number
+  failed: number
+  pending: number
+}
+
+/** A pull request in the project panel, from `gh pr list`. */
+export interface PullRequestRow {
+  number: number
+  title: string
+  url: string
+  state: 'open' | 'draft' | 'merged'
+  headRef: string
+  baseRef: string
+  author: { login: string; name?: string; bot?: boolean }
+  /** Unset when the PR has no checks. */
+  checks?: PullRequestChecks
+  /**
+   * What its reviews say: approved, changes requested, someone asked to
+   * review, or a review that branch protection requires though nobody is
+   * asked yet. Unset when none of these.
+   */
+  review?: 'approved' | 'changes-requested' | 'review-requested' | 'review-required'
+  /** The signed-in GitHub user opened it. */
+  mine: boolean
+  /** The signed-in GitHub user's review is asked for, or one of their teams'. */
+  needsMyReview: boolean
+  comments: number
+  updatedAt: number
+  mergedAt?: number
+}
+
+export interface PullRequestsResult {
+  /** The repository the list is from: owner/name, its page, and its host (github.com or an Enterprise one). */
+  repo?: { nameWithOwner: string; url: string; host: string }
+  /** Open and draft PRs, then those merged in the last week, newest first. */
+  rows: PullRequestRow[]
+  problem?: PanelProblem
+  fetchedAt: number
 }

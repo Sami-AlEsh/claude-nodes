@@ -24,6 +24,7 @@ import type {
   ViewPatch
 } from '@shared/types'
 import { dispose as disposeTerminal } from './terminal/registry'
+import type { PanelTab, PrFilter } from './components/panel/panelUi'
 
 export type Route = { view: 'projects' } | { view: 'board'; projectId: string }
 
@@ -48,6 +49,11 @@ interface AppState {
   git: GitStatus | null
   /** The Changes (diff) modal is open. */
   diffOpen: boolean
+  /** The file the Changes modal opened on, when it was opened from one (the project panel). */
+  diffPath: string | null
+
+  panelTab: PanelTab
+  prFilter: PrFilter
 
   /** Session whose terminal modal is open. */
   terminalSessionId: string | null
@@ -95,8 +101,13 @@ interface AppState {
   setUsage(sessionId: string, usage: SessionUsage): void
   /** Re-reads the open board's git status. */
   refreshGit(): Promise<void>
-  openDiff(): void
+  /** Opens the Changes modal, on one file when given. */
+  openDiff(path?: string): void
   closeDiff(): void
+  /** Opens the project panel beside the board, or folds it to its corner button, and remembers it. */
+  setPanelOpen(open: boolean): void
+  setPanelTab(tab: PanelTab): void
+  setPrFilter(filter: PrFilter): void
   /** Adds an action, or replaces it, and persists it: on the project, or app-wide when global. */
   saveAction(projectId: string, action: ProjectAction): Promise<void>
   /** Deletes one of the project's actions, or a global one. */
@@ -134,6 +145,9 @@ export const useApp = create<AppState>((set, get) => ({
   boardLoading: false,
   git: null,
   diffOpen: false,
+  diffPath: null,
+  panelTab: 'prs',
+  prFilter: 'all',
   terminalSessionId: null,
   previewSessionId: null,
   previewFind: null,
@@ -420,8 +434,11 @@ export const useApp = create<AppState>((set, get) => ({
   closePreview: () => set({ previewSessionId: null }),
   openAgents: (sessionId, agentId) => set({ agentView: { sessionId, agentId } }),
   closeAgents: () => set({ agentView: null }),
-  openDiff: () => set({ diffOpen: true }),
-  closeDiff: () => set({ diffOpen: false }),
+  openDiff: (path) => set({ diffOpen: true, diffPath: path ?? null }),
+  closeDiff: () => set({ diffOpen: false, diffPath: null }),
+  setPanelOpen: (open) => get().updateSettings({ panelOpen: open }),
+  setPanelTab: (tab) => set({ panelTab: tab }),
+  setPrFilter: (filter) => set({ prFilter: filter }),
 
   async saveAction(projectId, action) {
     setActions(await window.api.actions.save(projectId, action))

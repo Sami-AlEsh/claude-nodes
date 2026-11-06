@@ -60,13 +60,14 @@ import {
   watchProject
 } from './discovery'
 import { getClaudePath, getClaudeVersion, initEnv } from './env'
-import { gitDiff, gitStatus } from './git'
+import { gitDiff, gitInit, gitStatus } from './git'
 import { configureStatus, forgetStatus, getStatus } from './hooks'
 import { cleanInk } from './ink'
 import { installMenu, syncFocusMenu } from './menu'
 import { nameSection, type NamingSource } from './naming'
 import * as notes from './notes'
 import * as notify from './notify'
+import { forgetProject, projectPullRequests } from './panel'
 import * as ptys from './pty'
 import {
   flush,
@@ -377,6 +378,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     ptys.killProject(id)
     unwatchProject(id)
     views.removeProjectViews(state.boards[id])
+    forgetProject(id)
     state.projects = state.projects.filter((p) => p.id !== id)
     delete state.boards[id]
     save()
@@ -594,6 +596,21 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
   ipcMain.handle(IPC.gitDiff, async (_e, projectId: string, file: GitFileChange) => {
     await envReady
     return gitDiff(getProject(projectId).repoPath, file)
+  })
+
+  // --- Project panel -------------------------------------------------------
+
+  // gh and git come from the user's PATH, known once the login-shell env is in.
+  ipcMain.handle(IPC.panelPullRequests, async (_e, projectId: string, fresh: boolean) => {
+    await envReady
+    return projectPullRequests(getProject(projectId), fresh === true)
+  })
+
+  ipcMain.handle(IPC.panelGitInit, async (_e, projectId: string) => {
+    await envReady
+    const status = await gitInit(getProject(projectId).repoPath)
+    forgetProject(projectId)
+    return status
   })
 
   // --- Actions -------------------------------------------------------------

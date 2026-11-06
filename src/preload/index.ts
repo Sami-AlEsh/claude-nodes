@@ -91,6 +91,11 @@ const api: Api = {
     diff: (projectId, file) => ipcRenderer.invoke(IPC.gitDiff, projectId, file)
   },
 
+  panel: {
+    pullRequests: (projectId, fresh) => ipcRenderer.invoke(IPC.panelPullRequests, projectId, fresh),
+    gitInit: (projectId) => ipcRenderer.invoke(IPC.panelGitInit, projectId)
+  },
+
   actions: {
     global: () => ipcRenderer.invoke(IPC.actionsGlobal),
     save: (projectId, action) => ipcRenderer.invoke(IPC.actionsSave, projectId, action),

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type CSSProperties } from 'react'
 import clsx from 'clsx'
 import { useApp } from './store'
 import { TitleBar } from './components/TitleBar'
@@ -10,10 +10,12 @@ import { AgentViewer } from './terminal/AgentViewer'
 import { DiffModal } from './components/git/DiffModal'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ProjectRail } from './components/projects/ProjectRail'
+import { PanelDock, usePanelPlacement } from './components/panel/PanelDock'
 
 export function App() {
   const route = useApp((s) => s.route)
   const pinRail = useApp((s) => s.settings?.pinProjectRail ?? false)
+  const panel = usePanelPlacement()
 
   useEffect(() => {
     useApp.getState().refreshProjects()
@@ -88,16 +90,30 @@ export function App() {
   return (
     <div className="app">
       <TitleBar />
-      <main className="app-main">
+      {/*
+        On a board, the open project panel takes the window's right: --panel-offset is how much, for
+        the board and for what's placed from the board's right edge. Folded, it takes nothing: its
+        button floats over the board.
+      */}
+      <main
+        className="app-main"
+        style={
+          {
+            '--panel-w': `${panel.width}px`,
+            '--panel-offset': route.view === 'board' && panel.open ? `${panel.width}px` : '0px'
+          } as CSSProperties
+        }
+      >
         {route.view === 'projects' ? (
           <ProjectsView />
         ) : (
           <>
-            {/* A pinned rail takes a column of its own, so it never covers the board. */}
-            <div className={clsx('board-area', pinRail && 'beside-rail')}>
+            {/* A pinned rail and the project panel take columns of their own, so they never cover the board. */}
+            <div className={clsx('board-area beside-panel', pinRail && 'beside-rail')}>
               <BoardView key={route.projectId} projectId={route.projectId} />
             </div>
             <ProjectRail activeId={route.projectId} pinned={pinRail} />
+            <PanelDock projectId={route.projectId} />
           </>
         )}
       </main>

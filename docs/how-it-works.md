@@ -135,7 +135,7 @@ This makes one Claude request per selected session, so it counts toward your Cla
 
 ## Actions
 
-A project's buttons live in a rail on the board's right edge. It hides like the project rail on the left: point at the window's right edge to slide it in. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button to run, edit or delete it.
+A project's buttons live in a rail on the board's right edge. It hides like the project rail on the left: point at the board's right edge (the window's, or the open project panel's) to slide it in. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button to run, edit or delete it.
 
 Turn on **Use in every project** to make a button global: it shows in every project's rail, below that project's own buttons, with a globe on its tile. Claude then writes its prompt to work in any repository, finding commands at run time rather than assuming this one's. Turning the switch off moves the button into the project you're in. A project's buttons are stored with it in `state.json`, global ones at the top level of the same file, and never in the repo.
 
@@ -146,6 +146,20 @@ Pressing a button starts a session on the action's prompt. It isn't drawn on the
 - a note asking it to work without stopping to chat, to ask with AskUserQuestion when it needs you, and to end with a one-line summary.
 
 When the run's turn ends, the session goes, its transcript is hidden like a removed card's, and the summary shows as a notice. If you type into a run, or interrupt it with Esc or Ctrl+C, it becomes yours: it joins the board as an ordinary session, and loses its session tools. Answering a question it asked doesn't count. While a run is going, pressing its button opens it rather than starting another.
+
+## Project panel
+
+The project panel sits on the board's right, the counterpart of the project rail on the left. Folded, it takes no room: the board runs to the window's edge, and a small button with an arrow floats at the board's top right. Click it to open the panel in a column of its own, up to the window's edge, which makes the board narrower. The **›** button in the panel's header folds it back to the button. Drag the panel's left edge to resize it, from 280 to 640 px, or double-click the edge for the default 360. Whether the panel is open, and how wide, are remembered across launches. The actions rail slides in at the board's edge: the window's when the panel is folded, the panel's when it's open.
+
+It shows the project whose board is open, in three segments:
+
+- **PRs**, with a count of those open: the repository's pull requests, grouped **Open**, **Draft** and **Merged this week**, newest first. A row has the number, title and branches, how its checks went (the latest run of each check), the review state (review requested, changes requested or approved), the author, its comments and how long ago it changed. **Mine**, **Needs my review** (asked of you or one of your teams) and **Failing** narrow the list. A click opens the PR in your browser.
+- **Tickets**: coming soon. For now the segment says the tickets of the Jira project you link to the folder will show there.
+- **Changes**, with a count: the uncommitted files the Changes window lists. A click opens that file's diff.
+
+The panel reads its pull requests again every two minutes while it's open and the window is in front, when you come back to the window if they're more than 30 seconds old, and with its refresh button. Nothing is read while it's folded. Switching projects shows each one's last list at once while a new one loads.
+
+**Pull requests come from the GitHub CLI**, signed in as it already is, so there's nothing to set up, and it works for GitHub Enterprise hosts `gh` is signed in to. The repository is `origin`'s, or the one `gh repo set-default` picked. In a fork with an `upstream` remote that's the fork, unlike `gh`'s own default. The panel runs `gh pr list` for at most 50 open and 50 merged PRs, and never anything that changes GitHub. When it can't list them it says why and what to do: the folder isn't a git repository (a button runs `git init`, the one thing the panel ever does to your files), there's no GitHub remote or it points at GitLab or Bitbucket, `gh` isn't installed or signed in (with the command to run), or GitHub couldn't be reached.
 
 ## Focus
 
@@ -171,7 +185,7 @@ The schemes are herdr-app's, with the colours around the cards derived from each
 
 ## Your data
 
-Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme, dark colour scheme, mouse, terminal font and size, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
+Transcripts stay where Claude Code keeps them. The app stores only the board layout (projects, card positions, sections, notes, views, archive, custom titles and lineage) and its settings (theme, dark colour scheme, mouse, terminal font and size, whether the project panel is open and its width, and the xAI key for voice prompts if you save one, encrypted with the macOS Keychain) in `~/Library/Application Support/Nodus/state.json`. Each view's page, data, saved state and the last output of its commands are kept beside it in `views/<view id>/`, never in your repository. *Remove from board* hides a card and never deletes a transcript.
 The session host keeps its socket and log in the `host` folder next to it. Only your user can open the folder, which matters because anything that can connect to the socket can start processes as you.
 
 ## Shortcuts
@@ -212,6 +226,8 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Change a view | Its ✎ button · talk to its brain with ⌨ |
 | | Rename a view · delete it | Double-click its title · ⌫ (asks first) |
 | | Fan out a card's agents | Point at the deck under it · click to pin |
+| | Open the project panel, or fold it | The arrow button at the board's top right · the panel's › button |
+| | Resize the project panel | Drag its left edge · double-click the edge for the default width |
 | | Pan · zoom | Two-finger scroll, Space-drag or middle-drag (with Mouse only, also drag on empty canvas) · pinch or ⌘-scroll |
 | Terminal | Newline in Claude's prompt | ⇧Enter |
 | | Clear · copy · select all | ⌘K · ⌘C · ⌘A |
@@ -229,6 +245,8 @@ In the terminal, Esc goes to Claude (it interrupts a turn), so it never closes t
 - A view's commands and refreshes only run while the app is open.
 - If you update the app while sessions are running, and the update changed how the app talks to the session host, the new version asks to stop those sessions before it continues.
 - A session host started by a version without board tools keeps running sessions after an update, but sessions started on it don't get the tools. They do once every session has stopped and a new host starts.
+- The project panel's PRs tab needs the GitHub CLI (`gh`), signed in.
+- The session window covers the board, the project panel included.
 - Built and tested on macOS only.
 
 ## Project layout
@@ -238,6 +256,7 @@ src/
   shared/       types.ts + api.ts: the typed IPC contract (window.api)
                 geometry.ts: board sizes and the free-spot search, which the main process uses to place notes and views
                 schemes.ts: the colour schemes, as the board's CSS variables and views' --nodus-* ones
+                panel.ts: the project panel's width limits
   preload/      contextBridge implementation of the contract
   main/         Electron main process
     env.ts        login-shell environment and claude binary lookup
@@ -255,11 +274,12 @@ src/
     views.ts      views: their files, commands and schedules, their brains, and what their pages ask the board for
     viewPage.ts   the page a view's frame loads: its content security policy, theme and window.nodus
     voice.ts      speech to text for the mics through xAI, and the key it uses
+    panel/        the project panel's lists: github.ts (pull requests through gh), index.ts (each project's last list)
     updater.ts    updates the app from GitHub releases: download, checks, and the swap on quit
     store.ts      state.json in the app's userData directory
   renderer/src/
     views/        ProjectsView (folders) and BoardView (canvas)
-    components/   title bar, folder icon, board cards, agent decks, sections, archive stack, notes and their pad, views and the relay to their frames, merge dialog, lineage edges, the prompt bar and its mic
+    components/   title bar, folder icon, board cards, agent decks, sections, archive stack, notes and their pad, views and the relay to their frames, merge dialog, lineage edges, the prompt bar and its mic, the project panel
     terminal/     xterm.js registry, TerminalModal, TranscriptPreview, AgentViewer
 ```
 

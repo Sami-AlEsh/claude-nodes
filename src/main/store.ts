@@ -15,6 +15,7 @@ import type {
   Rect,
   Viewport
 } from '@shared/types'
+import { normalizePanel } from '@shared/panel'
 import { normalizeSchemes } from '@shared/schemes'
 import { normalizeTerminalFont } from '@shared/terminalFont'
 
@@ -37,6 +38,7 @@ export function normalizeSettings(raw: unknown): AppSettings {
     focusFeature: s.focusFeature === true,
     focusMode: s.focusMode === true,
     showOwnStatusLine: s.showOwnStatusLine === true,
+    ...normalizePanel(s),
     ...normalizeSchemes(s),
     ...normalizeTerminalFont(s)
   }

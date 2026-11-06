@@ -31,3 +31,14 @@ describe('normalizeSettings', () => {
     })
   })
 })
+
+describe('the project panel’s settings', () => {
+  it('starts folded at 360 px, and remembers being left open and its width', () => {
+    expect(normalizeSettings(null)).toMatchObject({ panelOpen: false, panelWidth: 360 })
+    expect(normalizeSettings({ panelOpen: true, panelWidth: 480 })).toMatchObject({
+      panelOpen: true,
+      panelWidth: 480
+    })
+    expect(normalizeSettings({ panelWidth: 10 }).panelWidth).toBe(280)
+  })
+})

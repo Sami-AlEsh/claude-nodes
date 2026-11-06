@@ -27,6 +27,7 @@ import type {
   ProjectAction,
   ProjectGroup,
   ProjectStats,
+  PullRequestsResult,
   Rect,
   SessionCard,
   SessionStatus,
@@ -99,6 +100,9 @@ export const IPC = {
 
   gitStatus: 'git:status',
   gitDiff: 'git:diff',
+
+  panelPullRequests: 'panel:pull-requests',
+  panelGitInit: 'panel:git-init',
 
   actionsGlobal: 'actions:global',
   actionsSave: 'actions:save',
@@ -286,6 +290,18 @@ export interface Api {
     status(projectId: string): Promise<GitStatus | null>
     /** Diff of one changed file (from status) against HEAD. */
     diff(projectId: string, file: GitFileChange): Promise<GitFileDiff>
+  }
+
+  /**
+   * The project panel beside the board. Its list comes back from the last
+   * read at once with `fresh` false (null before the first), and is read
+   * again with `fresh` true. Nothing here writes to GitHub.
+   */
+  panel: {
+    /** The repository's open, draft and recently merged pull requests, through the GitHub CLI. */
+    pullRequests(projectId: string, fresh: boolean): Promise<PullRequestsResult | null>
+    /** Runs `git init` in the project folder, unless it's in a repository already. */
+    gitInit(projectId: string): Promise<GitStatus | null>
   }
 
   /** The Actions dock. An action runs through sessions.create with its actionId. */
