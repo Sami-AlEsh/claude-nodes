@@ -1,4 +1,4 @@
-/* ───────────── The Actions button, beside the prompt bar, and its menu above it ───────────── */
+/* ───────────── The Actions button, beside the prompt bar, and the rail's tiles stacked above it ───────────── */
 
 .action-button-wrap {
   position: relative;
@@ -24,146 +24,43 @@
   border: 1.5px solid var(--bg-elevated);
 }
 
-/* Above the button, centred on it, scrolling once it's taller than most of the window. */
-.action-menu {
-  position: absolute;
-  z-index: 2;
-  bottom: calc(100% + 10px);
+/*
+ * The project rail's panel (.rail in ProjectRail.css), as wide as the button and
+ * centred on it, its inset above it, rising from it instead of sliding in from an edge.
+ */
+.rail.action-stack {
+  top: auto;
+  bottom: calc(100% + var(--rail-inset));
   left: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 320px;
   max-height: 60vh;
-  box-sizing: border-box;
-  margin-left: -160px;
-  padding: 5px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--bg-elevated) 96%, transparent);
-  backdrop-filter: blur(24px) saturate(1.8);
-  box-shadow: var(--shadow-lg);
-  outline: none;
-  cursor: default;
-  animation: action-menu-in var(--dur-fast) var(--ease-out);
+  margin: 0 0 0 calc(var(--rail-w) / -2);
+  animation: action-stack-in var(--dur-fast) var(--ease-out);
 }
-@keyframes action-menu-in {
+@keyframes action-stack-in {
   from {
     opacity: 0;
     transform: translateY(6px);
   }
 }
-
-.action-menu-sep {
-  flex: none;
-  height: 0.5px;
-  margin: 3px 8px;
-  background: var(--separator);
-}
-
-.action-menu-row {
-  position: relative;
-  display: flex;
-  flex: none;
-  align-items: center;
-  border-radius: 8px;
-}
-.action-menu-row.is-active,
-.action-menu-row.has-menu {
-  background: var(--bg-selected);
-}
-
-.action-menu-item {
-  display: flex;
-  flex: 1;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-  padding: 7px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-primary);
-  text-align: left;
-  outline: none;
-  cursor: default;
-}
-
-.action-menu-text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding-top: 1px;
-}
-.action-menu-name {
-  overflow: hidden;
-  font-size: var(--text-md);
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.action-menu-detail {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.35;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-/* What a run last said: one line, under its state. */
-.action-menu-detail.is-step {
-  color: var(--text-tertiary);
-  -webkit-line-clamp: 1;
-}
-
-.action-menu-run {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-  font-weight: 500;
-}
-.action-menu-run[data-status='working'] {
-  color: var(--status-working);
-}
-.action-menu-run[data-status='waiting'] {
-  color: var(--status-waiting);
-}
-
-/* The row's own menu (run, edit, delete), shown on the highlighted row. */
-.action-menu-more {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  margin-right: 6px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-secondary);
-  opacity: 0;
-  cursor: default;
-}
-.action-menu-row.is-active .action-menu-more,
-.action-menu-row.has-menu .action-menu-more {
-  opacity: 1;
-}
-.action-menu-more:hover,
-.action-menu-row.has-menu .action-menu-more {
+/* The tile the arrow keys are on, as the pointer's would be. */
+.action-stack .rail-item.is-current {
   background: var(--bg-hover);
-  color: var(--text-primary);
+}
+
+/* Beside the stack on its left, when the window has no room on its right. */
+.rail-hint.is-flipped {
+  animation-name: action-hint-in;
+}
+@keyframes action-hint-in {
+  from {
+    opacity: 0;
+    transform: translate(3px, -50%);
+  }
 }
 
 .action-tile {
   position: relative;
   display: grid;
-  flex: none;
   place-items: center;
   width: 32px;
   height: 32px;
@@ -173,10 +70,6 @@
   transition:
     background var(--dur-fast) ease,
     color var(--dur-fast) ease;
-}
-.action-tile.is-new {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
 }
 /* A global action's tile carries a small globe in its corner. */
 .action-global {
@@ -192,14 +85,27 @@
   box-shadow: 0 0 0 0.5px var(--border-strong);
   color: var(--text-secondary);
 }
-/* A running action's tile takes its run's colour. */
-.action-menu-row[data-run='working'] .action-tile {
+.rail-item.is-running .action-tile {
   background: color-mix(in srgb, var(--status-working) 16%, transparent);
   color: var(--status-working);
 }
-.action-menu-row[data-run='waiting'] .action-tile {
-  background: color-mix(in srgb, var(--status-waiting) 14%, transparent);
-  color: var(--status-waiting);
+
+/*
+ * A running action's session, dealt out beside the stack while its tile is
+ * highlighted (the card is .fan-card in board.css). The tile's click opens it.
+ */
+.action-fan {
+  --deal-x: -46px;
+  position: fixed;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 260px;
+  pointer-events: none;
+}
+.action-fan.is-flipped {
+  --deal-x: 46px;
 }
 
 /* ───────────── Add / edit action ───────────── */

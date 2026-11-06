@@ -145,17 +145,17 @@ This makes one Claude request per selected session, so it counts toward your Cla
 
 ## Actions
 
-A project's buttons sit behind the round ⚡ button in the board's bottom bar, between the prompt bar and the mic. Click it to open the Actions menu above it: the project's own actions, then the global ones, each with its icon, its name and what it does, and **New action** at the end. Esc, a click anywhere else or the ⚡ button again closes it. The arrow keys move through it and Return runs the action picked. A project starts with none. **New action** asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click an action in the menu, or click its **⋯**, to run, edit or delete it.
+A project's buttons sit behind the round ⚡ button in the board's bottom bar, between the prompt bar and the mic. Click it to stack them above it as tiles: the project's own buttons, then the global ones, and **+** at the bottom, just above the ⚡. Point at a tile for its name and what it does. Esc, a click anywhere else or the ⚡ button again puts the stack away. The arrow keys move between the tiles, with the name following, and Return presses one. A project starts with none. The **+** button asks what a new one should do, with a few examples to start from. Claude (`claude -p`, Sonnet, able to read the repo but not change it) drafts a name, an icon and the prompt each press runs, and you review and edit them before saving. Right-click a button, or press Shift+F10 or → on it, to run, edit or delete it.
 
-Turn on **Use in every project** to make a button global: it shows in every project's Actions menu, below that project's own, with a globe on its tile. Claude then writes its prompt to work in any repository, finding commands at run time rather than assuming this one's. Turning the switch off moves the button into the project you're in. A project's buttons are stored with it in `state.json`, global ones at the top level of the same file, and never in the repo.
+Turn on **Use in every project** to make a button global: it shows in every project's stack, below that project's own buttons, with a globe on its tile. Claude then writes its prompt to work in any repository, finding commands at run time rather than assuming this one's. Turning the switch off moves the button into the project you're in. A project's buttons are stored with it in `state.json`, global ones at the top level of the same file, and never in the repo.
 
-Clicking an action starts a session on its prompt, and the menu closes. The session isn't drawn on the board. In the menu, its row turns orange and says what the run is doing: **Working** or **Needs you** (red), for how long, and what Claude last said. Click the row to open the run in the workspace. While the menu is closed, a dot on the ⚡ button shows a run is going, orange, and turns red when one needs you. The run gets:
+Pressing a button starts a session on the action's prompt, and the stack goes away. The session isn't drawn on the board. Its button turns orange with a status dot, and pointing at it deals the session out beside the stack: what Claude last said, **Working**, **Needs you** or **Finishing**, and for how long. Press the button to open the run in the workspace. While the stack is away, a dot on the ⚡ button shows a run is going, and turns red when one needs you. The run gets:
 
 - `--permission-mode auto`, so it never stops to ask permission: Claude Code approves routine steps itself and blocks risky ones.
 - the session tools, `list_sessions` and `archive_sessions`, on top of the note tools every session has (see [Board tools](#board-tools)).
 - a note asking it to work without stopping to chat, to ask with AskUserQuestion when it needs you, and to end with a one-line summary.
 
-When the run's turn ends, the session goes, its transcript is hidden like a removed card's, and the summary shows as a notice. If you type into a run, or interrupt it with Esc or Ctrl+C, it becomes yours: it joins the board as an ordinary session, and loses its session tools. Answering a question it asked doesn't count. While a run is going, clicking its action opens it rather than starting another.
+When the run's turn ends, the session goes, its transcript is hidden like a removed card's, and the summary shows as a notice. If you type into a run, or interrupt it with Esc or Ctrl+C, it becomes yours: it joins the board as an ordinary session, and loses its session tools. Answering a question it asked doesn't count. While a run is going, pressing its button opens it rather than starting another, and a second press while it's still starting does nothing.
 
 ## Project panel
 
@@ -231,8 +231,8 @@ The session host keeps its socket and log in the `host` folder next to it. Only 
 | | Send a prompt into a session | Select its card, then type in the bar · Return |
 | | Start a session with the selection as context | Select several, then type in the bar · Return |
 | | Speak a prompt · stop | V · the mic beside the bar |
-| | Run an action, or open its run | The ⚡ button beside the bar, then click the action · ↑↓ and Return in the menu · Esc closes it |
-| | New action · run, edit or delete one | **New action** at the end of the ⚡ menu · right-click an action, or its ⋯ |
+| | Run an action, or open its run | The ⚡ button beside the bar, then click its tile · ↑↓ and Return in the stack · Esc puts it away |
+| | New action · run, edit or delete one | The **+** tile at the bottom of the ⚡ stack · right-click a tile, or Shift+F10 or → on it (↑↓, Return, Esc or ← in its menu) |
 | | Speak into an open session, typed in but not sent | The mic in its header or title bar |
 | | Delete the selected notes | ⌫ |
 | | New view | **View** in the title bar · right-click › New view here… |
@@ -290,7 +290,7 @@ src/
     hostProtocol.ts  messages between the two over a Unix socket
     hooks.ts      the status machine, driven by hooks the session host passes on
     summarize.ts  forked, non-persisted handoff summaries
-    actions.ts    the Actions menu's buttons: drafting them with Claude, and each run's extra claude options
+    actions.ts    the action buttons: drafting them with Claude, and each run's extra claude options
     boardTools.ts the board tools' MCP server, answering what the session host relays: notes, views and projects for every session, and listing and archiving sessions for action runs
     notes.ts      notes sessions write: where they go on the board, and how big they are
     views.ts      views: their files, commands and schedules, their brains, and what their pages ask the board for

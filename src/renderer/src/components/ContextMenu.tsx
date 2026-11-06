@@ -29,10 +29,15 @@ interface Props {
   align?: 'left' | 'right'
   /** The button that opened the menu. Presses on it are left to it, so it can toggle the menu. */
   anchor?: RefObject<HTMLElement | null>
+  /**
+   * Opened from the keyboard: the first item takes the focus, the arrow keys
+   * (and Home, End) move between items, and ← closes it, as Esc does.
+   */
+  keyboard?: boolean
 }
 
 /** A macOS-style context menu rendered in a portal and kept inside the window. */
-export function ContextMenu({ x, y, items, onClose, align = 'left', anchor }: Props) {
+export function ContextMenu({ x, y, items, onClose, align = 'left', anchor, keyboard }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState({ x, y })
 
@@ -47,6 +52,13 @@ export function ContextMenu({ x, y, items, onClose, align = 'left', anchor }: Pr
       y: Math.min(y, window.innerHeight - height - 8)
     })
   }, [x, y, align])
+
+  const buttons = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>('.ctx-item:not(:disabled)') ?? [])]
+
+  useEffect(() => {
+    if (keyboard) buttons()[0]?.focus({ preventScroll: true })
+    // Only as it opens.
+  }, [keyboard])
 
   useEffect(() => {
     const onPointer = (e: PointerEvent) => {
@@ -78,6 +90,32 @@ export function ContextMenu({ x, y, items, onClose, align = 'left', anchor }: Pr
       role="menu"
       style={{ left: pos.x, top: pos.y }}
       onContextMenu={(e) => e.preventDefault()}
+      onKeyDown={
+        keyboard
+          ? (e) => {
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault()
+                return onClose()
+              }
+              const all = buttons()
+              const at = all.indexOf(document.activeElement as HTMLButtonElement)
+              const last = all.length - 1
+              const next =
+                e.key === 'ArrowDown'
+                  ? at < last ? at + 1 : 0
+                  : e.key === 'ArrowUp'
+                    ? at > 0 ? at - 1 : last
+                    : e.key === 'Home'
+                      ? 0
+                      : e.key === 'End'
+                        ? last
+                        : -1
+              if (next < 0 || !all.length) return
+              e.preventDefault()
+              all[next].focus()
+            }
+          : undefined
+      }
     >
       {items.map((item, i) => {
         if (item === 'separator') return <div key={i} className="ctx-sep" role="separator" />

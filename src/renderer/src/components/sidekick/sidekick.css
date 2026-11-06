@@ -12,8 +12,11 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  /* Clear of the zoom controls on the left and the minimap on the right. */
-  width: max(300px, min(672px, calc(100% - 2 * 208px)));
+  /*
+   * Clear of the zoom controls on the left and the minimap on the right. At most
+   * the open bar (600 px) and the two round buttons beside it (52 px, 10 px apart).
+   */
+  width: max(300px, min(724px, calc(100% - 2 * 208px)));
   transform: translateX(-50%);
   pointer-events: none;
 }

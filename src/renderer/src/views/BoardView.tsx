@@ -219,7 +219,7 @@ const VIEW_SESSION_GAP = 3 * GAP
 export function BoardView({ projectId }: { projectId: string }) {
   const snapshot = useApp((s) => s.board)
   const loading = useApp((s) => s.boardLoading)
-  // Action runs show on their row in the Actions menu, not on the board,
+  // Action runs show on their tile above the Actions button, not on the board,
   // and a view's brain shows on its view.
   const board = useMemo(
     () =>
@@ -581,7 +581,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
   const [searchQuery, setSearchQuery] = useState('')
 
   const closeMenu = useCallback(() => setMenu(null), [])
-  // The Actions menu and its dialogs, which the board's shortcuts must not reach behind.
+  // The Actions button's stack and its dialogs, which the board's shortcuts must not reach behind.
   const [dockOverlay, setDockOverlay] = useState(false)
   const overlayOpen = Boolean(menu || confirmReq || merge || dockOverlay || viewDialog || searchOpen)
   const overlayOpenRef = useRef(overlayOpen)
@@ -1136,7 +1136,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
 
   // ---- actions ---------------------------------------------------------------
 
-  /** Starts a run of `action`: a session on its prompt, shown in the Actions menu rather than here. */
+  /** Starts a run of `action`: a session on its prompt, shown on its tile above the Actions button rather than here. */
   const runAction = useCallback(
     async (action: ProjectAction) => {
       // Where its card goes should the user take the run over.
@@ -1181,7 +1181,7 @@ function BoardCanvas({ projectId, board }: { projectId: string; board: BoardSnap
     [projectId, showToast]
   )
 
-  // A card a notification asked to open, brought on screen. A run opens in the workspace, as from its row in the Actions menu.
+  // A card a notification asked to open, brought on screen. A run opens in the workspace, as from its tile.
   const openRequest = useApp((s) => s.openRequest)
   useEffect(() => {
     if (openRequest?.projectId !== projectId || !openRequest.sessionId) return

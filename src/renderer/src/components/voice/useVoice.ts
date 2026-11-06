@@ -177,7 +177,7 @@ export function useVoice(projectId: string, onText: (text: string) => void, { fi
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       const target = e.target as HTMLElement | null
-      // Another field's Esc (a terminal's, say) is its own, as is an open menu's (the Actions menu's).
+      // Another field's Esc (a terminal's, say) is its own, as is an open menu's (the Actions button's stack).
       if (target !== field?.current && target?.closest('input, textarea, [contenteditable="true"], [role="menu"]')) return
       e.stopPropagation()
       cancel()
