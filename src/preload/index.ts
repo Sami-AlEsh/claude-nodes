@@ -91,6 +91,18 @@ const api: Api = {
     diff: (projectId, file) => ipcRenderer.invoke(IPC.gitDiff, projectId, file)
   },
 
+  panel: {
+    pullRequests: (projectId, fresh) => ipcRenderer.invoke(IPC.panelPullRequests, projectId, fresh),
+    tickets: (projectId, fresh) => ipcRenderer.invoke(IPC.panelTickets, projectId, fresh),
+    gitInit: (projectId) => ipcRenderer.invoke(IPC.panelGitInit, projectId)
+  },
+
+  jira: {
+    account: () => ipcRenderer.invoke(IPC.jiraAccount),
+    setAccount: (input) => ipcRenderer.invoke(IPC.jiraSetAccount, input),
+    projects: () => ipcRenderer.invoke(IPC.jiraProjects)
+  },
+
   actions: {
     global: () => ipcRenderer.invoke(IPC.actionsGlobal),
     save: (projectId, action) => ipcRenderer.invoke(IPC.actionsSave, projectId, action),

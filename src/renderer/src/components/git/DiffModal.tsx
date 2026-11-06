@@ -48,7 +48,11 @@ function DiffPanel({ projectId }: { projectId: string }) {
   }, [])
 
   // Selection is by path; if that file drops out of the list, the one now at its index takes over.
-  const [sel, setSel] = useState<{ path: string; index: number } | null>(null)
+  // Opened from a file in the project panel, it starts on that file.
+  const [sel, setSel] = useState<{ path: string; index: number } | null>(() => {
+    const path = useApp.getState().diffPath
+    return path ? { path, index: 0 } : null
+  })
   const found = sel ? files.findIndex((f) => f.path === sel.path) : -1
   const index = found >= 0 ? found : Math.min(sel?.index ?? 0, files.length - 1)
   const file = index >= 0 ? files[index] : undefined
@@ -194,6 +198,17 @@ function splitPath(p: string) {
   return { dir: p.slice(0, slash + 1), name: p.slice(slash + 1) }
 }
 
+/** A changed file's folder and name; the folder gives way first when it's narrow. */
+export function FilePath({ path }: { path: string }) {
+  const { dir, name } = splitPath(path)
+  return (
+    <span className="diff-file-path">
+      {dir && <span className="diff-file-dir">{dir}</span>}
+      <span className="diff-file-name">{name}</span>
+    </span>
+  )
+}
+
 const STATUS_LABEL: Record<GitFileStatus, string> = {
   modified: 'Modified',
   added: 'Added',
@@ -203,7 +218,7 @@ const STATUS_LABEL: Record<GitFileStatus, string> = {
   conflicted: 'Conflicted'
 }
 
-function StatusIcon({ status }: { status: GitFileStatus }) {
+export function StatusIcon({ status }: { status: GitFileStatus }) {
   const props = { size: 15, strokeWidth: 2, className: 'diff-status', 'data-status': status }
   const label = STATUS_LABEL[status]
   switch (status) {
@@ -222,22 +237,23 @@ function StatusIcon({ status }: { status: GitFileStatus }) {
 }
 
 function FileRow({ file, selected, onSelect }: { file: GitFileChange; selected: boolean; onSelect: () => void }) {
-  const { dir, name } = splitPath(file.path)
   return (
     <div
       role="option"
       aria-selected={selected}
       className={clsx('diff-file', selected && 'is-selected')}
       onPointerDown={onSelect}
-      title={`${STATUS_LABEL[file.status]}: ${file.oldPath ? `${file.oldPath} → ` : ''}${file.path}`}
+      title={fileTitle(file)}
     >
-      <span className="diff-file-path">
-        {dir && <span className="diff-file-dir">{dir}</span>}
-        <span className="diff-file-name">{name}</span>
-      </span>
+      <FilePath path={file.path} />
       <StatusIcon status={file.status} />
     </div>
   )
+}
+
+/** A changed file's tooltip: what happened to it, and where it was renamed from. */
+export function fileTitle(file: GitFileChange): string {
+  return `${STATUS_LABEL[file.status]}: ${file.oldPath ? `${file.oldPath} → ` : ''}${file.path}`
 }
 
 function DiffView({ loaded }: { loaded: Loaded }) {

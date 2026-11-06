@@ -16,7 +16,8 @@
 
 .rail-hint.is-right {
   left: auto;
-  right: calc(var(--rail-inset) + var(--rail-w) + 6px);
+  /* Fixed to the window, so it moves over by the pinned project panel's width (App's --panel-offset). */
+  right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 6px);
   animation-name: action-hint-in;
 }
 @keyframes action-hint-in {
@@ -85,7 +86,7 @@
   --deal-x: 46px;
   position: fixed;
   z-index: 45;
-  right: calc(var(--rail-inset) + var(--rail-w) + 10px);
+  right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 10px);
   display: flex;
   flex-direction: column;
   gap: 8px;

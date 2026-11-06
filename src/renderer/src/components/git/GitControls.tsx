@@ -42,7 +42,7 @@ export function GitControls({ projectId }: { projectId: string }) {
       </span>
       <button
         className="git-changes no-drag"
-        onClick={openDiff}
+        onClick={() => openDiff()}
         title={count ? `Show ${count} changed ${count === 1 ? 'file' : 'files'}` : 'No local changes'}
       >
         <FileDiff size={14} strokeWidth={2} />

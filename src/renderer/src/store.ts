@@ -14,6 +14,7 @@ import type {
   Project,
   ProjectAction,
   ProjectGroup,
+  ProjectJiraLink,
   ProjectStats,
   Rect,
   GitStatus,
@@ -24,6 +25,7 @@ import type {
   ViewPatch
 } from '@shared/types'
 import { dispose as disposeTerminal } from './terminal/registry'
+import type { PanelTab, PrFilter, TicketFilter } from './components/panel/panelUi'
 
 export type Route = { view: 'projects' } | { view: 'board'; projectId: string }
 
@@ -48,6 +50,17 @@ interface AppState {
   git: GitStatus | null
   /** The Changes (diff) modal is open. */
   diffOpen: boolean
+  /** The file the Changes modal opened on, when it was opened from one (the project panel). */
+  diffPath: string | null
+
+  /**
+   * The project panel is out: the title bar's button and the panel's own hide
+   * button flip it. null follows Settings: out when pinned, in otherwise.
+   */
+  panelOpen: boolean | null
+  panelTab: PanelTab
+  prFilter: PrFilter
+  ticketFilter: TicketFilter
 
   /** Session whose terminal modal is open. */
   terminalSessionId: string | null
@@ -61,6 +74,8 @@ interface AppState {
   selection: string[]
   /** The Settings dialog is open. It survives navigation. */
   settingsOpen: boolean
+  /** The Settings section to scroll to as it opens, e.g. integrations. */
+  settingsSection: string | null
   /** App-wide preferences; null until loaded. */
   settings: AppSettings | null
   /** A card a notification asked to open, until its board has it on screen. */
@@ -95,8 +110,15 @@ interface AppState {
   setUsage(sessionId: string, usage: SessionUsage): void
   /** Re-reads the open board's git status. */
   refreshGit(): Promise<void>
-  openDiff(): void
+  /** Opens the Changes modal, on one file when given. */
+  openDiff(path?: string): void
   closeDiff(): void
+  setPanelOpen(open: boolean): void
+  setPanelTab(tab: PanelTab): void
+  setPrFilter(filter: PrFilter): void
+  setTicketFilter(filter: TicketFilter): void
+  /** Links the project to a Jira project, or unlinks it with null, and saves it. */
+  setProjectJira(projectId: string, link: ProjectJiraLink | null): Promise<void>
   /** Adds an action, or replaces it, and persists it: on the project, or app-wide when global. */
   saveAction(projectId: string, action: ProjectAction): Promise<void>
   /** Deletes one of the project's actions, or a global one. */
@@ -109,7 +131,7 @@ interface AppState {
   openAgents(sessionId: string, agentId?: string): void
   closeAgents(): void
   setSelection(ids: string[]): void
-  openSettings(): void
+  openSettings(section?: string): void
   closeSettings(): void
   loadSettings(): Promise<void>
   /** Applies the changed settings at once and saves them. */
@@ -134,12 +156,18 @@ export const useApp = create<AppState>((set, get) => ({
   boardLoading: false,
   git: null,
   diffOpen: false,
+  diffPath: null,
+  panelOpen: null,
+  panelTab: 'prs',
+  prFilter: 'all',
+  ticketFilter: 'all',
   terminalSessionId: null,
   previewSessionId: null,
   previewFind: null,
   agentView: null,
   selection: [],
   settingsOpen: false,
+  settingsSection: null,
   settings: null,
   openRequest: null,
 
@@ -420,8 +448,21 @@ export const useApp = create<AppState>((set, get) => ({
   closePreview: () => set({ previewSessionId: null }),
   openAgents: (sessionId, agentId) => set({ agentView: { sessionId, agentId } }),
   closeAgents: () => set({ agentView: null }),
-  openDiff: () => set({ diffOpen: true }),
-  closeDiff: () => set({ diffOpen: false }),
+  openDiff: (path) => set({ diffOpen: true, diffPath: path ?? null }),
+  closeDiff: () => set({ diffOpen: false, diffPath: null }),
+  setPanelOpen: (open) => set({ panelOpen: open }),
+  setPanelTab: (tab) => set({ panelTab: tab }),
+  setPrFilter: (filter) => set({ prFilter: filter }),
+  setTicketFilter: (filter) => set({ ticketFilter: filter }),
+
+  async setProjectJira(projectId, link) {
+    const project = await window.api.projects.update(projectId, { jira: link })
+    const { projects, board } = get()
+    set({
+      projects: projects.map((p) => (p.id === project.id ? project : p)),
+      board: board?.project.id === project.id ? { ...board, project } : board
+    })
+  },
 
   async saveAction(projectId, action) {
     setActions(await window.api.actions.save(projectId, action))
@@ -431,15 +472,19 @@ export const useApp = create<AppState>((set, get) => ({
     setActions(await window.api.actions.remove(projectId, actionId))
   },
   setSelection: (ids) => set({ selection: ids }),
-  openSettings: () => set({ settingsOpen: true }),
-  closeSettings: () => set({ settingsOpen: false }),
+  openSettings: (section) => set({ settingsOpen: true, settingsSection: section ?? null }),
+  closeSettings: () => set({ settingsOpen: false, settingsSection: null }),
 
   async loadSettings() {
     set({ settings: await window.api.settings.get() })
   },
 
   updateSettings(patch) {
-    set((s) => ({ settings: s.settings && { ...s.settings, ...patch } }))
+    set((s) => ({
+      settings: s.settings && { ...s.settings, ...patch },
+      // Pinning or unpinning puts the panel where the setting says, whatever the button did before.
+      ...('pinProjectPanel' in patch ? { panelOpen: null } : {})
+    }))
     window.api.settings.update(patch).then((settings) => set({ settings }))
   },
 

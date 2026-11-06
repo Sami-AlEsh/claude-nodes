@@ -20,13 +20,18 @@ import type {
   GitFileDiff,
   GitStatus,
   InkStroke,
+  JiraAccountInfo,
+  JiraAccountInput,
+  JiraProjectInfo,
   NodePatch,
   OpenCardRequest,
   OpenSessionResult,
   Project,
   ProjectAction,
   ProjectGroup,
+  ProjectJiraLink,
   ProjectStats,
+  PullRequestsResult,
   Rect,
   SessionCard,
   SessionStatus,
@@ -34,6 +39,7 @@ import type {
   SessionSearchHit,
   SummarizeProgress,
   SummaryResult,
+  TicketsResult,
   TranscribeResult,
   TranscriptMessage,
   UpdateStatus,
@@ -99,6 +105,14 @@ export const IPC = {
 
   gitStatus: 'git:status',
   gitDiff: 'git:diff',
+
+  panelPullRequests: 'panel:pull-requests',
+  panelTickets: 'panel:tickets',
+  panelGitInit: 'panel:git-init',
+
+  jiraAccount: 'jira:account',
+  jiraSetAccount: 'jira:set-account',
+  jiraProjects: 'jira:projects',
 
   actionsGlobal: 'actions:global',
   actionsSave: 'actions:save',
@@ -187,6 +201,8 @@ export interface Api {
         archived?: boolean
         groupId?: string | null
         focused?: boolean
+        /** Links the project to a Jira project; null unlinks it. */
+        jira?: ProjectJiraLink | null
       }
     ): Promise<Project>
     remove(id: string): Promise<void>
@@ -286,6 +302,29 @@ export interface Api {
     status(projectId: string): Promise<GitStatus | null>
     /** Diff of one changed file (from status) against HEAD. */
     diff(projectId: string, file: GitFileChange): Promise<GitFileDiff>
+  }
+
+  /**
+   * The project panel beside the board. Each list comes back from the last
+   * read at once with `fresh` false (null before the first), and is read
+   * again with `fresh` true. Nothing here writes to GitHub or Jira.
+   */
+  panel: {
+    /** The repository's open, draft and recently merged pull requests, through the GitHub CLI. */
+    pullRequests(projectId: string, fresh: boolean): Promise<PullRequestsResult | null>
+    /** The linked Jira project's tickets that are to do, in flight, or done this week. */
+    tickets(projectId: string, fresh: boolean): Promise<TicketsResult | null>
+    /** Runs `git init` in the project folder, unless it's in a repository already. */
+    gitInit(projectId: string): Promise<GitStatus | null>
+  }
+
+  /** The Jira Cloud account behind the panel's Tickets tab. The API token never leaves the main process. */
+  jira: {
+    account(): Promise<JiraAccountInfo | null>
+    /** Checks the account against Jira and saves it, the token encrypted with the macOS Keychain; null signs out. */
+    setAccount(input: JiraAccountInput | null): Promise<JiraAccountInfo | null>
+    /** The Jira projects the account can see, to link a project folder to. */
+    projects(): Promise<JiraProjectInfo[]>
   }
 
   /** The Actions dock. An action runs through sessions.create with its actionId. */

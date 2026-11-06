@@ -152,3 +152,12 @@ export async function gitDiff(projectPath: string, file: GitFileChange): Promise
   const binary = /^(Binary files .* differ|GIT binary patch)$/m.test(res.stdout)
   return binary ? { patch: '', binary: true } : { patch: res.stdout }
 }
+
+/** Makes the folder a git repository, for the project panel's “Initialise a repository”. Never inside an existing one. */
+export async function gitInit(repoPath: string): Promise<GitStatus | null> {
+  const existing = await gitStatus(repoPath)
+  if (existing) return existing
+  const res = await git(repoPath, ['init'])
+  if (res.code !== 0) throw new Error('git init failed')
+  return gitStatus(repoPath)
+}

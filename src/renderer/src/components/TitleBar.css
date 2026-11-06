@@ -125,3 +125,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* The project panel's toggle, at the far right like a sidebar button. Lit while the panel is out. */
+.titlebar-panel {
+  color: var(--text-secondary);
+}
+.titlebar-panel:hover {
+  color: var(--text-primary);
+}
+.titlebar-panel.is-on {
+  background: var(--bg-pressed);
+  color: var(--text-primary);
+}

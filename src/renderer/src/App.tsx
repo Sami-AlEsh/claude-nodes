@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type CSSProperties } from 'react'
 import clsx from 'clsx'
 import { useApp } from './store'
 import { TitleBar } from './components/TitleBar'
@@ -10,10 +10,13 @@ import { AgentViewer } from './terminal/AgentViewer'
 import { DiffModal } from './components/git/DiffModal'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ProjectRail } from './components/projects/ProjectRail'
+import { PanelDock, usePanelPlacement } from './components/panel/PanelDock'
 
 export function App() {
   const route = useApp((s) => s.route)
   const pinRail = useApp((s) => s.settings?.pinProjectRail ?? false)
+  const panel = usePanelPlacement()
+  const panelBeside = panel.pinned && panel.open
 
   useEffect(() => {
     useApp.getState().refreshProjects()
@@ -88,16 +91,26 @@ export function App() {
   return (
     <div className="app">
       <TitleBar />
-      <main className="app-main">
+      {/* --panel-offset: how much of the window's right the pinned panel takes, for what's placed from that edge. */}
+      <main
+        className="app-main"
+        style={
+          {
+            '--panel-w': `${panel.width}px`,
+            '--panel-offset': route.view === 'board' && panelBeside ? `${panel.width}px` : '0px'
+          } as CSSProperties
+        }
+      >
         {route.view === 'projects' ? (
           <ProjectsView />
         ) : (
           <>
-            {/* A pinned rail takes a column of its own, so it never covers the board. */}
-            <div className={clsx('board-area', pinRail && 'beside-rail')}>
+            {/* A pinned rail or panel takes a column of its own, so it never covers the board. */}
+            <div className={clsx('board-area', pinRail && 'beside-rail', panelBeside && 'beside-panel')}>
               <BoardView key={route.projectId} projectId={route.projectId} />
             </div>
             <ProjectRail activeId={route.projectId} pinned={pinRail} />
+            <PanelDock projectId={route.projectId} />
           </>
         )}
       </main>

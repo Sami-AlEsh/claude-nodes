@@ -18,11 +18,13 @@ import type {
   FolderColor,
   GitFileChange,
   InkStroke,
+  JiraAccountInput,
   NodePatch,
   OpenSessionResult,
   Project,
   ProjectAction,
   ProjectGroup,
+  ProjectJiraLink,
   ProjectStats,
   Rect,
   SessionCard,
@@ -60,13 +62,15 @@ import {
   watchProject
 } from './discovery'
 import { getClaudePath, getClaudeVersion, initEnv } from './env'
-import { gitDiff, gitStatus } from './git'
+import { gitDiff, gitInit, gitStatus } from './git'
 import { configureStatus, forgetStatus, getStatus } from './hooks'
 import { cleanInk } from './ink'
 import { installMenu, syncFocusMenu } from './menu'
 import { nameSection, type NamingSource } from './naming'
 import * as notes from './notes'
 import * as notify from './notify'
+import { forgetProject, forgetTickets, projectPullRequests, projectTickets } from './panel'
+import * as jira from './panel/jira'
 import * as ptys from './pty'
 import {
   flush,
@@ -355,6 +359,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
         archived?: boolean
         groupId?: string | null
         focused?: boolean
+        jira?: ProjectJiraLink | null
       }
     ): Project => {
       const project = getProject(id)
@@ -367,6 +372,9 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
       else if (patch.focused === false) delete project.focused
       if (patch.groupId === null) delete project.groupId
       else if (patch.groupId) project.groupId = getGroup(patch.groupId).id
+      if (patch.jira === null) delete project.jira
+      else if (patch.jira && jira.isProjectKey(patch.jira.key)) project.jira = { key: patch.jira.key }
+      if (patch.jira !== undefined) forgetTickets(project.id)
       save()
       return project
     }
@@ -377,6 +385,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     ptys.killProject(id)
     unwatchProject(id)
     views.removeProjectViews(state.boards[id])
+    forgetProject(id)
     state.projects = state.projects.filter((p) => p.id !== id)
     delete state.boards[id]
     save()
@@ -595,6 +604,35 @@ export async function registerIpc(getWindow: () => BrowserWindow | null, showWin
     await envReady
     return gitDiff(getProject(projectId).repoPath, file)
   })
+
+  // --- Project panel -------------------------------------------------------
+
+  // gh and git come from the user's PATH, known once the login-shell env is in.
+  ipcMain.handle(IPC.panelPullRequests, async (_e, projectId: string, fresh: boolean) => {
+    await envReady
+    return projectPullRequests(getProject(projectId), fresh === true)
+  })
+
+  ipcMain.handle(IPC.panelTickets, (_e, projectId: string, fresh: boolean) =>
+    projectTickets(getProject(projectId), fresh === true)
+  )
+
+  ipcMain.handle(IPC.panelGitInit, async (_e, projectId: string) => {
+    await envReady
+    const status = await gitInit(getProject(projectId).repoPath)
+    forgetProject(projectId)
+    return status
+  })
+
+  ipcMain.handle(IPC.jiraAccount, () => jira.accountInfo())
+
+  ipcMain.handle(IPC.jiraSetAccount, async (_e, input: JiraAccountInput | null) => {
+    const account = await jira.setAccount(input && typeof input === 'object' ? input : null)
+    forgetTickets()
+    return account
+  })
+
+  ipcMain.handle(IPC.jiraProjects, () => jira.listProjects())
 
   // --- Actions -------------------------------------------------------------
 
