@@ -1,35 +1,169 @@
-/* ───────────── Actions rail: the project rail's twin on the right edge (ProjectRail.css) ───────────── */
+/* ───────────── The Actions button, beside the prompt bar, and its menu above it ───────────── */
 
-.rail-edge.is-right {
-  left: auto;
-  right: 0;
-}
-
-.rail.is-right {
-  left: auto;
-  right: var(--rail-inset);
-  transform: translateX(calc(100% + var(--rail-inset)));
-}
-.rail.is-right.is-open {
-  transform: none;
+.action-button-wrap {
+  position: relative;
+  display: flex;
+  flex: none;
 }
 
-.rail-hint.is-right {
-  left: auto;
-  /* Fixed to the window, so it moves over by what the project panel takes of its right (App's --panel-offset). */
-  right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 6px);
-  animation-name: action-hint-in;
+/* The mic's twin (.sidekick-orb in sidekick.css), with its dot for a run that is going. */
+.action-button {
+  position: relative;
 }
-@keyframes action-hint-in {
+/* Open, its bolt takes the accent (scoped up to win over the mic's hover colour). */
+.sidekick-row .action-button.is-open,
+.sidekick-row .action-button.is-open:hover {
+  color: var(--accent);
+}
+.action-button .status-dot.action-button-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--bg-elevated);
+}
+
+/* Above the button, centred on it, scrolling once it's taller than most of the window. */
+.action-menu {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 320px;
+  max-height: 60vh;
+  box-sizing: border-box;
+  margin-left: -160px;
+  padding: 5px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-elevated) 96%, transparent);
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow: var(--shadow-lg);
+  outline: none;
+  cursor: default;
+  animation: action-menu-in var(--dur-fast) var(--ease-out);
+}
+@keyframes action-menu-in {
   from {
     opacity: 0;
-    transform: translate(3px, -50%);
+    transform: translateY(6px);
   }
+}
+
+.action-menu-sep {
+  flex: none;
+  height: 0.5px;
+  margin: 3px 8px;
+  background: var(--separator);
+}
+
+.action-menu-row {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  border-radius: 8px;
+}
+.action-menu-row.is-active,
+.action-menu-row.has-menu {
+  background: var(--bg-selected);
+}
+
+.action-menu-item {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  outline: none;
+  cursor: default;
+}
+
+.action-menu-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 1px;
+}
+.action-menu-name {
+  overflow: hidden;
+  font-size: var(--text-md);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.action-menu-detail {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* What a run last said: one line, under its state. */
+.action-menu-detail.is-step {
+  color: var(--text-tertiary);
+  -webkit-line-clamp: 1;
+}
+
+.action-menu-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+.action-menu-run[data-status='working'] {
+  color: var(--status-working);
+}
+.action-menu-run[data-status='waiting'] {
+  color: var(--status-waiting);
+}
+
+/* The row's own menu (run, edit, delete), shown on the highlighted row. */
+.action-menu-more {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 0;
+  cursor: default;
+}
+.action-menu-row.is-active .action-menu-more,
+.action-menu-row.has-menu .action-menu-more {
+  opacity: 1;
+}
+.action-menu-more:hover,
+.action-menu-row.has-menu .action-menu-more {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .action-tile {
   position: relative;
   display: grid;
+  flex: none;
   place-items: center;
   width: 32px;
   height: 32px;
@@ -39,6 +173,10 @@
   transition:
     background var(--dur-fast) ease,
     color var(--dur-fast) ease;
+}
+.action-tile.is-new {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 /* A global action's tile carries a small globe in its corner. */
 .action-global {
@@ -54,43 +192,14 @@
   box-shadow: 0 0 0 0.5px var(--border-strong);
   color: var(--text-secondary);
 }
-.rail-item.is-running .action-tile {
+/* A running action's tile takes its run's colour. */
+.action-menu-row[data-run='working'] .action-tile {
   background: color-mix(in srgb, var(--status-working) 16%, transparent);
   color: var(--status-working);
 }
-
-/* While the rail is hidden: a sliver on the edge for a run that is going, red when it needs you. */
-.action-rail-mark {
-  position: absolute;
-  top: 50%;
-  right: 1px;
-  width: 3px;
-  height: 36px;
-  border-radius: 2px;
-  background: var(--status-working);
-  transform: translateY(-50%);
-  animation: action-mark-breathe 1.6s ease-in-out infinite;
-}
-.action-rail-mark[data-status='waiting'] {
-  background: var(--status-waiting);
-  animation-duration: 1.1s;
-}
-@keyframes action-mark-breathe {
-  50% {
-    opacity: 0.45;
-  }
-}
-
-/* Running actions' sessions, dealt out of the rail (cards styled by .fan-card in board.css). */
-.action-fan {
-  --deal-x: 46px;
-  position: fixed;
-  z-index: 45;
-  right: calc(var(--panel-offset, 0px) + var(--rail-inset) + var(--rail-w) + 10px);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 260px;
+.action-menu-row[data-run='waiting'] .action-tile {
+  background: color-mix(in srgb, var(--status-waiting) 14%, transparent);
+  color: var(--status-waiting);
 }
 
 /* ───────────── Add / edit action ───────────── */

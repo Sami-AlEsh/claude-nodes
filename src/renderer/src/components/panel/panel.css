@@ -51,8 +51,7 @@
 
 /*
  * App counts the strip in --panel-offset, for the folded panel. Open, there's
- * no strip, so the board, and what's placed from its right edge (the Actions
- * rail's hint and run cards), stop at the panel instead.
+ * no strip, so the board stops at the panel instead.
  */
 .app-main:has(> .panel-dock) > .board-area {
   --panel-offset: var(--panel-w);
@@ -60,8 +59,7 @@
 
 /*
  * The panel's left edge drags to resize it: a 7 px hit area from its hairline
- * inwards. It stays off the board, whose own right edge is where the Actions
- * rail slides in from.
+ * inwards, so it stays off the board.
  */
 .panel-resize {
   position: absolute;

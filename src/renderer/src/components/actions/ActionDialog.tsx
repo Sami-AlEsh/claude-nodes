@@ -108,7 +108,7 @@ export function ActionDialog({
         <span className="action-scope-title">Use in every project</span>
         <span className="action-scope-hint">
           {global
-            ? 'A global button, in the actions rail of all your projects. Claude writes its prompt to work in any repository.'
+            ? 'A global button, in the Actions menu of all your projects. Claude writes its prompt to work in any repository.'
             : 'Only this project has it.'}
         </span>
       </span>
@@ -144,7 +144,7 @@ export function ActionDialog({
             <p className="action-subtitle">
               {step === 'describe'
                 ? 'Say what the button should do. Claude writes the prompt each press runs.'
-                : 'Each press runs a session on this prompt in auto mode, beside its button. It goes when it’s done.'}
+                : 'Each press runs a session on this prompt in auto mode, shown on its row in the Actions menu. It goes when it’s done.'}
             </p>
           </div>
         </header>

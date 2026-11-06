@@ -96,7 +96,7 @@ export function App() {
       <TitleBar />
       {/*
         On a board, the project panel's strip, and the panel when it's open, take the window's right:
-        --panel-offset is how much, for the board and for what's placed from the board's right edge.
+        --panel-offset is how much, for the board to stop short of it.
       */}
       <main
         className="app-main"
